@@ -290,3 +290,30 @@
     border-color: rgb(245, 158, 11);
   }
 }
+
+/* Aggressive Mobile Chart Fixes */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
+.recharts-layer,
+.recharts-layer *,
+.recharts-sector,
+.recharts-sector *,
+.recharts-curve,
+.recharts-curve *,
+.recharts-active-dot,
+.recharts-dot,
+.recharts-cartesian-grid,
+.recharts-cartesian-axis,
+.recharts-legend-wrapper {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+}
+
+*:focus {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}

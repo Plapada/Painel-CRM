@@ -49,14 +49,14 @@ interface AreaChartProps {
 
 export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: AreaChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
+        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[160px] w-full">
+                <div className="h-[160px] w-full outline-none" tabIndex={-1}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} style={{ outline: 'none' }}>
                             <defs>
                                 <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={color} stopOpacity={0.3} />
@@ -103,14 +103,14 @@ interface BarChartProps {
 
 export function ElegantBarChart({ data, title, dataKey, color = "#3b82f6" }: BarChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
+        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[160px] w-full">
+                <div className="h-[160px] w-full outline-none" tabIndex={-1}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} style={{ outline: 'none' }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(128,128,128,0.1)" />
                             <XAxis
                                 dataKey="name"
@@ -145,14 +145,14 @@ const DEFAULT_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
 
 export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: DonutChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
+        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[160px] w-full flex items-center justify-center relative">
+                <div className="h-[160px] w-full flex items-center justify-center relative outline-none" tabIndex={-1}>
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
+                        <PieChart style={{ outline: 'none' }}>
                             <Pie
                                 data={data}
                                 cx="50%"
