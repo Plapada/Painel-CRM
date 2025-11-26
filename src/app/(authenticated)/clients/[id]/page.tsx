@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import MessageConversation, { ChatMessage, ChatUser } from "@/components/ui/messaging-conversation"
 
 export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
     const [clientId, setClientId] = useState<string | null>(null)
     const [client, setClient] = useState<any>(null)
     const [appointments, setAppointments] = useState<any[]>([])
-    const [messages, setMessages] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
@@ -85,14 +83,6 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                     setAppointments(clientApps)
                 }
 
-                // 3. Fetch Chat History
-                const { data: msgData } = await supabase
-                    .from('n8n_chat_histories')
-                    .select('*')
-                    .eq('session_id', clientData.telefone)
-                    .order('created_at', { ascending: true })
-
-                if (msgData) setMessages(msgData)
             }
         } catch (err: any) {
             console.error("Error fetching client data:", err)
@@ -129,25 +119,6 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
         )
     }
 
-    // Format messages for MessageConversation
-    const formattedMessages: ChatMessage[] = messages.map((msg: any) => ({
-        id: msg.id,
-        text: msg.content || msg.message, // Support both
-        sender: {
-            id: msg.role === 'user' ? client.id : 'me',
-            name: msg.role === 'user' ? (client.nomewpp || 'Cliente') : 'Eu',
-            avatar: msg.role === 'user' ? undefined : '/placeholder-user.jpg'
-        },
-        time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isMe: msg.role !== 'user'
-    }))
-
-    const otherUser: ChatUser = {
-        id: client.id,
-        name: client.nomewpp || 'Cliente',
-        avatar: '/placeholder-user.jpg',
-        status: 'offline' // We don't have real status yet
-    }
 
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] space-y-6">
@@ -179,7 +150,6 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
             <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
                 <TabsList>
                     <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-                    <TabsTrigger value="chat">Conversas</TabsTrigger>
                     <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
                 </TabsList>
 
@@ -239,13 +209,6 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                     </div>
                 </TabsContent>
 
-                <TabsContent value="chat" className="flex-1 min-h-0 py-4 h-full">
-                    <MessageConversation
-                        messages={formattedMessages}
-                        otherUser={otherUser}
-                        className="h-full border rounded-lg shadow-sm"
-                    />
-                </TabsContent>
 
                 <TabsContent value="appointments" className="flex-1 overflow-y-auto py-4">
                     <Card>
