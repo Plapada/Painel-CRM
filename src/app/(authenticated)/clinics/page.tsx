@@ -97,7 +97,7 @@ export default function ClinicsPage() {
             // 1. Create the clinic in 'clinics' table
             // We assume 'clinics' table has id, nome, status columns
             const { data: existingClinic } = await supabase
-                .from('clinics')
+                .from('clinicas')
                 .select('id')
                 .ilike('nome', newClinicName.trim())
                 .single()
@@ -111,7 +111,7 @@ export default function ClinicsPage() {
             } else {
                 // Insert new clinic
                 const { data: newClinic, error: createError } = await supabase
-                    .from('clinics')
+                    .from('clinicas')
                     .insert([{
                         nome: newClinicName.trim(),
                         status: 'ativo'
