@@ -94,33 +94,37 @@ export default function ClinicsPage() {
         setErrorMsg("")
 
         try {
-            // 1. Create the clinic in 'clinics' table
-            // We assume 'clinics' table has id, nome, status columns
+            // 1. Create the clinic in 'clinicas' table
+            // We assume 'clinicas' table has id, nome_clinica, clinic_id, status columns
             const { data: existingClinic } = await supabase
                 .from('clinicas')
-                .select('id')
-                .ilike('nome', newClinicName.trim())
+                .select('clinic_id, id')
+                .ilike('nome_clinica', newClinicName.trim())
                 .single()
 
             let clinicId
 
             if (existingClinic) {
                 // Determine if we should use existing or warn
-                // For simplicity, let's reuse if found, but ideally we'd ask
-                clinicId = existingClinic.id
+                // For simplicity, let's reuse if found
+                clinicId = existingClinic.clinic_id
             } else {
                 // Insert new clinic
+                // clinic_id is NOT auto-generated in DB, so we generate it here
+                const newId = crypto.randomUUID()
+
                 const { data: newClinic, error: createError } = await supabase
                     .from('clinicas')
                     .insert([{
-                        nome: newClinicName.trim(),
+                        nome_clinica: newClinicName.trim(),
+                        clinic_id: newId,
                         status: 'ativo'
                     }])
                     .select()
                     .single()
 
                 if (createError) throw createError
-                clinicId = newClinic.id
+                clinicId = newClinic.clinic_id
             }
 
             // 2. Generate registration token
