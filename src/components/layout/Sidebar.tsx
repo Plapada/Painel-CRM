@@ -24,9 +24,8 @@ const navItems = [
     { name: "Funil", href: "/funnel", icon: Filter },
     { name: "Conversas", href: "/chat", icon: MessageSquare },
     { name: "Agendamentos", href: "/appointments", icon: Calendar },
-    { name: "Clientes", href: "/clients", icon: Users },
-    { name: "Tarefas", href: "/tasks", icon: ClipboardList },
-    { name: "Suporte", href: "/support", icon: MessageSquare }, // Added Support
+    { name: "Clínicas", href: "/clinics", icon: Users },
+    { name: "Suporte", href: "/support", icon: MessageSquare },
 ]
 
 export function Sidebar() {
