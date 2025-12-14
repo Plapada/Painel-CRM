@@ -24,6 +24,7 @@ const navItems = [
     { name: "Funil", href: "/funnel", icon: Filter },
     { name: "Conversas", href: "/chat", icon: MessageSquare },
     { name: "Agendamentos", href: "/appointments", icon: Calendar },
+    { name: "Clientes", href: "/clients", icon: ClipboardList },
     { name: "Clínicas", href: "/clinics", icon: Users },
     { name: "Suporte", href: "/support", icon: MessageSquare },
 ]
@@ -37,8 +38,8 @@ export function Sidebar() {
     // Filter items based on role
     const filteredNavItems = navItems.filter(item => {
         if (isClient) {
-            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Suporte
-            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Suporte'].includes(item.name)
+            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Clientes, Suporte
+            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Clientes', 'Suporte'].includes(item.name)
         } else {
             // Admin sees: Dashboard, Conversas, Clínicas, Suporte (NO Agendamentos, NO Funil)
             return ['Dashboard', 'Conversas', 'Clínicas', 'Suporte'].includes(item.name)
