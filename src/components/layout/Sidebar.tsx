@@ -32,11 +32,18 @@ export function Sidebar() {
     const pathname = usePathname()
     const { user, logout } = useAuth()
     const isClient = user?.role === 'client'
+    const isAdmin = user?.role === 'admin' || !user?.role
 
-    // Filter items for client
-    const filteredNavItems = isClient
-        ? navItems.filter(item => ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Suporte'].includes(item.name))
-        : navItems
+    // Filter items based on role
+    const filteredNavItems = navItems.filter(item => {
+        if (isClient) {
+            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Suporte
+            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Suporte'].includes(item.name)
+        } else {
+            // Admin sees: Dashboard, Conversas, Clínicas, Suporte (NO Agendamentos, NO Funil)
+            return ['Dashboard', 'Conversas', 'Clínicas', 'Suporte'].includes(item.name)
+        }
+    })
 
     return (
         <aside className="hidden md:flex w-20 lg:w-64 flex-col border-r bg-card fixed inset-y-0 z-50 transition-all duration-300">
