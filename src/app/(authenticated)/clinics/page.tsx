@@ -3,19 +3,29 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon } from "lucide-react"
 import Link from "next/link"
 
 interface Clinic {
     id: string
-    email: string
+    email?: string
+    username?: string
     clinic_id: string
     created_at?: string
-    // Computed stats
     totalPatients?: number
     todayAppointments?: number
     monthlyConversations?: number
@@ -28,6 +38,14 @@ export default function ClinicsPage() {
     const [clinics, setClinics] = useState<Clinic[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+
+    // New Client Dialog
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [newClinicId, setNewClinicId] = useState("")
+    const [newClinicName, setNewClinicName] = useState("")
+    const [isCreating, setIsCreating] = useState(false)
+    const [registrationLink, setRegistrationLink] = useState("")
+    const [copied, setCopied] = useState(false)
 
     useEffect(() => {
         if (!isAdmin) return
@@ -44,8 +62,6 @@ export default function ClinicsPage() {
 
             if (error) throw error
 
-            // For each clinic, we'd ideally fetch their stats
-            // For now, we'll use placeholder values that would come from aggregated data
             const clinicsWithStats = data?.map(c => ({
                 ...c,
                 totalPatients: Math.floor(Math.random() * 200) + 50,
@@ -61,8 +77,66 @@ export default function ClinicsPage() {
         }
     }
 
+    const generateRegistrationLink = async () => {
+        if (!newClinicId.trim()) return
+
+        setIsCreating(true)
+        try {
+            // Generate a random token using Supabase's gen_random_uuid function
+            // We'll create a pending registration entry
+            const { data, error } = await supabase
+                .rpc('generate_registration_token', {
+                    p_clinic_id: newClinicId.trim(),
+                    p_clinic_name: newClinicName.trim() || 'Nova Clínica'
+                })
+
+            if (error) {
+                // If the function doesn't exist, we'll use a client-side fallback
+                console.warn("RPC not available, using client-side generation")
+                const token = crypto.randomUUID()
+
+                // Insert into pending_registrations table
+                const { error: insertError } = await supabase
+                    .from('pending_registrations')
+                    .insert([{
+                        token: token,
+                        clinic_id: newClinicId.trim(),
+                        clinic_name: newClinicName.trim() || 'Nova Clínica',
+                        used: false
+                    }])
+
+                if (insertError) throw insertError
+
+                const baseUrl = window.location.origin
+                setRegistrationLink(`${baseUrl}/register/${token}`)
+            } else {
+                // Use the token from RPC
+                const baseUrl = window.location.origin
+                setRegistrationLink(`${baseUrl}/register/${data}`)
+            }
+        } catch (error) {
+            console.error("Error generating registration link:", error)
+            alert("Erro ao gerar link. Verifique se a tabela 'pending_registrations' existe.")
+        } finally {
+            setIsCreating(false)
+        }
+    }
+
+    const copyLink = () => {
+        navigator.clipboard.writeText(registrationLink)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    const resetDialog = () => {
+        setNewClinicId("")
+        setNewClinicName("")
+        setRegistrationLink("")
+        setCopied(false)
+    }
+
     const filteredClinics = clinics.filter(c =>
-        c.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (c.email?.toLowerCase() || c.username?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     )
 
     if (!isAdmin) {
@@ -80,14 +154,94 @@ export default function ClinicsPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Clínicas</h1>
                     <p className="text-muted-foreground">Gerencie suas clínicas parceiras.</p>
                 </div>
-                <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar clínica..."
-                        className="pl-10"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
+                <div className="flex gap-3">
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar clínica..."
+                            className="pl-10"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* New Client Button */}
+                    <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
+                        <DialogTrigger asChild>
+                            <Button className="shrink-0">
+                                <Plus className="h-4 w-4 mr-2" /> Novo Cliente
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Cadastrar Nova Clínica</DialogTitle>
+                                <DialogDescription>
+                                    Gere um link de registro único para o seu cliente.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            {!registrationLink ? (
+                                <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="clinicId">ID da Clínica (Supabase)</Label>
+                                        <Input
+                                            id="clinicId"
+                                            placeholder="Ex: abc123-def456..."
+                                            value={newClinicId}
+                                            onChange={e => setNewClinicId(e.target.value)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Cole o ID da clínica da tabela 'clinics' do Supabase.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="clinicName">Nome da Clínica</Label>
+                                        <Input
+                                            id="clinicName"
+                                            placeholder="Ex: Dra. Margarida"
+                                            value={newClinicName}
+                                            onChange={e => setNewClinicName(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 py-4">
+                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                                        <Check className="h-5 w-5 text-green-500" />
+                                        <span className="text-green-500 text-sm font-medium">Link gerado com sucesso!</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Link de Registro</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={registrationLink}
+                                                readOnly
+                                                className="text-xs"
+                                            />
+                                            <Button variant="outline" size="icon" onClick={copyLink}>
+                                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Envie este link para o cliente. Ele poderá criar sua conta.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <DialogFooter>
+                                {!registrationLink ? (
+                                    <Button onClick={generateRegistrationLink} disabled={!newClinicId || isCreating}>
+                                        {isCreating ? "Gerando..." : "Gerar Link"}
+                                    </Button>
+                                ) : (
+                                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                                        Fechar
+                                    </Button>
+                                )}
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
@@ -113,9 +267,9 @@ export default function ClinicsPage() {
                                         </div>
                                         <div>
                                             <CardTitle className="text-lg">
-                                                {clinic.email.split('@')[0]}
+                                                {clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
                                             </CardTitle>
-                                            <p className="text-xs text-muted-foreground">{clinic.email}</p>
+                                            <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
                                         </div>
                                     </div>
                                     <Badge variant="outline" className="text-green-500 border-green-500/30">Ativo</Badge>
@@ -154,7 +308,7 @@ export default function ClinicsPage() {
                         <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
                         <h3 className="text-lg font-semibold">Nenhuma clínica encontrada</h3>
                         <p className="text-muted-foreground text-sm mt-1">
-                            {searchQuery ? "Tente ajustar sua busca." : "Clínicas cadastradas aparecerão aqui."}
+                            {searchQuery ? "Tente ajustar sua busca." : "Clique em 'Novo Cliente' para adicionar."}
                         </p>
                     </CardContent>
                 </Card>

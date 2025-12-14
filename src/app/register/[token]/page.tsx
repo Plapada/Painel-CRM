@@ -17,7 +17,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle, Calendar } from "lucide-react"
 import { Hexagon } from "lucide-react"
 
 const registerSchema = z.object({
@@ -28,6 +28,7 @@ const registerSchema = z.object({
         .regex(/^[a-zA-Z0-9._]+$/, { message: "Use apenas letras, números, pontos e underscores." }),
     password: z.string().min(6, { message: "A senha deve ter no mínimo 6 caracteres." }),
     confirmPassword: z.string(),
+    birthDate: z.string().min(1, { message: "Data de nascimento é obrigatória." }),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não coincidem.",
     path: ["confirmPassword"],
@@ -40,13 +41,13 @@ export default function RegisterPage() {
 
     const [isLoading, setIsLoading] = useState(false)
     const [isValidToken, setIsValidToken] = useState<boolean | null>(null)
-    const [clinicData, setClinicData] = useState<any>(null)
+    const [registrationData, setRegistrationData] = useState<any>(null)
     const [showPassword, setShowPassword] = useState(false)
     const [success, setSuccess] = useState(false)
 
     const form = useForm<z.infer<typeof registerSchema>>({
         resolver: zodResolver(registerSchema),
-        defaultValues: { email: "", username: "", password: "", confirmPassword: "" },
+        defaultValues: { email: "", username: "", password: "", confirmPassword: "", birthDate: "" },
     })
 
     useEffect(() => {
@@ -59,18 +60,17 @@ export default function RegisterPage() {
             return
         }
 
-        // Token format: CLINIC_ID-RANDOM_STRING (e.g., "abc123-XyZ789")
-        // We check if there's a clinic with this registration token
+        // Check pending_registrations table
         const { data, error } = await supabase
-            .from('clinics')
+            .from('pending_registrations')
             .select('*')
-            .eq('registration_token', token)
-            .eq('status', 'ativo')
+            .eq('token', token)
+            .eq('used', false)
             .single()
 
         if (data) {
             setIsValidToken(true)
-            setClinicData(data)
+            setRegistrationData(data)
         } else {
             setIsValidToken(false)
         }
@@ -98,10 +98,17 @@ export default function RegisterPage() {
                     username: values.username.toLowerCase(),
                     senha: values.password,
                     role: 'client',
-                    clinic_id: clinicData.id,
+                    clinic_id: registrationData.clinic_id,
+                    birth_date: values.birthDate,
                 }])
 
             if (error) throw error
+
+            // Mark token as used
+            await supabase
+                .from('pending_registrations')
+                .update({ used: true })
+                .eq('token', token)
 
             setSuccess(true)
 
@@ -134,7 +141,7 @@ export default function RegisterPage() {
                         <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
                         <h2 className="text-xl font-bold text-destructive">Link Inválido</h2>
                         <p className="text-muted-foreground text-sm">
-                            Este link de registro não é válido ou expirou. Entre em contato com o administrador para obter um novo link.
+                            Este link de registro não é válido ou já foi utilizado. Entre em contato com o administrador para obter um novo link.
                         </p>
                     </CardContent>
                 </Card>
@@ -169,7 +176,7 @@ export default function RegisterPage() {
                     </div>
                     <CardTitle className="text-2xl font-playfair">Criar Conta</CardTitle>
                     <CardDescription>
-                        Registro para: <span className="font-medium text-primary">{clinicData?.nome}</span>
+                        Registro para: <span className="font-medium text-primary">{registrationData?.clinic_name}</span>
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -202,6 +209,23 @@ export default function RegisterPage() {
                                             <div className="relative">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                                 <Input placeholder="seu.usuario" {...field} className="pl-10" />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="birthDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Data de Nascimento</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input type="date" {...field} className="pl-10" />
                                             </div>
                                         </FormControl>
                                         <FormMessage />
