@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, Key, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, User, Lock, ArrowRight } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,16 +19,11 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-const adminSchema = z.object({
-    email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
+const loginSchema = z.object({
+    username: z.string().min(1, { message: "Nome de usuário é obrigatório." }),
     password: z.string().min(1, { message: "A senha é obrigatória." }),
     remember: z.boolean().default(false).optional(),
-})
-
-const clientSchema = z.object({
-    accessKey: z.string().min(1, { message: "Chave de acesso é obrigatória." }),
 })
 
 export function LoginForm() {
@@ -36,31 +31,25 @@ export function LoginForm() {
     const [showPassword, setShowPassword] = useState(false)
     const { login } = useAuth()
     const { transitionTheme } = useThemeTransition()
-    const [activeTab, setActiveTab] = useState("admin")
 
-    const adminForm = useForm<z.infer<typeof adminSchema>>({
-        resolver: zodResolver(adminSchema),
-        defaultValues: { email: "", password: "", remember: false },
+    const form = useForm<z.infer<typeof loginSchema>>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: { username: "", password: "", remember: false },
     })
 
-    const clientForm = useForm<z.infer<typeof clientSchema>>({
-        resolver: zodResolver(clientSchema),
-        defaultValues: { accessKey: "" },
-    })
-
-    async function onAdminSubmit(values: z.infer<typeof adminSchema>) {
+    async function onSubmit(values: z.infer<typeof loginSchema>) {
         setIsLoading(true)
         try {
-            const email = values.email.trim().toLowerCase()
+            const username = values.username.trim().toLowerCase()
             const { data: users, error } = await supabase
                 .from('usuarios_site')
                 .select('*')
-                .eq('email', email)
+                .eq('username', username)
                 .single()
 
             if (error || !users) {
                 console.error("Login error:", error)
-                throw new Error("Email não encontrado ou erro na conexão.")
+                throw new Error("Usuário não encontrado.")
             }
 
             if (users.senha !== values.password) {
@@ -70,47 +59,16 @@ export function LoginForm() {
             const userData = {
                 id: users.id,
                 email: users.email,
-                role: users.role || 'admin', // Default to admin if role missing
+                username: users.username,
+                role: users.role || 'client',
                 clinic_id: users.clinic_id,
             }
 
             await transitionTheme('light')
             login(userData, !!values.remember)
         } catch (error: any) {
-            adminForm.setError("root", {
+            form.setError("root", {
                 message: error.message || "Erro ao fazer login.",
-            })
-            setIsLoading(false)
-        }
-    }
-
-    async function onClientSubmit(values: z.infer<typeof clientSchema>) {
-        setIsLoading(true)
-        try {
-            const key = values.accessKey.trim()
-            const { data: users, error } = await supabase
-                .from('usuarios_site')
-                .select('*')
-                .eq('access_key', key)
-                .single()
-
-            if (error || !users) {
-                throw new Error("Chave de acesso inválida.")
-            }
-
-            const userData = {
-                id: users.id,
-                email: users.email,
-                role: 'client' as const,
-                clinic_id: users.clinic_id,
-                access_key: users.access_key
-            }
-
-            await transitionTheme('light')
-            login(userData, true) // Always remember client for easier access
-        } catch (error: any) {
-            clientForm.setError("root", {
-                message: error.message || "Erro ao acessar área do cliente.",
             })
             setIsLoading(false)
         }
@@ -118,139 +76,117 @@ export function LoginForm() {
 
     return (
         <div className="w-full max-w-md space-y-8 animate-in fade-in duration-700">
+            {/* Header */}
             <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">Bem-vindo</h1>
-                <p className="text-muted-foreground">Acesse sua conta para continuar</p>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">
+                    Bem-vindo
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                    Acesse sua conta para continuar
+                </p>
             </div>
 
-            <Tabs defaultValue="admin" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="admin">Administrador</TabsTrigger>
-                    <TabsTrigger value="client">Área do Cliente</TabsTrigger>
-                </TabsList>
+            {/* Login Form */}
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-foreground/80">
+                                    Usuário
+                                </FormLabel>
+                                <FormControl>
+                                    <div className="relative group input-golden-glow rounded-lg">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <Input
+                                            placeholder="seu.usuario"
+                                            {...field}
+                                            className="pl-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-300"
+                                        />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                <TabsContent value="admin">
-                    <Form {...adminForm}>
-                        <form onSubmit={adminForm.handleSubmit(onAdminSubmit)} className="space-y-6">
-                            <FormField
-                                control={adminForm.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <div className="relative input-golden-glow rounded-md">
-                                                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                                <Input placeholder="admin@elegance.com" className="pl-10" {...field} />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-foreground/80">
+                                    Senha
+                                </FormLabel>
+                                <FormControl>
+                                    <div className="relative group input-golden-glow rounded-lg">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            {...field}
+                                            className="pl-10 pr-10 bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                            <FormField
-                                control={adminForm.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Senha</FormLabel>
-                                        <FormControl>
-                                            <div className="relative input-golden-glow rounded-md">
-                                                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    type={showPassword ? "text" : "password"}
-                                                    placeholder="••••••••"
-                                                    className="pl-10 pr-10"
-                                                    {...field}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                                                >
-                                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                                </button>
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    <FormField
+                        control={form.control}
+                        name="remember"
+                        render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        className="border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                    />
+                                </FormControl>
+                                <FormLabel className="text-sm text-muted-foreground font-normal">
+                                    Lembrar de mim
+                                </FormLabel>
+                            </FormItem>
+                        )}
+                    />
 
-                            <FormField
-                                control={adminForm.control}
-                                name="remember"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-normal cursor-pointer">
-                                            Lembrar de mim neste computador
-                                        </FormLabel>
-                                    </FormItem>
-                                )}
-                            />
+                    {form.formState.errors.root && (
+                        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg border border-destructive/20 animate-in fade-in">
+                            {form.formState.errors.root.message}
+                        </div>
+                    )}
 
-                            {adminForm.formState.errors.root && (
-                                <div className="text-sm font-medium text-destructive text-center">
-                                    {adminForm.formState.errors.root.message}
-                                </div>
-                            )}
-
-                            <Button type="submit" className="w-full button-shimmer" disabled={isLoading}>
-                                {isLoading ? "Entrando..." : "Entrar como Admin"}
-                            </Button>
-                        </form>
-                    </Form>
-                </TabsContent>
-
-                <TabsContent value="client">
-                    <Form {...clientForm}>
-                        <form onSubmit={clientForm.handleSubmit(onClientSubmit)} className="space-y-6">
-                            <div className="bg-primary/5 p-4 rounded-lg text-sm text-muted-foreground mb-4 border border-primary/10">
-                                <p>Digite a chave de acesso fornecida pela equipe Elegance para visualizar os dados da sua clínica.</p>
+                    <Button
+                        type="submit"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-5 button-shimmer"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                <span>Entrando...</span>
                             </div>
-
-                            <FormField
-                                control={clientForm.control}
-                                name="accessKey"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Chave de Acesso</FormLabel>
-                                        <FormControl>
-                                            <div className="relative input-golden-glow rounded-md">
-                                                <Key className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                                                <Input
-                                                    placeholder="ELEGANCE-XXXX-XXXX"
-                                                    className="pl-10 uppercase tracking-widest font-mono"
-                                                    {...field}
-                                                />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {clientForm.formState.errors.root && (
-                                <div className="text-sm font-medium text-destructive text-center">
-                                    {clientForm.formState.errors.root.message}
-                                </div>
-                            )}
-
-                            <Button type="submit" className="w-full button-shimmer group" disabled={isLoading}>
-                                {isLoading ? "Verificando..." : "Acessar Dashboard"}
-                                {!isLoading && <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
-                            </Button>
-                        </form>
-                    </Form>
-                </TabsContent>
-            </Tabs>
+                        ) : (
+                            <div className="flex items-center justify-center gap-2">
+                                <span>Entrar</span>
+                                <ArrowRight className="h-4 w-4" />
+                            </div>
+                        )}
+                    </Button>
+                </form>
+            </Form>
         </div>
     )
 }
