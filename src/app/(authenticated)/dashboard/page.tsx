@@ -53,26 +53,16 @@ export default function DashboardPage() {
     const [appointmentsByDay, setAppointmentsByDay] = useState<any[]>([])
     const [conversionData, setConversionData] = useState<any[]>([])
 
-    // Client stats
+    // Client stats - now using null to indicate "no data"
     const [stats, setStats] = useState({
-        totalRevenue: 0,
-        todayAppointments: 0,
-        newPatients: 0,
-        avgTicket: 450,
-        patientSatisfaction: 4.9,
-        treatmentSuccess: 92,
+        totalRevenue: null as number | null,
+        todayAppointments: null as number | null,
+        newPatients: null as number | null,
+        monthlyConversations: null as number | null,
     })
     const [recentAppointments, setRecentAppointments] = useState<any[]>([])
     const [recentPatients, setRecentPatients] = useState<any[]>([])
     const [funnelData, setFunnelData] = useState<any[]>([])
-
-    // Hardcoded AI performance data
-    const aiPerformance = [
-        { name: 'Agendamentos', value: 145 },
-        { name: 'Dúvidas Clínicas', value: 89 },
-        { name: 'Triagem Inicial', value: 210 },
-        { name: 'Renovação Receita', value: 65 },
-    ]
 
     useEffect(() => {
         if (isAdmin) {
@@ -219,13 +209,20 @@ export default function DashboardPage() {
             const estimatedRevenue = confirmedAppointments * 450
             const avgTicket = 450
 
-            setStats(prev => ({
-                ...prev,
+            // Fetch monthly conversations
+            const monthStart = new Date(new Date().setDate(1)).toISOString()
+            const { count: convCount } = await supabase
+                .from('n8n_chat_histories')
+                .select('*', { count: 'exact', head: true })
+                .eq('clinic_id', user.clinic_id)
+                .gte('created_at', monthStart)
+
+            setStats({
                 totalRevenue: estimatedRevenue,
                 todayAppointments: todayAppointmentsCount,
                 newPatients: newPatientsCount,
-                avgTicket: avgTicket
-            }))
+                monthlyConversations: convCount ?? null,
+            })
 
             // Recent Appointments
             const recentAppts = appointments ? appointments
@@ -408,32 +405,27 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <ElegantStatsCard
                     title="Receita Estimada"
-                    value={`R$ ${stats.totalRevenue.toLocaleString()}`}
+                    value={stats.totalRevenue !== null ? `R$ ${stats.totalRevenue.toLocaleString()}` : '-'}
                     icon={DollarSign}
-                    trend="+12%"
-                    trendUp={true}
                     description="Total acumulado"
                 />
                 <ElegantStatsCard
                     title="Agendamentos"
-                    value={stats.todayAppointments.toString()}
+                    value={stats.todayAppointments !== null ? stats.todayAppointments.toString() : '-'}
                     icon={Calendar}
                     description="Para hoje"
                 />
                 <ElegantStatsCard
                     title="Total de Clientes"
-                    value={stats.newPatients.toString()}
+                    value={stats.newPatients !== null ? stats.newPatients.toString() : '-'}
                     icon={Users}
-                    trend="+5%"
-                    trendUp={true}
                     description="Base de cadastros"
                 />
                 <ElegantStatsCard
-                    title="Ticket Médio"
-                    value={`R$ ${stats.avgTicket.toFixed(0)}`}
-                    icon={CreditCard}
-                    trend="Estável"
-                    trendUp={true}
+                    title="Conversas (Mês)"
+                    value={stats.monthlyConversations !== null ? stats.monthlyConversations.toString() : '-'}
+                    icon={MessageSquare}
+                    description="Atendimentos"
                 />
             </div>
 
@@ -449,20 +441,7 @@ export default function DashboardPage() {
                         color="#d4af37"
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <ElegantBarChart
-                            title="Desempenho da IA"
-                            data={aiPerformance}
-                            dataKey="value"
-                            color="#10b981"
-                        />
-                        <ElegantBarChart
-                            title="Conversões por Canal"
-                            data={[{ name: 'WhatsApp', value: 65 }, { name: 'Instagram', value: 40 }]}
-                            dataKey="value"
-                            color="#3b82f6"
-                        />
-                    </div>
+                    {/* Removed mock AI Performance and Channel charts - no real data source available */}
 
                     {/* Recent Appointments Table */}
                     <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
@@ -501,25 +480,7 @@ export default function DashboardPage() {
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 1 }]}
                     />
 
-                    {/* Secondary Stats Vertical Stack */}
-                    <div className="grid grid-cols-1 gap-6">
-                        <ElegantStatsCard
-                            title="Satisfação (NPS)"
-                            value={stats.patientSatisfaction.toString()}
-                            icon={Activity}
-                            trend="+0.2"
-                            trendUp={true}
-                            description="Excelente"
-                        />
-                        <ElegantStatsCard
-                            title="Taxa de Sucesso"
-                            value={`${stats.treatmentSuccess}%`}
-                            icon={TrendingUp}
-                            trend="+2%"
-                            trendUp={true}
-                            description="Tratamentos"
-                        />
-                    </div>
+                    {/* Stats - only showing real data */}
 
                     {/* Recent Patients List */}
                     <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">

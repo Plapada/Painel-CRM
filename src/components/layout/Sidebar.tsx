@@ -41,8 +41,8 @@ export function Sidebar() {
             // Clients see: Dashboard, Funil, Conversas, Agendamentos, Clientes, Suporte
             return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Clientes', 'Suporte'].includes(item.name)
         } else {
-            // Admin sees: Dashboard, Conversas, Clínicas, Suporte (NO Agendamentos, NO Funil)
-            return ['Dashboard', 'Conversas', 'Clínicas', 'Suporte'].includes(item.name)
+            // Admin sees: Dashboard, Clínicas, Suporte (NO Conversas - access via clinic details)
+            return ['Dashboard', 'Clínicas', 'Suporte'].includes(item.name)
         }
     })
 

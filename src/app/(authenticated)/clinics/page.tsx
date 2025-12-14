@@ -64,17 +64,57 @@ export default function ClinicsPage() {
 
             if (error) throw error
 
-            const clinicsWithStats = users?.map(c => ({
-                id: c.id,
-                email: c.email,
-                username: c.username,
-                clinic_id: c.clinic_id,
-                created_at: c.created_at,
-                // Stats placeholders (would be real in production)
-                totalPatients: Math.floor(Math.random() * 200) + 50,
-                todayAppointments: Math.floor(Math.random() * 10),
-                monthlyConversations: Math.floor(Math.random() * 500) + 100,
-            })) || []
+            // Fetch real stats for each clinic
+            const clinicsWithStats: Clinic[] = []
+            const today = new Date().toISOString().split('T')[0]
+            const monthStart = new Date(new Date().setDate(1)).toISOString()
+
+            for (const c of users || []) {
+                if (!c.clinic_id) {
+                    clinicsWithStats.push({
+                        id: c.id,
+                        email: c.email,
+                        username: c.username,
+                        clinic_id: c.clinic_id,
+                        created_at: c.created_at,
+                        totalPatients: undefined,
+                        todayAppointments: undefined,
+                        monthlyConversations: undefined,
+                    })
+                    continue
+                }
+
+                // Real patient count
+                const { count: patientCount } = await supabase
+                    .from('dados_cliente')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('clinic_id', c.clinic_id)
+
+                // Real today's appointments
+                const { count: aptCount } = await supabase
+                    .from('consultas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('clinic_id', c.clinic_id)
+                    .gte('data_inicio', today)
+
+                // Real monthly conversations
+                const { count: convCount } = await supabase
+                    .from('n8n_chat_histories')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('clinic_id', c.clinic_id)
+                    .gte('created_at', monthStart)
+
+                clinicsWithStats.push({
+                    id: c.id,
+                    email: c.email,
+                    username: c.username,
+                    clinic_id: c.clinic_id,
+                    created_at: c.created_at,
+                    totalPatients: patientCount ?? undefined,
+                    todayAppointments: aptCount ?? undefined,
+                    monthlyConversations: convCount ?? undefined,
+                })
+            }
 
             setClinics(clinicsWithStats)
         } catch (error) {
@@ -311,17 +351,17 @@ export default function ClinicsPage() {
                                 <div className="grid grid-cols-3 gap-2 text-center">
                                     <div className="p-2 rounded-lg bg-muted/50">
                                         <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.totalPatients}</p>
+                                        <p className="text-lg font-bold">{clinic.totalPatients !== undefined ? clinic.totalPatients : '-'}</p>
                                         <p className="text-[10px] text-muted-foreground">Pacientes</p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-muted/50">
                                         <Calendar className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.todayAppointments}</p>
+                                        <p className="text-lg font-bold">{clinic.todayAppointments !== undefined ? clinic.todayAppointments : '-'}</p>
                                         <p className="text-[10px] text-muted-foreground">Hoje</p>
                                     </div>
                                     <div className="p-2 rounded-lg bg-muted/50">
                                         <MessageSquare className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.monthlyConversations}</p>
+                                        <p className="text-lg font-bold">{clinic.monthlyConversations !== undefined ? clinic.monthlyConversations : '-'}</p>
                                         <p className="text-[10px] text-muted-foreground">Conversas/Mês</p>
                                     </div>
                                 </div>
