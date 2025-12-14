@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/lib/auth-context"
 import MessageConversation, { ChatMessage, ChatUser } from "@/components/ui/messaging-conversation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -21,6 +22,7 @@ interface ChatSession {
 }
 
 export default function ChatPage() {
+    const { user } = useAuth()
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [selectedSession, setSelectedSession] = useState<string | null>(null)
     const [messages, setMessages] = useState<any[]>([])
@@ -30,23 +32,25 @@ export default function ChatPage() {
     const [showMobileChat, setShowMobileChat] = useState(false)
 
     useEffect(() => {
-        fetchSessions()
+        if (user?.clinic_id) {
+            fetchSessions()
 
-        // Subscribe to chat updates
-        const channel = supabase
-            .channel('chat-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'n8n_chat_histories' }, () => {
-                fetchSessions()
-                if (selectedSession) {
-                    fetchMessages(selectedSession)
-                }
-            })
-            .subscribe()
+            // Subscribe to chat updates
+            const channel = supabase
+                .channel('chat-updates')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'n8n_chat_histories' }, () => {
+                    fetchSessions()
+                    if (selectedSession) {
+                        fetchMessages(selectedSession)
+                    }
+                })
+                .subscribe()
 
-        return () => {
-            supabase.removeChannel(channel)
+            return () => {
+                supabase.removeChannel(channel)
+            }
         }
-    }, [])
+    }, [user?.clinic_id])
 
     useEffect(() => {
         if (selectedSession) {
@@ -56,13 +60,21 @@ export default function ChatPage() {
     }, [selectedSession])
 
     async function fetchSessions() {
+        if (!user?.clinic_id) {
+            setLoading(false)
+            return
+        }
+
+        // Only fetch conversations for this clinic
         const { data, error } = await supabase
             .from('n8n_chat_histories')
             .select('session_id, content, created_at, patient_name')
+            .eq('clinic_id', user.clinic_id)
             .order('created_at', { ascending: false })
 
         if (error) {
             console.error("Error fetching sessions:", error)
+            setLoading(false)
             return
         }
 
