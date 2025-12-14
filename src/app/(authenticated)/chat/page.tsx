@@ -35,7 +35,7 @@ export default function ChatPage() {
         // Subscribe to chat updates
         const channel = supabase
             .channel('chat-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'n8n_chat_histories' }, () => {
                 fetchSessions()
                 if (selectedSession) {
                     fetchMessages(selectedSession)
@@ -56,44 +56,46 @@ export default function ChatPage() {
     }, [selectedSession])
 
     async function fetchSessions() {
-        // Fetch recent chats from 'chats' table
-        const { data: chatsData, error } = await supabase
-            .from('chats')
-            .select('*')
-            .order('updated_at', { ascending: false })
+        const { data, error } = await supabase
+            .from('n8n_chat_histories')
+            .select('session_id, content, created_at, patient_name')
+            .order('created_at', { ascending: false })
 
         if (error) {
-            console.error("Error fetching chats:", error)
-            setLoading(false)
+            console.error("Error fetching sessions:", error)
             return
         }
 
-        // Map chats to session interface
-        // Note: 'chats' table lacks 'name' and 'last_message', so we mock or fetch separately
-        const mappedSessions: ChatSession[] = chatsData.map((c: any) => ({
-            session_id: c.phone,
-            client_name: c.phone, // We'll try to improve this with client details later
-            client_phone: c.phone,
-            last_message: "Conversa ativa", // 'chats' doesn't have content content
-            last_message_time: new Date(c.updated_at || c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }))
+        // Group by session_id and get latest message
+        const sessionMap = new Map<string, ChatSession>()
+        data.forEach((msg: any) => {
+            if (!sessionMap.has(msg.session_id)) {
+                sessionMap.set(msg.session_id, {
+                    session_id: msg.session_id,
+                    client_name: msg.patient_name || msg.session_id.replace(/[^0-9]/g, '') || "Cliente",
+                    client_phone: msg.session_id,
+                    last_message: msg.content || '',
+                    last_message_time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                })
+            }
+        })
 
-        setSessions(mappedSessions)
+        const uniqueSessions = Array.from(sessionMap.values())
+        setSessions(uniqueSessions)
 
-        // Auto-select first
-        if (!selectedSession && mappedSessions.length > 0 && window.innerWidth >= 768) {
-            setSelectedSession(mappedSessions[0].session_id)
+        // Auto-select first session on desktop only
+        if (!selectedSession && uniqueSessions.length > 0 && window.innerWidth >= 768) {
+            setSelectedSession(uniqueSessions[0].session_id)
         }
 
         setLoading(false)
     }
 
     async function fetchMessages(sessionId: string) {
-        // Fetch messages for this phone number
         const { data, error } = await supabase
-            .from('chat_messages')
+            .from('n8n_chat_histories')
             .select('*')
-            .eq('phone', sessionId)
+            .eq('session_id', sessionId)
             .order('created_at', { ascending: true })
 
         if (data) {
@@ -102,7 +104,8 @@ export default function ChatPage() {
     }
 
     async function fetchClientDetails(sessionId: string) {
-        const { data } = await supabase
+        // Try to find client by phone number (session_id)
+        const { data, error } = await supabase
             .from('dados_cliente')
             .select('*')
             .eq('telefone', sessionId)
@@ -110,11 +113,6 @@ export default function ChatPage() {
 
         if (data) {
             setClientDetails(data)
-
-            // Update name in sessions list if found
-            setSessions(prev => prev.map(s =>
-                s.session_id === sessionId ? { ...s, client_name: data.nomewpp || data.telefone } : s
-            ))
         } else {
             setClientDetails(null)
         }
@@ -124,82 +122,47 @@ export default function ChatPage() {
         if (!selectedSession) return
 
         const tempId = Date.now().toString()
-        // Optimistic UI update
         const newMessage = {
             id: tempId,
-            bot_message: text,
-            user_message: null,
+            content: text,
+            role: 'assistant',
             created_at: new Date().toISOString(),
-            phone: selectedSession,
-            // Add other fields to match local display logic
+            session_id: selectedSession
         }
 
         setMessages(prev => [...prev, newMessage])
 
-        // Send to Supabase
+        // Uncomment to enable sending to Supabase
         const { error } = await supabase
-            .from('chat_messages')
+            .from('n8n_chat_histories')
             .insert([{
-                phone: selectedSession,
-                bot_message: text,
-                user_message: null,
-                active: true,
-                message_type: 'text'
-                // clinic_id? if avail
+                content: text,
+                role: 'assistant',
+                session_id: selectedSession,
             }])
-
         if (error) console.error("Error sending message:", error)
     }
 
     const handleSelectSession = (sessionId: string) => {
         setSelectedSession(sessionId)
-        setShowMobileChat(true)
+        setShowMobileChat(true) // Show chat on mobile when session selected
     }
 
     const handleBackToList = () => {
         setShowMobileChat(false)
     }
 
-    // Convert keys from 'chat_messages' (user_message/bot_message) to UI format
-    const formattedMessages: ChatMessage[] = [];
-
-    messages.forEach(msg => {
-        // If user_message exists, it's a message FROM the user
-        if (msg.user_message) {
-            formattedMessages.push({
-                id: `u-${msg.id}`,
-                text: msg.user_message,
-                sender: {
-                    id: 'client',
-                    name: sessions.find(s => s.session_id === selectedSession)?.client_name || 'Cliente',
-                    avatar: undefined
-                },
-                time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isMe: false
-            })
-        }
-
-        // If bot_message exists, it's a message FROM the bot/agent (Me)
-        if (msg.bot_message) {
-            formattedMessages.push({
-                id: `b-${msg.id}`,
-                text: msg.bot_message,
-                sender: {
-                    id: 'me',
-                    name: 'Eu',
-                    avatar: '/placeholder-user.jpg'
-                },
-                time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isMe: true
-            })
-        }
-    })
-
-    // Sort combined messages by time if they came from same row but need order? 
-    // Usually they are separate rows or Q&A. If Q&A pair, user asked, bot answered.
-    // So user_message comes before bot_message in the same row?
-    // Let's assume user_message is first if both exist.
-    // However, usually they are separate events in this kind of schema or capture.
+    const formattedMessages: ChatMessage[] = messages.map(msg => ({
+        id: msg.id,
+        text: msg.content || '',
+        sender: {
+            id: msg.role === 'user' ? 'client' : 'me',
+            name: msg.role === 'user' ? (msg.patient_name || 'Cliente') : 'Eu',
+            avatar: msg.role === 'user' ? undefined : '/placeholder-user.jpg'
+        },
+        time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isMe: msg.role !== 'user'
+    }))
 
     const currentChatUser: ChatUser = {
         id: selectedSession || 'unknown',

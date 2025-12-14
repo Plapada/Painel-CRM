@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
                 // Conversations count
                 const { count: convCount } = await supabase
-                    .from('chats')
+                    .from('n8n_chat_histories')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', client.clinic_id)
 
@@ -196,7 +196,7 @@ export default function DashboardPage() {
 
             // Monthly conversations
             const { count: convCount } = await supabase
-                .from('chats')
+                .from('n8n_chat_histories')
                 .select('*', { count: 'exact', head: true })
                 .eq('clinic_id', user.clinic_id)
                 .gte('created_at', monthAgo)

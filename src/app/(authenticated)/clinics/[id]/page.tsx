@@ -68,21 +68,21 @@ export default function ClinicDetailPage() {
 
                 // Today's conversations (New Chats)
                 const { count: todayCount } = await supabase
-                    .from('chats')
+                    .from('n8n_chat_histories')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', todayStart)
 
                 // Week's conversations
                 const { count: weekCount } = await supabase
-                    .from('chats')
+                    .from('n8n_chat_histories')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', weekStart)
 
                 // Month's conversations
                 const { count: monthCount } = await supabase
-                    .from('chats')
+                    .from('n8n_chat_histories')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', monthStart)
@@ -106,7 +106,7 @@ export default function ClinicDetailPage() {
 
                 // 4. Fetch recent messages
                 const { data: msgData } = await supabase
-                    .from('chat_messages')
+                    .from('n8n_chat_histories')
                     .select('*')
                     .eq('clinic_id', clinicData.clinic_id)
                     .order('created_at', { ascending: false })
@@ -277,18 +277,18 @@ export default function ClinicDetailPage() {
                                     {recentMessages.map((msg, i) => (
                                         <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                                                {msg.user_message ? 'U' : 'IA'}
+                                                {msg.role === 'user' ? 'U' : 'IA'}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm line-clamp-2">
-                                                    {msg.user_message || msg.bot_message || '...'}
+                                                    {msg.content || '...'}
                                                 </p>
                                                 <div className="flex justify-between items-center mt-1">
                                                     <p className="text-[10px] text-muted-foreground">
                                                         {new Date(msg.created_at).toLocaleString()}
                                                     </p>
                                                     <Badge variant="outline" className="text-[10px] h-4">
-                                                        {msg.message_type || 'text'}
+                                                        {msg.role || 'text'}
                                                     </Badge>
                                                 </div>
                                             </div>
