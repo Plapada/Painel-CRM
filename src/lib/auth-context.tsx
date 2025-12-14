@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase"
 interface User {
     id: string
     email?: string
+    username?: string
     role?: 'admin' | 'client'
     clinic_id?: string
     access_key?: string
@@ -71,7 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUser(userData)
-        router.push("/dashboard")
+
+        // Redirect based on role
+        if (userData.role === 'admin') {
+            router.push("/dashboard")
+        } else {
+            router.push("/dashboard")
+        }
     }
 
     const logout = async () => {
@@ -86,13 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (loading) return
 
-        const isPublicRoute = pathname === "/login"
+        // Define public routes
+        const isPublicRoute =
+            pathname === "/login" ||
+            pathname?.startsWith("/register")
 
         if (!user && !isPublicRoute) {
             router.push("/login")
         }
 
-        if (user && isPublicRoute) {
+        if (user && pathname === "/login") {
             router.push("/dashboard")
         }
     }, [user, loading, pathname, router])

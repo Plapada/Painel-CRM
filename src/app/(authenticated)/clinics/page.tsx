@@ -17,11 +17,12 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon } from "lucide-react"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 interface Clinic {
     id: string
+    nome?: string
     email?: string
     username?: string
     clinic_id: string
@@ -33,7 +34,7 @@ interface Clinic {
 
 export default function ClinicsPage() {
     const { user } = useAuth()
-    const isAdmin = user?.role === 'admin' || !user?.role
+    const isAdmin = user?.role === 'admin'
 
     const [clinics, setClinics] = useState<Clinic[]>([])
     const [loading, setLoading] = useState(true)
@@ -41,11 +42,11 @@ export default function ClinicsPage() {
 
     // New Client Dialog
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [newClinicId, setNewClinicId] = useState("")
     const [newClinicName, setNewClinicName] = useState("")
     const [isCreating, setIsCreating] = useState(false)
     const [registrationLink, setRegistrationLink] = useState("")
     const [copied, setCopied] = useState(false)
+    const [errorMsg, setErrorMsg] = useState("")
 
     useEffect(() => {
         if (!isAdmin) return
@@ -54,7 +55,8 @@ export default function ClinicsPage() {
 
     const fetchClinics = async () => {
         try {
-            const { data, error } = await supabase
+            // Fetch users with client role
+            const { data: users, error } = await supabase
                 .from('usuarios_site')
                 .select('*')
                 .eq('role', 'client')
@@ -62,8 +64,13 @@ export default function ClinicsPage() {
 
             if (error) throw error
 
-            const clinicsWithStats = data?.map(c => ({
-                ...c,
+            const clinicsWithStats = users?.map(c => ({
+                id: c.id,
+                email: c.email,
+                username: c.username,
+                clinic_id: c.clinic_id,
+                created_at: c.created_at,
+                // Stats placeholders (would be real in production)
                 totalPatients: Math.floor(Math.random() * 200) + 50,
                 todayAppointments: Math.floor(Math.random() * 10),
                 monthlyConversations: Math.floor(Math.random() * 500) + 100,
@@ -77,46 +84,67 @@ export default function ClinicsPage() {
         }
     }
 
-    const generateRegistrationLink = async () => {
-        if (!newClinicId.trim()) return
+    const createClinicAndGenerateLink = async () => {
+        if (!newClinicName.trim()) {
+            setErrorMsg("O nome da clínica é obrigatório.")
+            return
+        }
 
         setIsCreating(true)
+        setErrorMsg("")
+
         try {
-            // Generate a random token using Supabase's gen_random_uuid function
-            // We'll create a pending registration entry
-            const { data, error } = await supabase
-                .rpc('generate_registration_token', {
-                    p_clinic_id: newClinicId.trim(),
-                    p_clinic_name: newClinicName.trim() || 'Nova Clínica'
-                })
+            // 1. Create the clinic in 'clinics' table
+            // We assume 'clinics' table has id, nome, status columns
+            const { data: existingClinic } = await supabase
+                .from('clinics')
+                .select('id')
+                .ilike('nome', newClinicName.trim())
+                .single()
 
-            if (error) {
-                // If the function doesn't exist, we'll use a client-side fallback
-                console.warn("RPC not available, using client-side generation")
-                const token = crypto.randomUUID()
+            let clinicId
 
-                // Insert into pending_registrations table
-                const { error: insertError } = await supabase
-                    .from('pending_registrations')
-                    .insert([{
-                        token: token,
-                        clinic_id: newClinicId.trim(),
-                        clinic_name: newClinicName.trim() || 'Nova Clínica',
-                        used: false
-                    }])
-
-                if (insertError) throw insertError
-
-                const baseUrl = window.location.origin
-                setRegistrationLink(`${baseUrl}/register/${token}`)
+            if (existingClinic) {
+                // Determine if we should use existing or warn
+                // For simplicity, let's reuse if found, but ideally we'd ask
+                clinicId = existingClinic.id
             } else {
-                // Use the token from RPC
-                const baseUrl = window.location.origin
-                setRegistrationLink(`${baseUrl}/register/${data}`)
+                // Insert new clinic
+                const { data: newClinic, error: createError } = await supabase
+                    .from('clinics')
+                    .insert([{
+                        nome: newClinicName.trim(),
+                        status: 'ativo'
+                    }])
+                    .select()
+                    .single()
+
+                if (createError) throw createError
+                clinicId = newClinic.id
             }
-        } catch (error) {
-            console.error("Error generating registration link:", error)
-            alert("Erro ao gerar link. Verifique se a tabela 'pending_registrations' existe.")
+
+            // 2. Generate registration token
+            const token = crypto.randomUUID()
+
+            // 3. Insert into pending_registrations
+            const { error: insertError } = await supabase
+                .from('pending_registrations')
+                .insert([{
+                    token: token,
+                    clinic_id: clinicId,
+                    clinic_name: newClinicName.trim(),
+                    used: false
+                }])
+
+            if (insertError) throw insertError
+
+            // 4. Show link
+            const baseUrl = window.location.origin
+            setRegistrationLink(`${baseUrl}/register/${token}`)
+
+        } catch (error: any) {
+            console.error("Error creating clinic:", error)
+            setErrorMsg(error.message || "Erro ao criar clínica.")
         } finally {
             setIsCreating(false)
         }
@@ -129,10 +157,10 @@ export default function ClinicsPage() {
     }
 
     const resetDialog = () => {
-        setNewClinicId("")
         setNewClinicName("")
         setRegistrationLink("")
         setCopied(false)
+        setErrorMsg("")
     }
 
     const filteredClinics = clinics.filter(c =>
@@ -148,7 +176,7 @@ export default function ClinicsPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Clínicas</h1>
@@ -176,33 +204,29 @@ export default function ClinicsPage() {
                             <DialogHeader>
                                 <DialogTitle>Cadastrar Nova Clínica</DialogTitle>
                                 <DialogDescription>
-                                    Gere um link de registro único para o seu cliente.
+                                    Crie a clínica e gere um link de registro único.
                                 </DialogDescription>
                             </DialogHeader>
 
                             {!registrationLink ? (
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="clinicId">ID da Clínica (Supabase)</Label>
-                                        <Input
-                                            id="clinicId"
-                                            placeholder="Ex: abc123-def456..."
-                                            value={newClinicId}
-                                            onChange={e => setNewClinicId(e.target.value)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Cole o ID da clínica da tabela 'clinics' do Supabase.
-                                        </p>
-                                    </div>
-                                    <div className="space-y-2">
                                         <Label htmlFor="clinicName">Nome da Clínica</Label>
                                         <Input
                                             id="clinicName"
-                                            placeholder="Ex: Dra. Margarida"
+                                            placeholder="Ex: Clínica Saúde Total"
                                             value={newClinicName}
                                             onChange={e => setNewClinicName(e.target.value)}
                                         />
+                                        <p className="text-xs text-muted-foreground">
+                                            Este nome será usado para criar o registro no banco de dados.
+                                        </p>
                                     </div>
+                                    {errorMsg && (
+                                        <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                                            {errorMsg}
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="space-y-4 py-4">
@@ -223,7 +247,7 @@ export default function ClinicsPage() {
                                             </Button>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Envie este link para o cliente. Ele poderá criar sua conta.
+                                            Envie este link para o cliente. Ele criará o usuário e senha.
                                         </p>
                                     </div>
                                 </div>
@@ -231,8 +255,12 @@ export default function ClinicsPage() {
 
                             <DialogFooter>
                                 {!registrationLink ? (
-                                    <Button onClick={generateRegistrationLink} disabled={!newClinicId || isCreating}>
-                                        {isCreating ? "Gerando..." : "Gerar Link"}
+                                    <Button onClick={createClinicAndGenerateLink} disabled={!newClinicName || isCreating}>
+                                        {isCreating ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                                            </>
+                                        ) : "Criar e Gerar Link"}
                                     </Button>
                                 ) : (
                                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
