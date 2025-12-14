@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import {
     Table,
@@ -17,42 +17,44 @@ import { Input } from "@/components/ui/input"
 import { MoreHorizontal, Plus, Search } from "lucide-react"
 
 export default function ClientsPage() {
+    const { user } = useAuth()
     const [clients, setClients] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
-    const router = useRouter()
 
     useEffect(() => {
-        fetchClients()
+        if (user?.clinic_id) {
+            fetchClients()
 
-        const channel = supabase
-            .channel('clients-updates')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dados_cliente' }, (payload) => {
-                setClients(prev => [payload.new, ...prev])
-            })
-            .subscribe()
+            const channel = supabase
+                .channel('clients-updates')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dados_cliente' }, (payload) => {
+                    // Only add if it belongs to this clinic
+                    if (payload.new.clinic_id === user.clinic_id) {
+                        setClients(prev => [payload.new, ...prev])
+                    }
+                })
+                .subscribe()
 
-        return () => {
-            supabase.removeChannel(channel)
+            return () => {
+                supabase.removeChannel(channel)
+            }
         }
-    }, [])
+    }, [user?.clinic_id])
 
     async function fetchClients() {
-        console.log("Fetching clients...")
-        const sessionStr = localStorage.getItem('crm_session')
-        let clinicId = '457e67c0-55ca-456d-8762-cc94df166e6d' // Fallback ID
-
-        if (sessionStr) {
-            const session = JSON.parse(sessionStr)
-            if (session.clinic_id) clinicId = session.clinic_id
+        if (!user?.clinic_id) {
+            setLoading(false)
+            return
         }
-        console.log("Using clinicId:", clinicId)
+
+        console.log("Fetching clients for clinic:", user.clinic_id)
 
         try {
             const { data, error } = await supabase
                 .from('dados_cliente')
                 .select('*')
-                .eq('clinic_id', clinicId)
+                .eq('clinic_id', user.clinic_id)
                 .order('created_at', { ascending: false })
 
             if (error) {
