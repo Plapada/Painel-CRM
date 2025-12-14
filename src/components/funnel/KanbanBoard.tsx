@@ -141,23 +141,29 @@ export function KanbanBoard() {
         async ({ activeContainer, overContainer, activeIndex, overIndex, event }: KanbanMoveEvent) => {
             const activeId = event.active.id as string;
 
-            console.log("Kanban Move Event:", {
-                activeId,
-                activeContainer,
-                overContainer,
-                activeIndex,
-                overIndex
-            });
+            // Skip if dropped in the same position (same column, same index)
+            if (activeContainer === overContainer && activeIndex === overIndex) {
+                return; // No change needed
+            }
 
             // Optimistic update
             setColumns((prev) => {
                 const activeItems = [...prev[activeContainer]];
+
+                // If same column, handle reordering
+                if (activeContainer === overContainer) {
+                    const [movedItem] = activeItems.splice(activeIndex, 1);
+                    activeItems.splice(overIndex, 0, movedItem);
+                    return {
+                        ...prev,
+                        [activeContainer]: activeItems,
+                    };
+                }
+
+                // Different columns - move between columns
                 const overItems = [...prev[overContainer]];
                 const [movedItem] = activeItems.splice(activeIndex, 1);
-
-                // Update the item's internal status
                 movedItem.etapa_funil = overContainer;
-
                 overItems.splice(overIndex, 0, movedItem);
 
                 return {
@@ -198,73 +204,75 @@ export function KanbanBoard() {
             onMove={handleMove}
             className="h-full w-full"
         >
-            <Board>
-                {Object.entries(columns).map(([columnId, tasks]) => (
-                    <KanbanColumn key={columnId} value={columnId} className="h-full min-w-[300px]">
-                        <div className="flex items-center justify-between p-3 font-medium">
-                            <div className="flex items-center gap-2">
-                                <KanbanColumnHandle className="cursor-grab">
-                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                </KanbanColumnHandle>
-                                <span className="text-sm font-semibold text-foreground">
-                                    {columnTitles[columnId]}
-                                </span>
-                                <Badge variant="secondary" size="xs" className="rounded-full px-2">
-                                    {tasks.length}
-                                </Badge>
+            <div className="overflow-x-auto h-full pb-4">
+                <Board className="min-w-max">
+                    {Object.entries(columns).map(([columnId, tasks]) => (
+                        <KanbanColumn key={columnId} value={columnId} className="h-full min-w-[300px]">
+                            <div className="flex items-center justify-between p-3 font-medium">
+                                <div className="flex items-center gap-2">
+                                    <KanbanColumnHandle className="cursor-grab">
+                                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                    </KanbanColumnHandle>
+                                    <span className="text-sm font-semibold text-foreground">
+                                        {columnTitles[columnId]}
+                                    </span>
+                                    <Badge variant="secondary" size="xs" className="rounded-full px-2">
+                                        {tasks.length}
+                                    </Badge>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <Plus className="h-3 w-3" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <MoreHorizontal className="h-3 w-3" />
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <Plus className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <MoreHorizontal className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        </div>
 
-                        <KanbanColumnContent value={columnId} className="h-full p-2 bg-muted/30 rounded-lg border border-border/50">
-                            {tasks.map((task) => (
-                                <KanbanItem key={task.id} value={task.id} className="bg-card rounded-md border shadow-sm">
-                                    <KanbanItemHandle className="cursor-grab active:cursor-grabbing w-full h-full p-3">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex flex-col gap-1 w-full">
-                                                <div className="flex items-center justify-between w-full">
-                                                    <span className="font-medium text-sm">{task.title}</span>
-                                                    <GripVertical className="h-3 w-3 text-muted-foreground" />
-                                                </div>
-                                                <span className="text-xs text-muted-foreground">{task.clientName}</span>
-
-                                                {task.tags.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                        {task.tags.map((tag, i) => (
-                                                            <Badge key={i} variant="outline" size="xs" className="text-[10px] h-5">
-                                                                {tag}
-                                                            </Badge>
-                                                        ))}
+                            <KanbanColumnContent value={columnId} className="h-full p-2 bg-muted/30 rounded-lg border border-border/50">
+                                {tasks.map((task) => (
+                                    <KanbanItem key={task.id} value={task.id} className="bg-card rounded-md border shadow-sm">
+                                        <KanbanItemHandle className="cursor-grab active:cursor-grabbing w-full h-full p-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex flex-col gap-1 w-full">
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span className="font-medium text-sm">{task.title}</span>
+                                                        <GripVertical className="h-3 w-3 text-muted-foreground" />
                                                     </div>
-                                                )}
+                                                    <span className="text-xs text-muted-foreground">{task.clientName}</span>
+
+                                                    {task.tags.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {task.tags.map((tag, i) => (
+                                                                <Badge key={i} variant="outline" size="xs" className="text-[10px] h-5">
+                                                                    {tag}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
-                                            <div className="flex items-center -space-x-2">
-                                                <Avatar className="h-5 w-5 border-2 border-background">
-                                                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
-                                                        {task.title.substring(0, 2).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                            <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50">
+                                                <div className="flex items-center -space-x-2">
+                                                    <Avatar className="h-5 w-5 border-2 border-background">
+                                                        <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                                                            {task.title.substring(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {new Date(task.created_at || Date.now()).toLocaleDateString()}
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] text-muted-foreground">
-                                                {new Date(task.created_at || Date.now()).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </KanbanItemHandle>
-                                </KanbanItem>
-                            ))}
-                        </KanbanColumnContent>
-                    </KanbanColumn>
-                ))}
-            </Board>
+                                        </KanbanItemHandle>
+                                    </KanbanItem>
+                                ))}
+                            </KanbanColumnContent>
+                        </KanbanColumn>
+                    ))}
+                </Board>
+            </div>
 
             <KanbanOverlay>
                 {({ value, variant }) => {
