@@ -101,7 +101,7 @@ export function LoginForm() {
             const userData = {
                 id: users.id,
                 email: users.email,
-                role: 'client',
+                role: 'client' as const,
                 clinic_id: users.clinic_id,
                 access_key: users.access_key
             }
