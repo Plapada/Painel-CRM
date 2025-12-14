@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import {
     Kanban,
     KanbanBoard as Board,
@@ -42,44 +43,45 @@ const columnTitles: Record<string, string> = {
 };
 
 export function KanbanBoard() {
+    const { user } = useAuth();
     const [columns, setColumns] = useState<Record<string, Task[]>>(initialColumns);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchKanbanData();
+        if (user?.clinic_id) {
+            fetchKanbanData();
 
-        const channel = supabase
-            .channel("kanban-updates")
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "dados_cliente" },
-                () => {
-                    fetchKanbanData();
-                }
-            )
-            .subscribe();
+            const channel = supabase
+                .channel("kanban-updates")
+                .on(
+                    "postgres_changes",
+                    { event: "*", schema: "public", table: "dados_cliente" },
+                    () => {
+                        fetchKanbanData();
+                    }
+                )
+                .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
+    }, [user?.clinic_id]);
 
     async function fetchKanbanData() {
-        const sessionStr = localStorage.getItem("crm_session");
-        let clinicId = "457e67c0-55ca-456d-8762-cc94df166e6d"; // Fallback ID
-
-        if (sessionStr) {
-            const session = JSON.parse(sessionStr);
-            if (session.clinic_id) clinicId = session.clinic_id;
+        if (!user?.clinic_id) {
+            setLoading(false);
+            return;
         }
 
         const { data, error } = await supabase
             .from("dados_cliente")
             .select("*")
-            .eq("clinic_id", clinicId);
+            .eq("clinic_id", user.clinic_id);
 
         if (error) {
             console.error("Error fetching kanban data:", error);
+            setLoading(false);
             return;
         }
 
@@ -165,34 +167,20 @@ export function KanbanBoard() {
                 };
             });
 
-            // Update Supabase
+            // Update Supabase in the background without blocking
             if (activeContainer !== overContainer) {
-                try {
-                    console.log(`Updating client ${activeId} to stage: ${overContainer}`);
-
-                    const { data, error } = await supabase
-                        .from("dados_cliente")
-                        .update({ etapa_funil: overContainer })
-                        .eq("id", activeId)
-                        .select();
-
-                    if (error) {
-                        console.error("Error updating task status:", {
-                            message: error.message,
-                            details: error.details,
-                            hint: error.hint,
-                            code: error.code
-                        });
-                        alert("Erro ao atualizar o status do cliente. Recarregando...");
-                        fetchKanbanData(); // Re-fetch to sync state
-                    } else {
-                        console.log("Successfully updated client status:", data);
-                    }
-                } catch (error) {
-                    console.error("Exception updating task status:", error);
-                    alert("Erro ao atualizar o status do cliente. Recarregando...");
-                    fetchKanbanData();
-                }
+                // Fire-and-forget update to Supabase
+                supabase
+                    .from("dados_cliente")
+                    .update({ etapa_funil: overContainer })
+                    .eq("id", activeId.replace(/_dup\d+$/, '')) // Remove duplicate suffix if any
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error("Error updating task status:", error);
+                            // Silently re-fetch to sync state
+                            fetchKanbanData();
+                        }
+                    });
             }
         },
         []
