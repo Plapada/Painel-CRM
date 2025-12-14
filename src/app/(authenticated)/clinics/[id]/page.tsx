@@ -39,7 +39,7 @@ export default function ClinicDetailPage() {
     const [loading, setLoading] = useState(true)
     const [conversationStats, setConversationStats] = useState<ConversationStats>({ today: 0, week: 0, month: 0 })
     const [appointments, setAppointments] = useState<any[]>([])
-    const [recentConversations, setRecentConversations] = useState<any[]>([])
+    const [recentMessages, setRecentMessages] = useState<any[]>([])
 
     useEffect(() => {
         if (clinicId) {
@@ -66,23 +66,23 @@ export default function ClinicDetailPage() {
                 const weekStart = new Date(now.setDate(now.getDate() - 7)).toISOString()
                 const monthStart = new Date(now.setMonth(now.getMonth() - 1)).toISOString()
 
-                // Today's conversations
+                // Today's conversations (New Chats)
                 const { count: todayCount } = await supabase
-                    .from('n8n_chat_histories')
+                    .from('chats')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', todayStart)
 
                 // Week's conversations
                 const { count: weekCount } = await supabase
-                    .from('n8n_chat_histories')
+                    .from('chats')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', weekStart)
 
                 // Month's conversations
                 const { count: monthCount } = await supabase
-                    .from('n8n_chat_histories')
+                    .from('chats')
                     .select('*', { count: 'exact', head: true })
                     .eq('clinic_id', clinicData.clinic_id)
                     .gte('created_at', monthStart)
@@ -104,15 +104,15 @@ export default function ClinicDetailPage() {
 
                 setAppointments(aptData || [])
 
-                // 4. Fetch recent conversations
-                const { data: convData } = await supabase
-                    .from('n8n_chat_histories')
+                // 4. Fetch recent messages
+                const { data: msgData } = await supabase
+                    .from('chat_messages')
                     .select('*')
                     .eq('clinic_id', clinicData.clinic_id)
                     .order('created_at', { ascending: false })
                     .limit(5)
 
-                setRecentConversations(convData || [])
+                setRecentMessages(msgData || [])
             }
         } catch (error) {
             console.error("Error fetching clinic data:", error)
@@ -184,7 +184,7 @@ export default function ClinicDetailPage() {
                     title="Conversas Hoje"
                     value={conversationStats.today.toString()}
                     icon={MessageSquare}
-                    description="Atendimentos do dia"
+                    description="Novos atendimentos"
                 />
                 <ElegantStatsCard
                     title="Conversas (Semana)"
@@ -213,7 +213,7 @@ export default function ClinicDetailPage() {
                 <TabsList>
                     <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                     <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
-                    <TabsTrigger value="conversations">Conversas</TabsTrigger>
+                    <TabsTrigger value="conversations">Atividade Recente</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6">
@@ -269,27 +269,34 @@ export default function ClinicDetailPage() {
                 <TabsContent value="conversations" className="space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Conversas Recentes</CardTitle>
+                            <CardTitle>Mensagens Recentes</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {recentConversations.length > 0 ? (
+                            {recentMessages.length > 0 ? (
                                 <div className="space-y-3">
-                                    {recentConversations.map((conv, i) => (
+                                    {recentMessages.map((msg, i) => (
                                         <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                                                {conv.role === 'user' ? 'U' : 'IA'}
+                                                {msg.user_message ? 'U' : 'IA'}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm line-clamp-2">{conv.content}</p>
-                                                <p className="text-[10px] text-muted-foreground mt-1">
-                                                    {new Date(conv.created_at).toLocaleString()}
+                                                <p className="text-sm line-clamp-2">
+                                                    {msg.user_message || msg.bot_message || '...'}
                                                 </p>
+                                                <div className="flex justify-between items-center mt-1">
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        {new Date(msg.created_at).toLocaleString()}
+                                                    </p>
+                                                    <Badge variant="outline" className="text-[10px] h-4">
+                                                        {msg.message_type || 'text'}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center text-muted-foreground py-8">Nenhuma conversa recente.</p>
+                                <p className="text-center text-muted-foreground py-8">Nenhuma atividade recente.</p>
                             )}
                         </CardContent>
                     </Card>

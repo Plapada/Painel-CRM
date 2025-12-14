@@ -27,14 +27,15 @@ export default function ChatPage() {
     const [clientDetails, setClientDetails] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [showDetails, setShowDetails] = useState(false)
-    const [showMobileChat, setShowMobileChat] = useState(false) // Mobile view state
+    const [showMobileChat, setShowMobileChat] = useState(false)
 
     useEffect(() => {
         fetchSessions()
 
+        // Subscribe to chat updates
         const channel = supabase
             .channel('chat-updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'n8n_chat_histories' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, () => {
                 fetchSessions()
                 if (selectedSession) {
                     fetchMessages(selectedSession)
@@ -55,46 +56,44 @@ export default function ChatPage() {
     }, [selectedSession])
 
     async function fetchSessions() {
-        const { data, error } = await supabase
-            .from('n8n_chat_histories')
-            .select('session_id, content, created_at, patient_name')
-            .order('created_at', { ascending: false })
+        // Fetch recent chats from 'chats' table
+        const { data: chatsData, error } = await supabase
+            .from('chats')
+            .select('*')
+            .order('updated_at', { ascending: false })
 
         if (error) {
-            console.error("Error fetching sessions:", error)
+            console.error("Error fetching chats:", error)
+            setLoading(false)
             return
         }
 
-        // Group by session_id and get latest message
-        const sessionMap = new Map<string, ChatSession>()
-        data.forEach((msg: any) => {
-            if (!sessionMap.has(msg.session_id)) {
-                sessionMap.set(msg.session_id, {
-                    session_id: msg.session_id,
-                    client_name: msg.patient_name || msg.session_id.replace(/[^0-9]/g, '') || "Cliente",
-                    client_phone: msg.session_id,
-                    last_message: msg.content || '',
-                    last_message_time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                })
-            }
-        })
+        // Map chats to session interface
+        // Note: 'chats' table lacks 'name' and 'last_message', so we mock or fetch separately
+        const mappedSessions: ChatSession[] = chatsData.map((c: any) => ({
+            session_id: c.phone,
+            client_name: c.phone, // We'll try to improve this with client details later
+            client_phone: c.phone,
+            last_message: "Conversa ativa", // 'chats' doesn't have content content
+            last_message_time: new Date(c.updated_at || c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
 
-        const uniqueSessions = Array.from(sessionMap.values())
-        setSessions(uniqueSessions)
+        setSessions(mappedSessions)
 
-        // Auto-select first session on desktop only
-        if (!selectedSession && uniqueSessions.length > 0 && window.innerWidth >= 768) {
-            setSelectedSession(uniqueSessions[0].session_id)
+        // Auto-select first
+        if (!selectedSession && mappedSessions.length > 0 && window.innerWidth >= 768) {
+            setSelectedSession(mappedSessions[0].session_id)
         }
 
         setLoading(false)
     }
 
     async function fetchMessages(sessionId: string) {
+        // Fetch messages for this phone number
         const { data, error } = await supabase
-            .from('n8n_chat_histories')
+            .from('chat_messages')
             .select('*')
-            .eq('session_id', sessionId)
+            .eq('phone', sessionId)
             .order('created_at', { ascending: true })
 
         if (data) {
@@ -103,8 +102,7 @@ export default function ChatPage() {
     }
 
     async function fetchClientDetails(sessionId: string) {
-        // Try to find client by phone number (session_id)
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('dados_cliente')
             .select('*')
             .eq('telefone', sessionId)
@@ -112,6 +110,11 @@ export default function ChatPage() {
 
         if (data) {
             setClientDetails(data)
+
+            // Update name in sessions list if found
+            setSessions(prev => prev.map(s =>
+                s.session_id === sessionId ? { ...s, client_name: data.nomewpp || data.telefone } : s
+            ))
         } else {
             setClientDetails(null)
         }
@@ -121,48 +124,82 @@ export default function ChatPage() {
         if (!selectedSession) return
 
         const tempId = Date.now().toString()
+        // Optimistic UI update
         const newMessage = {
             id: tempId,
-            content: text,
-            role: 'assistant',
+            bot_message: text,
+            user_message: null,
             created_at: new Date().toISOString(),
-            session_id: selectedSession
+            phone: selectedSession,
+            // Add other fields to match local display logic
         }
 
         setMessages(prev => [...prev, newMessage])
 
-        // Uncomment to enable sending to Supabase
-        // const { error } = await supabase
-        //     .from('n8n_chat_histories')
-        //     .insert([{ 
-        //         content: text, 
-        //         role: 'assistant', 
-        //         session_id: selectedSession,
-        //         clinic_id: localStorage.getItem('crm_session') ? JSON.parse(localStorage.getItem('crm_session')!).clinic_id : null
-        //     }])
-        // if (error) console.error("Error sending message:", error)
+        // Send to Supabase
+        const { error } = await supabase
+            .from('chat_messages')
+            .insert([{
+                phone: selectedSession,
+                bot_message: text,
+                user_message: null,
+                active: true,
+                message_type: 'text'
+                // clinic_id? if avail
+            }])
+
+        if (error) console.error("Error sending message:", error)
     }
 
     const handleSelectSession = (sessionId: string) => {
         setSelectedSession(sessionId)
-        setShowMobileChat(true) // Show chat on mobile when session selected
+        setShowMobileChat(true)
     }
 
     const handleBackToList = () => {
         setShowMobileChat(false)
     }
 
-    const formattedMessages: ChatMessage[] = messages.map(msg => ({
-        id: msg.id,
-        text: msg.content || msg.message || '', // Support both old and new schema
-        sender: {
-            id: msg.role === 'user' ? 'client' : 'me',
-            name: msg.role === 'user' ? (msg.patient_name || 'Cliente') : 'Eu',
-            avatar: msg.role === 'user' ? undefined : '/placeholder-user.jpg'
-        },
-        time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isMe: msg.role !== 'user'
-    }))
+    // Convert keys from 'chat_messages' (user_message/bot_message) to UI format
+    const formattedMessages: ChatMessage[] = [];
+
+    messages.forEach(msg => {
+        // If user_message exists, it's a message FROM the user
+        if (msg.user_message) {
+            formattedMessages.push({
+                id: `u-${msg.id}`,
+                text: msg.user_message,
+                sender: {
+                    id: 'client',
+                    name: sessions.find(s => s.session_id === selectedSession)?.client_name || 'Cliente',
+                    avatar: undefined
+                },
+                time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isMe: false
+            })
+        }
+
+        // If bot_message exists, it's a message FROM the bot/agent (Me)
+        if (msg.bot_message) {
+            formattedMessages.push({
+                id: `b-${msg.id}`,
+                text: msg.bot_message,
+                sender: {
+                    id: 'me',
+                    name: 'Eu',
+                    avatar: '/placeholder-user.jpg'
+                },
+                time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isMe: true
+            })
+        }
+    })
+
+    // Sort combined messages by time if they came from same row but need order? 
+    // Usually they are separate rows or Q&A. If Q&A pair, user asked, bot answered.
+    // So user_message comes before bot_message in the same row?
+    // Let's assume user_message is first if both exist.
+    // However, usually they are separate events in this kind of schema or capture.
 
     const currentChatUser: ChatUser = {
         id: selectedSession || 'unknown',
@@ -176,9 +213,7 @@ export default function ChatPage() {
             {/* Column 1: Conversations List */}
             <Card className={cn(
                 "flex flex-col overflow-hidden transition-all duration-300",
-                // Desktop: show alongside chat
                 "md:col-span-4 lg:col-span-3",
-                // Mobile: show only when not viewing chat
                 showMobileChat ? "hidden md:flex" : "col-span-12 md:flex",
                 showDetails && "md:col-span-3"
             )}>
@@ -191,7 +226,7 @@ export default function ChatPage() {
                 <CardContent className="flex-1 p-0 overflow-hidden">
                     <ScrollArea className="h-full">
                         <div className="space-y-1 p-2">
-                            {sessions.map((session) => (
+                            {sessions.length > 0 ? sessions.map((session) => (
                                 <div
                                     key={session.session_id}
                                     onClick={() => handleSelectSession(session.session_id)}
@@ -213,7 +248,9 @@ export default function ChatPage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className="text-center text-muted-foreground p-4">Nenhuma conversa encontrada.</p>
+                            )}
                         </div>
                     </ScrollArea>
                 </CardContent>
@@ -222,15 +259,12 @@ export default function ChatPage() {
             {/* Column 2: Messages - Middle */}
             <Card className={cn(
                 "flex flex-col overflow-hidden transition-all duration-300",
-                // Desktop: show alongside list
                 "md:col-span-8 lg:col-span-9",
-                // Mobile: show only when viewing chat
                 showMobileChat ? "col-span-12 md:flex" : "hidden md:flex",
                 showDetails && "md:col-span-5"
             )}>
                 {selectedSession ? (
                     <>
-                        {/* Mobile back button */}
                         <div className="md:hidden flex items-center gap-2 p-3 border-b">
                             <Button
                                 variant="ghost"
@@ -240,14 +274,7 @@ export default function ChatPage() {
                             >
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
-                            <div className="flex items-center gap-2">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarFallback className="text-xs">
-                                        {currentChatUser.name.substring(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-sm">{currentChatUser.name}</span>
-                            </div>
+                            <span className="font-medium text-sm">{currentChatUser.name}</span>
                         </div>
                         <MessageConversation
                             messages={formattedMessages}
@@ -296,7 +323,6 @@ export default function ChatPage() {
                                             </label>
                                             <p className="text-sm">{clientDetails.telefone || '-'}</p>
                                         </div>
-
                                         <div>
                                             <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
                                                 <Tag className="h-3 w-3" />
@@ -306,14 +332,12 @@ export default function ChatPage() {
                                                 {clientDetails.etapa_funil || 'Não definida'}
                                             </Badge>
                                         </div>
-
                                         <div>
                                             <label className="text-xs font-medium text-muted-foreground mb-1">
                                                 Status IA
                                             </label>
                                             <p className="text-sm">{clientDetails.atendimento_ia || '-'}</p>
                                         </div>
-
                                         {clientDetails.resumo_conversa && (
                                             <div>
                                                 <label className="text-xs font-medium text-muted-foreground mb-1">
@@ -325,11 +349,8 @@ export default function ChatPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                                    <User className="h-12 w-12 text-muted-foreground mb-2" />
-                                    <p className="text-sm text-muted-foreground">
-                                        Selecione uma conversa para ver os detalhes
-                                    </p>
+                                <div className="flex flex-col items-center justify-center p-4">
+                                    <p className="text-sm text-muted-foreground">Sem detalhes adicionais.</p>
                                 </div>
                             )}
                         </ScrollArea>
