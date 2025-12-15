@@ -8,9 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Phone, User, Tag, MessageSquare, ArrowLeft } from "lucide-react"
+import { Phone, User, Tag, MessageSquare, ArrowLeft, Loader2, Sparkles, FileText, Target, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
 
 interface ChatSession {
     session_id: string
@@ -30,6 +38,12 @@ export default function ChatPage() {
     const [loading, setLoading] = useState(true)
     const [showDetails, setShowDetails] = useState(false)
     const [showMobileChat, setShowMobileChat] = useState(false)
+
+    // Summary feature state
+    const [isSummarizing, setIsSummarizing] = useState(false)
+    const [summaryData, setSummaryData] = useState<string | null>(null)
+    const [showSummaryModal, setShowSummaryModal] = useState(false)
+    const [summaryError, setSummaryError] = useState<string | null>(null)
 
     useEffect(() => {
         if (user?.clinic_id) {
@@ -162,6 +176,84 @@ export default function ChatPage() {
 
     const handleBackToList = () => {
         setShowMobileChat(false)
+    }
+
+    // Parse summary into sections
+    const parseSummary = (text: string) => {
+        const sections: { title: string; content: string; icon: 'target' | 'alert' | 'file' }[] = []
+
+        // Extract Queixa Principal
+        const queixaMatch = text.match(/🎯\s*Queixa Principal[:\s]*([^-]+?)(?=-{2,}|🚧|📝|$)/i)
+        if (queixaMatch) {
+            sections.push({
+                title: 'Queixa Principal',
+                content: queixaMatch[1].trim(),
+                icon: 'target'
+            })
+        }
+
+        // Extract Objeções e Hesitações
+        const objecoesMatch = text.match(/🚧\s*Objeções e Hesitações[:\s]*([^-]+?)(?=-{2,}|📝|$)/i)
+        if (objecoesMatch) {
+            sections.push({
+                title: 'Objeções e Hesitações',
+                content: objecoesMatch[1].trim(),
+                icon: 'alert'
+            })
+        }
+
+        // Extract Resumo da Interação
+        const resumoMatch = text.match(/📝\s*\*?Resumo da Interação[:\s]*([\s\S]+)/i)
+        if (resumoMatch) {
+            sections.push({
+                title: 'Resumo da Interação',
+                content: resumoMatch[1].replace(/-{2,}/g, '').trim(),
+                icon: 'file'
+            })
+        }
+
+        // If no sections parsed, return the raw text
+        if (sections.length === 0) {
+            sections.push({
+                title: 'Resumo',
+                content: text,
+                icon: 'file'
+            })
+        }
+
+        return sections
+    }
+
+    // Handle summarize conversation
+    const handleSummarizeConversation = async () => {
+        if (!selectedSession || !user?.clinic_id) return
+
+        setIsSummarizing(true)
+        setSummaryError(null)
+
+        try {
+            const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/webhookresumirconversas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: selectedSession,
+                    clinic_id: user.clinic_id
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Falha ao resumir conversa')
+            }
+
+            const data = await response.text()
+            setSummaryData(data)
+            setShowSummaryModal(true)
+        } catch (error: any) {
+            console.error('Error summarizing conversation:', error)
+            setSummaryError(error.message || 'Erro ao resumir conversa.')
+        } finally {
+            setIsSummarizing(false)
+        }
     }
 
     const formattedMessages: ChatMessage[] = messages.map(msg => ({
@@ -313,10 +405,36 @@ export default function ChatPage() {
                                             </label>
                                             <p className="text-sm">{clientDetails.atendimento_ia || '-'}</p>
                                         </div>
+
+                                        {/* Summarize Button */}
+                                        <div className="pt-3 border-t">
+                                            <Button
+                                                onClick={handleSummarizeConversation}
+                                                disabled={isSummarizing}
+                                                className="w-full"
+                                                variant="outline"
+                                            >
+                                                {isSummarizing ? (
+                                                    <>
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        Resumindo...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles className="h-4 w-4 mr-2" />
+                                                        Resumir Conversa
+                                                    </>
+                                                )}
+                                            </Button>
+                                            {summaryError && (
+                                                <p className="text-xs text-destructive mt-2 text-center">{summaryError}</p>
+                                            )}
+                                        </div>
+
                                         {clientDetails.resumo_conversa && (
                                             <div>
                                                 <label className="text-xs font-medium text-muted-foreground mb-1">
-                                                    Resumo
+                                                    Resumo Salvo
                                                 </label>
                                                 <p className="text-xs text-muted-foreground">{clientDetails.resumo_conversa}</p>
                                             </div>
@@ -326,12 +444,91 @@ export default function ChatPage() {
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-4">
                                     <p className="text-sm text-muted-foreground">Sem detalhes adicionais.</p>
+                                    {/* Summarize Button for unknown clients */}
+                                    <Button
+                                        onClick={handleSummarizeConversation}
+                                        disabled={isSummarizing}
+                                        className="mt-4"
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        {isSummarizing ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Resumindo...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="h-4 w-4 mr-2" />
+                                                Resumir Conversa
+                                            </>
+                                        )}
+                                    </Button>
+                                    {summaryError && (
+                                        <p className="text-xs text-destructive mt-2">{summaryError}</p>
+                                    )}
                                 </div>
                             )}
                         </ScrollArea>
                     </CardContent>
                 </Card>
             )}
+
+            {/* Summary Modal */}
+            <Dialog open={showSummaryModal} onOpenChange={setShowSummaryModal}>
+                <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary" />
+                            Resumo da Conversa
+                        </DialogTitle>
+                        <DialogDescription>
+                            Análise gerada por IA da conversa com o cliente
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <ScrollArea className="flex-1 pr-4">
+                        {summaryData && (
+                            <div className="space-y-4 py-4">
+                                {parseSummary(summaryData).map((section, index) => (
+                                    <div
+                                        key={index}
+                                        className="rounded-lg border bg-card p-4 space-y-2"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {section.icon === 'target' && (
+                                                <div className="p-1.5 rounded-full bg-blue-500/10">
+                                                    <Target className="h-4 w-4 text-blue-500" />
+                                                </div>
+                                            )}
+                                            {section.icon === 'alert' && (
+                                                <div className="p-1.5 rounded-full bg-amber-500/10">
+                                                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                                </div>
+                                            )}
+                                            {section.icon === 'file' && (
+                                                <div className="p-1.5 rounded-full bg-green-500/10">
+                                                    <FileText className="h-4 w-4 text-green-500" />
+                                                </div>
+                                            )}
+                                            <h4 className="font-semibold text-sm">{section.title}</h4>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {section.content}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowSummaryModal(false)}>
+                            Fechar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
