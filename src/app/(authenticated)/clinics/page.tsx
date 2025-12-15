@@ -17,6 +17,14 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2 } from "lucide-react"
 import Link from "next/link"
 
@@ -30,6 +38,13 @@ interface Clinic {
     totalPatients?: number
     todayAppointments?: number
     monthlyConversations?: number
+}
+
+interface ExistingClinic {
+    id: number
+    clinic_id: string
+    nome_clinica: string
+    status?: string
 }
 
 export default function ClinicsPage() {
@@ -47,6 +62,12 @@ export default function ClinicsPage() {
     const [registrationLink, setRegistrationLink] = useState("")
     const [copied, setCopied] = useState(false)
     const [errorMsg, setErrorMsg] = useState("")
+
+    // Existing Clinic Selection
+    const [isSelectExisting, setIsSelectExisting] = useState(false)
+    const [existingClinics, setExistingClinics] = useState<ExistingClinic[]>([])
+    const [selectedClinicId, setSelectedClinicId] = useState("")
+    const [loadingClinics, setLoadingClinics] = useState(false)
 
     useEffect(() => {
         if (!isAdmin) return
@@ -124,65 +145,98 @@ export default function ClinicsPage() {
         }
     }
 
+    const fetchExistingClinics = async () => {
+        setLoadingClinics(true)
+        try {
+            const { data, error } = await supabase
+                .from('clinicas')
+                .select('id, clinic_id, nome_clinica, status')
+                .order('nome_clinica', { ascending: true })
+
+            if (error) throw error
+            setExistingClinics(data || [])
+        } catch (error) {
+            console.error("Error fetching existing clinics:", error)
+            setExistingClinics([])
+        } finally {
+            setLoadingClinics(false)
+        }
+    }
+
     const createClinicAndGenerateLink = async () => {
-        if (!newClinicName.trim()) {
-            setErrorMsg("O nome da clínica é obrigatório.")
-            return
+        // Validation based on mode
+        if (isSelectExisting) {
+            if (!selectedClinicId) {
+                setErrorMsg("Selecione uma clínica existente.")
+                return
+            }
+        } else {
+            if (!newClinicName.trim()) {
+                setErrorMsg("O nome da clínica é obrigatório.")
+                return
+            }
         }
 
         setIsCreating(true)
         setErrorMsg("")
 
         try {
-            // 1. Create the clinic in 'clinicas' table
-            // We assume 'clinicas' table has id, nome_clinica, clinic_id, status columns
-            const { data: existingClinic } = await supabase
-                .from('clinicas')
-                .select('clinic_id, id')
-                .ilike('nome_clinica', newClinicName.trim())
-                .single()
+            let clinicId: string
+            let clinicName: string
 
-            let clinicId
-
-            if (existingClinic) {
-                // Determine if we should use existing or warn
-                // For simplicity, let's reuse if found
-                clinicId = existingClinic.clinic_id
+            if (isSelectExisting) {
+                // Use the selected existing clinic
+                const selectedClinic = existingClinics.find(c => c.clinic_id === selectedClinicId)
+                if (!selectedClinic) {
+                    throw new Error("Clínica selecionada não encontrada.")
+                }
+                clinicId = selectedClinic.clinic_id
+                clinicName = selectedClinic.nome_clinica
             } else {
-                // Insert new clinic
-                // clinic_id is NOT auto-generated in DB, so we generate it here
-                const newId = crypto.randomUUID()
-
-                const { data: newClinic, error: createError } = await supabase
+                // Create new clinic or use existing with same name
+                const { data: existingClinic } = await supabase
                     .from('clinicas')
-                    .insert([{
-                        nome_clinica: newClinicName.trim(),
-                        clinic_id: newId,
-                        status: 'ativo'
-                    }])
-                    .select()
+                    .select('clinic_id, id')
+                    .ilike('nome_clinica', newClinicName.trim())
                     .single()
 
-                if (createError) throw createError
-                clinicId = newClinic.clinic_id
+                if (existingClinic) {
+                    clinicId = existingClinic.clinic_id
+                } else {
+                    const newId = crypto.randomUUID()
+
+                    const { data: newClinic, error: createError } = await supabase
+                        .from('clinicas')
+                        .insert([{
+                            nome_clinica: newClinicName.trim(),
+                            clinic_id: newId,
+                            status: 'ativo'
+                        }])
+                        .select()
+                        .single()
+
+                    if (createError) throw createError
+                    clinicId = newClinic.clinic_id
+                }
+                clinicName = newClinicName.trim()
             }
 
-            // 2. Generate registration token
+            // Generate registration token
             const token = crypto.randomUUID()
 
-            // 3. Insert into pending_registrations
+            // Insert into pending_registrations
             const { error: insertError } = await supabase
                 .from('pending_registrations')
                 .insert([{
                     token: token,
                     clinic_id: clinicId,
-                    clinic_name: newClinicName.trim(),
+                    clinic_name: clinicName,
                     used: false
                 }])
 
             if (insertError) throw insertError
 
-            // 4. Show link
+            // Show link
             const baseUrl = window.location.origin
             setRegistrationLink(`${baseUrl}/register/${token}`)
 
@@ -205,6 +259,9 @@ export default function ClinicsPage() {
         setRegistrationLink("")
         setCopied(false)
         setErrorMsg("")
+        setIsSelectExisting(false)
+        setSelectedClinicId("")
+        setExistingClinics([])
     }
 
     const filteredClinics = clinics.filter(c =>
@@ -248,24 +305,84 @@ export default function ClinicsPage() {
                             <DialogHeader>
                                 <DialogTitle>Cadastrar Nova Clínica</DialogTitle>
                                 <DialogDescription>
-                                    Crie a clínica e gere um link de registro único.
+                                    Crie uma nova clínica ou selecione uma existente para gerar um link de registro.
                                 </DialogDescription>
                             </DialogHeader>
 
                             {!registrationLink ? (
                                 <div className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="clinicName">Nome da Clínica</Label>
-                                        <Input
-                                            id="clinicName"
-                                            placeholder="Ex: Clínica Saúde Total"
-                                            value={newClinicName}
-                                            onChange={e => setNewClinicName(e.target.value)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Este nome será usado para criar o registro no banco de dados.
-                                        </p>
-                                    </div>
+                                    {/* Mode Toggle Tabs */}
+                                    <Tabs
+                                        value={isSelectExisting ? "existing" : "new"}
+                                        onValueChange={(value) => {
+                                            setIsSelectExisting(value === "existing")
+                                            setErrorMsg("")
+                                            if (value === "existing") {
+                                                fetchExistingClinics()
+                                            }
+                                        }}
+                                    >
+                                        <TabsList className="grid w-full grid-cols-2">
+                                            <TabsTrigger value="new">Nova Clínica</TabsTrigger>
+                                            <TabsTrigger value="existing">Clínica Existente</TabsTrigger>
+                                        </TabsList>
+                                    </Tabs>
+
+                                    {!isSelectExisting ? (
+                                        // Create New Clinic Form
+                                        <div className="space-y-2">
+                                            <Label htmlFor="clinicName">Nome da Clínica</Label>
+                                            <Input
+                                                id="clinicName"
+                                                placeholder="Ex: Clínica Saúde Total"
+                                                value={newClinicName}
+                                                onChange={e => setNewClinicName(e.target.value)}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Este nome será usado para criar o registro no banco de dados.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        // Select Existing Clinic Form
+                                        <div className="space-y-2">
+                                            <Label>Selecione a Clínica</Label>
+                                            {loadingClinics ? (
+                                                <div className="flex items-center justify-center py-4">
+                                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                                    <span className="ml-2 text-sm text-muted-foreground">Carregando clínicas...</span>
+                                                </div>
+                                            ) : existingClinics.length === 0 ? (
+                                                <div className="text-center py-4 text-sm text-muted-foreground">
+                                                    Nenhuma clínica encontrada no banco de dados.
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Select
+                                                        value={selectedClinicId}
+                                                        onValueChange={setSelectedClinicId}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecione uma clínica..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {existingClinics.map((clinic) => (
+                                                                <SelectItem key={clinic.clinic_id} value={clinic.clinic_id}>
+                                                                    <div className="flex flex-col">
+                                                                        <span>{clinic.nome_clinica}</span>
+                                                                        <span className="text-xs text-muted-foreground">ID: {clinic.clinic_id.slice(0, 8)}...</span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {existingClinics.length} clínica(s) disponível(is).
+                                                    </p>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+
                                     {errorMsg && (
                                         <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                                             {errorMsg}
@@ -299,12 +416,15 @@ export default function ClinicsPage() {
 
                             <DialogFooter>
                                 {!registrationLink ? (
-                                    <Button onClick={createClinicAndGenerateLink} disabled={!newClinicName || isCreating}>
+                                    <Button
+                                        onClick={createClinicAndGenerateLink}
+                                        disabled={(isSelectExisting ? !selectedClinicId : !newClinicName) || isCreating}
+                                    >
                                         {isCreating ? (
                                             <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...
                                             </>
-                                        ) : "Criar e Gerar Link"}
+                                        ) : "Gerar Link"}
                                     </Button>
                                 ) : (
                                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
