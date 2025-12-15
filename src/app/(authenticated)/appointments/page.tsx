@@ -6,8 +6,17 @@ import { useAuth } from "@/lib/auth-context"
 import { AppointmentScheduler, AvailableDate, TimeSlot } from "@/components/ui/appointment-scheduler"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Calendar, Clock } from "lucide-react"
+import { User, Calendar, Clock, Phone, MapPin, FileText, ExternalLink, X } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
 
 export default function AppointmentsPage() {
     const { user } = useAuth()
@@ -17,6 +26,12 @@ export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const router = useRouter()
+
+    // Appointment details modal state
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
+    const [showDetailsModal, setShowDetailsModal] = useState(false)
+    const [clientId, setClientId] = useState<number | null>(null)
+    const [loadingClient, setLoadingClient] = useState(false)
 
     useEffect(() => {
         if (user?.clinic_id) {
@@ -103,22 +118,29 @@ export default function AppointmentsPage() {
     }
 
     const handleAppointmentClick = async (appointment: any) => {
-        if (!appointment.telefone_cliente) {
-            console.warn("Appointment has no client phone:", appointment)
-            return
+        setSelectedAppointment(appointment)
+        setShowDetailsModal(true)
+        setClientId(null)
+        setLoadingClient(true)
+
+        // Try to find client by phone
+        if (appointment.telefone_cliente) {
+            const { data: client, error } = await supabase
+                .from('dados_cliente')
+                .select('id')
+                .eq('telefone', appointment.telefone_cliente)
+                .single()
+
+            if (client) {
+                setClientId(client.id)
+            }
         }
+        setLoadingClient(false)
+    }
 
-        // Find client by phone
-        const { data: client, error } = await supabase
-            .from('dados_cliente')
-            .select('id')
-            .eq('telefone', appointment.telefone_cliente)
-            .single()
-
-        if (client) {
-            router.push(`/clients/${client.id}`)
-        } else {
-            console.warn("Client not found for phone:", appointment.telefone_cliente)
+    const handleGoToClientDetails = () => {
+        if (clientId) {
+            router.push(`/clients/${clientId}`)
         }
     }
 
@@ -230,6 +252,111 @@ export default function AppointmentsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Appointment Details Modal */}
+            <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-primary" />
+                            Detalhes do Agendamento
+                        </DialogTitle>
+                        {selectedAppointment && (
+                            <DialogDescription>
+                                {new Date(selectedAppointment.data_inicio).toLocaleDateString('pt-BR', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}
+                            </DialogDescription>
+                        )}
+                    </DialogHeader>
+
+                    {selectedAppointment && (
+                        <div className="space-y-4 py-4">
+                            {/* Status */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Status</span>
+                                <Badge variant={selectedAppointment.status === 'confirmada' ? 'default' : 'secondary'}>
+                                    {selectedAppointment.status || 'Pendente'}
+                                </Badge>
+                            </div>
+
+                            {/* Time */}
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                                <div className="p-2 rounded-full bg-primary/10">
+                                    <Clock className="h-4 w-4 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Horário</p>
+                                    <p className="font-medium">
+                                        {new Date(selectedAppointment.data_inicio).toLocaleTimeString('pt-BR', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Client */}
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                                <div className="p-2 rounded-full bg-blue-500/10">
+                                    <User className="h-4 w-4 text-blue-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Paciente</p>
+                                    <p className="font-medium">{selectedAppointment.nome_cliente || 'Não informado'}</p>
+                                </div>
+                            </div>
+
+                            {/* Phone */}
+                            {selectedAppointment.telefone_cliente && (
+                                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                                    <div className="p-2 rounded-full bg-green-500/10">
+                                        <Phone className="h-4 w-4 text-green-500" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Telefone</p>
+                                        <p className="font-medium">{selectedAppointment.telefone_cliente}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Type */}
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                                <div className="p-2 rounded-full bg-amber-500/10">
+                                    <FileText className="h-4 w-4 text-amber-500" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Tipo de Consulta</p>
+                                    <p className="font-medium">{selectedAppointment.tipo_consulta || 'Consulta Geral'}</p>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            {selectedAppointment.observacoes && (
+                                <div className="p-3 rounded-lg bg-muted/50">
+                                    <p className="text-sm text-muted-foreground mb-1">Observações</p>
+                                    <p className="text-sm">{selectedAppointment.observacoes}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                        <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+                            Fechar
+                        </Button>
+                        {clientId && (
+                            <Button onClick={handleGoToClientDetails}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Ver Detalhes do Cliente
+                            </Button>
+                        )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

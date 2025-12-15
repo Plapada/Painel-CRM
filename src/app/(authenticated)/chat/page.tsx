@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
 import MessageConversation, { ChatMessage, ChatUser } from "@/components/ui/messaging-conversation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Phone, User, Tag, MessageSquare, ArrowLeft, Loader2, Sparkles, FileText, Target, AlertTriangle } from "lucide-react"
+import { Phone, User, Tag, MessageSquare, ArrowLeft, Loader2, Sparkles, FileText, Target, AlertTriangle, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +20,11 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface ChatSession {
     session_id: string
@@ -31,6 +37,7 @@ interface ChatSession {
 
 export default function ChatPage() {
     const { user } = useAuth()
+    const router = useRouter()
     const [sessions, setSessions] = useState<ChatSession[]>([])
     const [selectedSession, setSelectedSession] = useState<string | null>(null)
     const [messages, setMessages] = useState<any[]>([])
@@ -44,6 +51,11 @@ export default function ChatPage() {
     const [summaryData, setSummaryData] = useState<string | null>(null)
     const [showSummaryModal, setShowSummaryModal] = useState(false)
     const [summaryError, setSummaryError] = useState<string | null>(null)
+
+    // Client popup state
+    const [popoverClientId, setPopoverClientId] = useState<string | null>(null)
+    const [popoverLoading, setPopoverLoading] = useState(false)
+    const [popoverClient, setPopoverClient] = useState<any>(null)
 
     useEffect(() => {
         if (user?.clinic_id) {
@@ -178,6 +190,70 @@ export default function ChatPage() {
         setShowMobileChat(false)
     }
 
+    // Fetch client for popover
+    const fetchPopoverClient = async (phone: string) => {
+        setPopoverLoading(true)
+        setPopoverClient(null)
+
+        const { data, error } = await supabase
+            .from('dados_cliente')
+            .select('*')
+            .eq('telefone', phone)
+            .single()
+
+        if (data) {
+            setPopoverClient(data)
+        }
+        setPopoverLoading(false)
+    }
+
+    // Handle popover open
+    const handlePopoverOpen = (open: boolean, sessionId: string) => {
+        if (open) {
+            setPopoverClientId(sessionId)
+            fetchPopoverClient(sessionId)
+        } else {
+            setPopoverClientId(null)
+        }
+    }
+
+    // Summarize conversation for popover client
+    const handlePopoverSummarize = async (phone: string) => {
+        if (!user?.clinic_id) return
+
+        setIsSummarizing(true)
+        setSummaryError(null)
+
+        try {
+            const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/webhookresumirconversas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: phone,
+                    clinic_id: user.clinic_id
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Falha ao resumir conversa')
+            }
+
+            const data = await response.text()
+            setSummaryData(data)
+            setShowSummaryModal(true)
+        } catch (error: any) {
+            console.error('Error summarizing conversation:', error)
+            setSummaryError(error.message || 'Erro ao resumir conversa.')
+        } finally {
+            setIsSummarizing(false)
+        }
+    }
+
+    // Navigate to client details
+    const handleGoToClientDetails = (clientId: number) => {
+        router.push(`/clients/${clientId}`)
+    }
+
     // Parse summary into sections
     const parseSummary = (text: string) => {
         const sections: { title: string; content: string; icon: 'target' | 'alert' | 'file' }[] = []
@@ -296,22 +372,111 @@ export default function ChatPage() {
                             {sessions.length > 0 ? sessions.map((session) => (
                                 <div
                                     key={session.session_id}
-                                    onClick={() => handleSelectSession(session.session_id)}
                                     className={cn(
-                                        "p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent",
+                                        "p-3 rounded-lg transition-colors hover:bg-accent",
                                         selectedSession === session.session_id && "bg-accent"
                                     )}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <Avatar className="h-10 w-10">
+                                        <Avatar
+                                            className="h-10 w-10 cursor-pointer"
+                                            onClick={() => handleSelectSession(session.session_id)}
+                                        >
                                             <AvatarFallback>{session.client_name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between mb-1">
-                                                <p className="font-medium text-sm truncate">{session.client_name}</p>
+                                                <Popover
+                                                    open={popoverClientId === session.session_id}
+                                                    onOpenChange={(open) => handlePopoverOpen(open, session.session_id)}
+                                                >
+                                                    <PopoverTrigger asChild>
+                                                        <button
+                                                            className="font-medium text-sm truncate text-left hover:underline cursor-pointer"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            {session.client_name}
+                                                        </button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-72 p-4" align="start">
+                                                        {popoverLoading ? (
+                                                            <div className="flex items-center justify-center p-4">
+                                                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <Avatar className="h-12 w-12">
+                                                                        <AvatarFallback>
+                                                                            {popoverClient?.nomewpp?.substring(0, 2).toUpperCase() || session.client_name.substring(0, 2).toUpperCase()}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <div>
+                                                                        <p className="font-semibold">
+                                                                            {popoverClient?.nomewpp || popoverClient?.nome || session.client_name}
+                                                                        </p>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            {session.client_phone}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {popoverClient && (
+                                                                    <div className="space-y-2 text-sm">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Tag className="h-3 w-3 text-muted-foreground" />
+                                                                            <span className="text-muted-foreground">Etapa:</span>
+                                                                            <Badge variant="outline" className="text-xs">
+                                                                                {popoverClient.etapa_funil || 'Não definida'}
+                                                                            </Badge>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                <div className="flex flex-col gap-2 pt-2 border-t">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="w-full justify-start"
+                                                                        onClick={() => handlePopoverSummarize(session.session_id)}
+                                                                        disabled={isSummarizing}
+                                                                    >
+                                                                        {isSummarizing ? (
+                                                                            <>
+                                                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                                                Resumindo...
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <Sparkles className="h-4 w-4 mr-2" />
+                                                                                Resumir Conversa
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+
+                                                                    {popoverClient && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="w-full justify-start"
+                                                                            onClick={() => handleGoToClientDetails(popoverClient.id)}
+                                                                        >
+                                                                            <ExternalLink className="h-4 w-4 mr-2" />
+                                                                            Ver Detalhes do Cliente
+                                                                        </Button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <span className="text-xs text-muted-foreground">{session.last_message_time}</span>
                                             </div>
-                                            <p className="text-xs text-muted-foreground truncate">{session.last_message}</p>
+                                            <p
+                                                className="text-xs text-muted-foreground truncate cursor-pointer"
+                                                onClick={() => handleSelectSession(session.session_id)}
+                                            >
+                                                {session.last_message}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

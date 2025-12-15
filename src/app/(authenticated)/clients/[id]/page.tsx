@@ -3,19 +3,36 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Calendar, MessageSquare, User, Tag, Clock } from "lucide-react"
+import { ArrowLeft, Calendar, MessageSquare, User, Tag, Clock, Loader2, Sparkles, FileText, Target, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+    const { user } = useAuth()
     const [clientId, setClientId] = useState<string | null>(null)
     const [client, setClient] = useState<any>(null)
     const [appointments, setAppointments] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
+
+    // Summary feature state
+    const [isSummarizing, setIsSummarizing] = useState(false)
+    const [summaryData, setSummaryData] = useState<string | null>(null)
+    const [showSummaryModal, setShowSummaryModal] = useState(false)
+    const [summaryError, setSummaryError] = useState<string | null>(null)
 
     useEffect(() => {
         async function unwrapParams() {
@@ -89,6 +106,87 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
             setError(err.message || "Erro ao carregar dados do cliente")
         } finally {
             setLoading(false)
+        }
+    }
+
+    // Parse summary into sections
+    const parseSummary = (text: string) => {
+        const sections: { title: string; content: string; icon: 'target' | 'alert' | 'file' }[] = []
+
+        // Extract Queixa Principal
+        const queixaMatch = text.match(/🎯\s*Queixa Principal[:\s]*([^-]+?)(?=-{2,}|🚧|📝|$)/i)
+        if (queixaMatch) {
+            sections.push({
+                title: 'Queixa Principal',
+                content: queixaMatch[1].trim(),
+                icon: 'target'
+            })
+        }
+
+        // Extract Objeções e Hesitações
+        const objecoesMatch = text.match(/🚧\s*Objeções e Hesitações[:\s]*([^-]+?)(?=-{2,}|📝|$)/i)
+        if (objecoesMatch) {
+            sections.push({
+                title: 'Objeções e Hesitações',
+                content: objecoesMatch[1].trim(),
+                icon: 'alert'
+            })
+        }
+
+        // Extract Resumo da Interação
+        const resumoMatch = text.match(/📝\s*\*?Resumo da Interação[:\s]*([\s\S]+)/i)
+        if (resumoMatch) {
+            sections.push({
+                title: 'Resumo da Interação',
+                content: resumoMatch[1].replace(/-{2,}/g, '').trim(),
+                icon: 'file'
+            })
+        }
+
+        // If no sections parsed, return the raw text
+        if (sections.length === 0) {
+            sections.push({
+                title: 'Resumo',
+                content: text,
+                icon: 'file'
+            })
+        }
+
+        return sections
+    }
+
+    // Handle summarize conversation
+    const handleSummarizeConversation = async () => {
+        if (!client?.telefone || !user?.clinic_id) {
+            setSummaryError('Cliente sem telefone registrado.')
+            return
+        }
+
+        setIsSummarizing(true)
+        setSummaryError(null)
+
+        try {
+            const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/webhookresumirconversas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: client.telefone,
+                    clinic_id: user.clinic_id
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Falha ao resumir conversa')
+            }
+
+            const data = await response.text()
+            setSummaryData(data)
+            setShowSummaryModal(true)
+        } catch (error: any) {
+            console.error('Error summarizing conversation:', error)
+            setSummaryError(error.message || 'Erro ao resumir conversa.')
+        } finally {
+            setIsSummarizing(false)
         }
     }
 
@@ -204,6 +302,31 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                                         {client.resumo_conversa || 'Nenhum resumo disponível.'}
                                     </div>
                                 </div>
+
+                                {/* Summarize Button */}
+                                <div className="pt-3 border-t">
+                                    <Button
+                                        onClick={handleSummarizeConversation}
+                                        disabled={isSummarizing}
+                                        className="w-full"
+                                        variant="outline"
+                                    >
+                                        {isSummarizing ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Resumindo...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="h-4 w-4 mr-2" />
+                                                Gerar Resumo da Conversa
+                                            </>
+                                        )}
+                                    </Button>
+                                    {summaryError && (
+                                        <p className="text-xs text-destructive mt-2 text-center">{summaryError}</p>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -246,6 +369,62 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Summary Modal */}
+            <Dialog open={showSummaryModal} onOpenChange={setShowSummaryModal}>
+                <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="h-5 w-5 text-primary" />
+                            Resumo da Conversa
+                        </DialogTitle>
+                        <DialogDescription>
+                            Análise gerada por IA da conversa com {client?.nomewpp || client?.nome || 'o cliente'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <ScrollArea className="flex-1 pr-4">
+                        {summaryData && (
+                            <div className="space-y-4 py-4">
+                                {parseSummary(summaryData).map((section, index) => (
+                                    <div
+                                        key={index}
+                                        className="rounded-lg border bg-card p-4 space-y-2"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {section.icon === 'target' && (
+                                                <div className="p-1.5 rounded-full bg-blue-500/10">
+                                                    <Target className="h-4 w-4 text-blue-500" />
+                                                </div>
+                                            )}
+                                            {section.icon === 'alert' && (
+                                                <div className="p-1.5 rounded-full bg-amber-500/10">
+                                                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                                </div>
+                                            )}
+                                            {section.icon === 'file' && (
+                                                <div className="p-1.5 rounded-full bg-green-500/10">
+                                                    <FileText className="h-4 w-4 text-green-500" />
+                                                </div>
+                                            )}
+                                            <h4 className="font-semibold text-sm">{section.title}</h4>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            {section.content}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowSummaryModal(false)}>
+                            Fechar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
