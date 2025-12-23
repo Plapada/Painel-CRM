@@ -31,7 +31,7 @@ export function usePushNotifications() {
         const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
         if (!vapidKey) {
             console.error('Missing VAPID key')
-            alert('Erro interno: Chave de notificação não encontrada.')
+            alert('Erro interno: Chave de notificação VAPID não encontrada.')
             return
         }
 
@@ -51,7 +51,14 @@ export function usePushNotifications() {
 
             const registration = await navigator.serviceWorker.ready
 
-            // Attempt subscription
+            // Force unsubscribe to ensure clean slate (fixes "different application server key" errors)
+            const existingSub = await registration.pushManager.getSubscription()
+            if (existingSub) {
+                await existingSub.unsubscribe()
+                console.log('Existing subscription unsubscribed.')
+            }
+
+            // Attempt new subscription
             const sub = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(vapidKey)
@@ -70,12 +77,13 @@ export function usePushNotifications() {
 
                 if (error) {
                     console.error('Database error:', error)
-                    // We don't alert user about DB error usually, but maybe we should if critical.
+                    // Optional: alert user if strictly necessary, but usually we proceed
                 }
             }
         } catch (error: any) {
             console.error('Subscription failed:', error)
-            alert(`Falha ao ativar notificações: ${error.message || 'Erro desconhecido'}`)
+            // Show the actual error message or object for better debugging
+            alert(`Falha ao ativar notificações: ${error.message || JSON.stringify(error)}`)
         } finally {
             setIsLoading(false)
         }
