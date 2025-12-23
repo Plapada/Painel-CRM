@@ -9,14 +9,15 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-} from "@/components/ui/dialog"
+    Modal,
+    ModalContent,
+    ModalDescription,
+    ModalHeader,
+    ModalTitle,
+    ModalTrigger,
+    ModalFooter,
+    ModalBody,
+} from "@/components/ui/modal"
 import {
     Select,
     SelectContent,
@@ -413,126 +414,128 @@ export default function ClinicsPage() {
                         Verificar Conexões
                     </Button>
 
-                    <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
-                        <DialogTrigger asChild>
+                    <Modal open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
+                        <ModalTrigger asChild>
                             <Button className="shrink-0 bg-primary hover:bg-primary/90">
                                 <Plus className="h-4 w-4 mr-2" /> Novo Cliente
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Cadastrar Nova Clínica</DialogTitle>
-                                <DialogDescription>
+                        </ModalTrigger>
+                        <ModalContent className="sm:max-w-md">
+                            <ModalHeader>
+                                <ModalTitle>Cadastrar Nova Clínica</ModalTitle>
+                                <ModalDescription>
                                     Crie uma nova clínica ou selecione uma existente para gerar um link de registro.
-                                </DialogDescription>
-                            </DialogHeader>
+                                </ModalDescription>
+                            </ModalHeader>
+                            <ModalBody>
 
-                            {!registrationLink ? (
-                                <div className="space-y-4 py-4">
-                                    {/* Mode Toggle Tabs */}
-                                    <Tabs
-                                        value={isSelectExisting ? "existing" : "new"}
-                                        onValueChange={(value) => {
-                                            setIsSelectExisting(value === "existing")
-                                            setErrorMsg("")
-                                            if (value === "existing") {
-                                                fetchExistingClinics()
-                                            }
-                                        }}
-                                    >
-                                        <TabsList className="grid w-full grid-cols-2">
-                                            <TabsTrigger value="new">Nova Clínica</TabsTrigger>
-                                            <TabsTrigger value="existing">Clínica Existente</TabsTrigger>
-                                        </TabsList>
-                                    </Tabs>
+                                {!registrationLink ? (
+                                    <div className="space-y-4 py-4">
+                                        {/* Mode Toggle Tabs */}
+                                        <Tabs
+                                            value={isSelectExisting ? "existing" : "new"}
+                                            onValueChange={(value) => {
+                                                setIsSelectExisting(value === "existing")
+                                                setErrorMsg("")
+                                                if (value === "existing") {
+                                                    fetchExistingClinics()
+                                                }
+                                            }}
+                                        >
+                                            <TabsList className="grid w-full grid-cols-2">
+                                                <TabsTrigger value="new">Nova Clínica</TabsTrigger>
+                                                <TabsTrigger value="existing">Clínica Existente</TabsTrigger>
+                                            </TabsList>
+                                        </Tabs>
 
-                                    {!isSelectExisting ? (
-                                        // Create New Clinic Form
+                                        {!isSelectExisting ? (
+                                            // Create New Clinic Form
+                                            <div className="space-y-2">
+                                                <Label htmlFor="clinicName">Nome da Clínica</Label>
+                                                <Input
+                                                    id="clinicName"
+                                                    placeholder="Ex: Clínica Saúde Total"
+                                                    value={newClinicName}
+                                                    onChange={e => setNewClinicName(e.target.value)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">
+                                                    Este nome será usado para criar o registro no banco de dados.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            // Select Existing Clinic Form
+                                            <div className="space-y-2">
+                                                <Label>Selecione a Clínica</Label>
+                                                {loadingClinics ? (
+                                                    <div className="flex items-center justify-center py-4">
+                                                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                                        <span className="ml-2 text-sm text-muted-foreground">Carregando clínicas...</span>
+                                                    </div>
+                                                ) : existingClinics.length === 0 ? (
+                                                    <div className="text-center py-4 text-sm text-muted-foreground">
+                                                        Nenhuma clínica encontrada no banco de dados.
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <Select
+                                                            value={selectedClinicId}
+                                                            onValueChange={setSelectedClinicId}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Selecione uma clínica..." />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {existingClinics.map((clinic) => (
+                                                                    <SelectItem key={clinic.clinic_id} value={clinic.clinic_id}>
+                                                                        <div className="flex flex-col">
+                                                                            <span>{clinic.nome_clinica}</span>
+                                                                            <span className="text-xs text-muted-foreground">ID: {clinic.clinic_id.slice(0, 8)}...</span>
+                                                                        </div>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {existingClinics.length} clínica(s) disponível(is).
+                                                        </p>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {errorMsg && (
+                                            <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                                                {errorMsg}
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4 py-4">
+                                        <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                                            <Check className="h-5 w-5 text-green-500" />
+                                            <span className="text-green-500 text-sm font-medium">Link gerado com sucesso!</span>
+                                        </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="clinicName">Nome da Clínica</Label>
-                                            <Input
-                                                id="clinicName"
-                                                placeholder="Ex: Clínica Saúde Total"
-                                                value={newClinicName}
-                                                onChange={e => setNewClinicName(e.target.value)}
-                                            />
+                                            <Label>Link de Registro</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    value={registrationLink}
+                                                    readOnly
+                                                    className="text-xs"
+                                                />
+                                                <Button variant="outline" size="icon" onClick={copyLink}>
+                                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                                </Button>
+                                            </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Este nome será usado para criar o registro no banco de dados.
+                                                Envie este link para o cliente. Ele criará o usuário e senha.
                                             </p>
                                         </div>
-                                    ) : (
-                                        // Select Existing Clinic Form
-                                        <div className="space-y-2">
-                                            <Label>Selecione a Clínica</Label>
-                                            {loadingClinics ? (
-                                                <div className="flex items-center justify-center py-4">
-                                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                                    <span className="ml-2 text-sm text-muted-foreground">Carregando clínicas...</span>
-                                                </div>
-                                            ) : existingClinics.length === 0 ? (
-                                                <div className="text-center py-4 text-sm text-muted-foreground">
-                                                    Nenhuma clínica encontrada no banco de dados.
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <Select
-                                                        value={selectedClinicId}
-                                                        onValueChange={setSelectedClinicId}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Selecione uma clínica..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {existingClinics.map((clinic) => (
-                                                                <SelectItem key={clinic.clinic_id} value={clinic.clinic_id}>
-                                                                    <div className="flex flex-col">
-                                                                        <span>{clinic.nome_clinica}</span>
-                                                                        <span className="text-xs text-muted-foreground">ID: {clinic.clinic_id.slice(0, 8)}...</span>
-                                                                    </div>
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {existingClinics.length} clínica(s) disponível(is).
-                                                    </p>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {errorMsg && (
-                                        <p className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                                            {errorMsg}
-                                        </p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="space-y-4 py-4">
-                                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                                        <Check className="h-5 w-5 text-green-500" />
-                                        <span className="text-green-500 text-sm font-medium">Link gerado com sucesso!</span>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Link de Registro</Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={registrationLink}
-                                                readOnly
-                                                className="text-xs"
-                                            />
-                                            <Button variant="outline" size="icon" onClick={copyLink}>
-                                                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Envie este link para o cliente. Ele criará o usuário e senha.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                                )}
 
-                            <DialogFooter>
+                            </ModalBody>
+                            <ModalFooter>
                                 {!registrationLink ? (
                                     <Button
                                         onClick={createClinicAndGenerateLink}
@@ -549,9 +552,9 @@ export default function ClinicsPage() {
                                         Fechar
                                     </Button>
                                 )}
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                            </ModalFooter>
+                        </ModalContent>
+                    </Modal>
                 </div>
             </div>
 
@@ -632,53 +635,59 @@ export default function ClinicsPage() {
                 </Card>
             )}
             {/* Disconnected Alert Dialog */}
-            <Dialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-destructive">
+            {/* Disconnected Alert Dialog */}
+            <Modal open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <ModalContent>
+                    <ModalHeader>
+                        <ModalTitle className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="h-5 w-5" />
                             Instâncias Desconectadas
-                        </DialogTitle>
-                        <DialogDescription>
+                        </ModalTitle>
+                        <ModalDescription>
                             As seguintes clínicas estão com o WhatsApp desconectado ou instável:
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
-                        {disconnectedClinics.map((name, idx) => (
-                            <div key={idx} className="flex items-center gap-2 p-3 rounded bg-destructive/10 text-destructive text-sm font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                                {name}
-                            </div>
-                        ))}
-                    </div>
-                    <DialogFooter>
+                        </ModalDescription>
+                    </ModalHeader>
+                    <ModalBody>
+                        <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                            {disconnectedClinics.map((name, idx) => (
+                                <div key={idx} className="flex items-center gap-2 p-3 rounded bg-destructive/10 text-destructive text-sm font-medium">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                                    {name}
+                                </div>
+                            ))}
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button onClick={() => setIsAlertOpen(false)}>Fechar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
 
             {/* Success Alert Dialog */}
-            <Dialog open={isSuccessAlertOpen} onOpenChange={setIsSuccessAlertOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-green-500">
+            {/* Success Alert Dialog */}
+            <Modal open={isSuccessAlertOpen} onOpenChange={setIsSuccessAlertOpen}>
+                <ModalContent>
+                    <ModalHeader>
+                        <ModalTitle className="flex items-center gap-2 text-green-500">
                             <CheckCircle className="h-5 w-5" />
                             Tudo Conectado!
-                        </DialogTitle>
-                        <DialogDescription>
+                        </ModalTitle>
+                        <ModalDescription>
                             Todas as instâncias verificadas estão conectadas e operando normalmente.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 flex justify-center">
-                        <div className="bg-green-500/10 p-4 rounded-full">
-                            <CheckCircle className="h-12 w-12 text-green-500" />
+                        </ModalDescription>
+                    </ModalHeader>
+                    <ModalBody>
+                        <div className="py-4 flex justify-center">
+                            <div className="bg-green-500/10 p-4 rounded-full">
+                                <CheckCircle className="h-12 w-12 text-green-500" />
+                            </div>
                         </div>
-                    </div>
-                    <DialogFooter>
+                    </ModalBody>
+                    <ModalFooter>
                         <Button onClick={() => setIsSuccessAlertOpen(false)} className="bg-green-500 hover:bg-green-600 text-white">Ótimo!</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </div>
     )
 }
