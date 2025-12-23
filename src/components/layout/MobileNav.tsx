@@ -44,8 +44,8 @@ export function MobileNav() {
     const isClient = user?.role === 'client'
 
     // Define visible items vs menu items
-    let visibleItems = []
-    let menuItems = []
+    let visibleItems: typeof navItems = []
+    let menuItems: typeof navItems = []
 
     if (isClient) {
         // Client: Dashboard, Chat, Calendar visible. Rest in Menu.
