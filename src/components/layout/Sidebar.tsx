@@ -11,7 +11,8 @@ import {
     ClipboardList,
     Settings,
     LogOut,
-    Hexagon
+    Hexagon,
+    Smartphone
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -26,6 +27,7 @@ const navItems = [
     { name: "Agendamentos", href: "/appointments", icon: Calendar },
     { name: "Clientes", href: "/clients", icon: ClipboardList },
     { name: "Clínicas", href: "/clinics", icon: Users },
+    { name: "Minhas Instâncias", href: "/clinics", icon: Smartphone },
     { name: "Suporte", href: "/support", icon: MessageSquare },
 ]
 
@@ -41,8 +43,8 @@ export function Sidebar() {
             // Clients see: Dashboard, Funil, Conversas, Agendamentos, Clientes, Suporte
             return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Clientes', 'Suporte'].includes(item.name)
         } else {
-            // Admin sees: Dashboard, Clínicas, Suporte (NO Conversas - access via clinic details)
-            return ['Dashboard', 'Clínicas', 'Suporte'].includes(item.name)
+            // Admin sees: Dashboard, Minhas Instâncias, Suporte (Renaming Clínicas to Minhas Instâncias for Admin View)
+            return ['Dashboard', 'Minhas Instâncias', 'Suporte'].includes(item.name)
         }
     })
 
