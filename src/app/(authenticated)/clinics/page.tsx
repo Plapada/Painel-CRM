@@ -25,7 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2 } from "lucide-react"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone } from "lucide-react"
 import Link from "next/link"
 
 interface Clinic {
@@ -38,6 +38,8 @@ interface Clinic {
     totalPatients?: number
     todayAppointments?: number
     monthlyConversations?: number
+    connectionStatus?: 'connected' | 'disconnected' | 'unknown'
+    instanceName?: string
 }
 
 interface ExistingClinic {
@@ -67,7 +69,9 @@ export default function ClinicsPage() {
     const [isSelectExisting, setIsSelectExisting] = useState(false)
     const [existingClinics, setExistingClinics] = useState<ExistingClinic[]>([])
     const [selectedClinicId, setSelectedClinicId] = useState("")
+
     const [loadingClinics, setLoadingClinics] = useState(false)
+    const [isCheckingStatus, setIsCheckingStatus] = useState(false)
 
     useEffect(() => {
         if (!isAdmin) return
@@ -85,12 +89,23 @@ export default function ClinicsPage() {
 
             if (error) throw error
 
-            // Fetch real stats for each clinic
+            // Fetch real stats for each clinic AND clinic details for name
+            const { data: realClinicsData } = await supabase
+                .from('clinicas')
+                .select('clinic_id, nome_clinica')
+
+            const realClinicsMap = new Map(realClinicsData?.map(rc => [rc.clinic_id, rc.nome_clinica]) || [])
+
             const clinicsWithStats: Clinic[] = []
             const today = new Date().toISOString().split('T')[0]
             const monthStart = new Date(new Date().setDate(1)).toISOString()
 
             for (const c of users || []) {
+                const realName = c.clinic_id ? realClinicsMap.get(c.clinic_id) : undefined
+                const generatedInstanceName = realName
+                    ? realName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+                    : (c.username || c.email?.split('@')[0])?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+
                 if (!c.clinic_id) {
                     clinicsWithStats.push({
                         id: c.id,
@@ -98,6 +113,9 @@ export default function ClinicsPage() {
                         username: c.username,
                         clinic_id: c.clinic_id,
                         created_at: c.created_at,
+                        connectionStatus: 'unknown',
+                        instanceName: generatedInstanceName,
+                        // ... (keep defaults)
                         totalPatients: undefined,
                         todayAppointments: undefined,
                         monthlyConversations: undefined,
@@ -134,6 +152,8 @@ export default function ClinicsPage() {
                     totalPatients: patientCount ?? undefined,
                     todayAppointments: aptCount ?? undefined,
                     monthlyConversations: convCount ?? undefined,
+                    connectionStatus: 'unknown',
+                    instanceName: generatedInstanceName
                 })
             }
 
@@ -142,6 +162,46 @@ export default function ClinicsPage() {
             console.error("Error fetching clinics:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const checkAllStatuses = async (currentClinics = clinics) => {
+        setIsCheckingStatus(true)
+        try {
+            const response = await fetch(process.env.NEXT_PUBLIC_WEBHOOK_CHECK_STATUS!, {
+                method: 'GET', // Or POST if webhook requires it.
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                // Assume data returned by N8N matches what we need.
+                // If it returns an object with instances array or just array
+                const instances = Array.isArray(data) ? data : (data.instances || (data.data ? data.data : []))
+
+                setClinics(prev => prev.map(clinic => {
+                    if (!clinic.instanceName) return clinic
+
+                    // Find matching instance
+                    // Evolution API structure: { instance: { instanceName: ... }, ... } OR { instance: "name", ... }
+                    // We try to match liberally
+                    const match = instances.find((i: any) => {
+                        const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
+                        return iName === clinic.instanceName
+                    })
+
+                    let isConnected = false
+                    if (match) {
+                        const state = match.instance?.state || match.state || match.status
+                        isConnected = state === 'open' || state === 'connected'
+                    }
+
+                    return { ...clinic, connectionStatus: isConnected ? 'connected' : 'disconnected' }
+                }))
+            }
+        } catch (error) {
+            console.error("Error checking statuses:", error)
+        } finally {
+            setIsCheckingStatus(false)
         }
     }
 
@@ -295,9 +355,20 @@ export default function ClinicsPage() {
                     </div>
 
                     {/* New Client Button */}
+                    {/* Check Status Button */}
+                    <Button
+                        variant="outline"
+                        onClick={() => checkAllStatuses()}
+                        disabled={isCheckingStatus || loading}
+                        className="mr-2"
+                    >
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+                        Verificar Conexões
+                    </Button>
+
                     <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
                         <DialogTrigger asChild>
-                            <Button className="shrink-0">
+                            <Button className="shrink-0 bg-primary hover:bg-primary/90">
                                 <Plus className="h-4 w-4 mr-2" /> Novo Cliente
                             </Button>
                         </DialogTrigger>
@@ -461,10 +532,18 @@ export default function ClinicsPage() {
                                             <CardTitle className="text-lg">
                                                 {clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
                                             </CardTitle>
-                                            <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
                                         </div>
                                     </div>
                                     <Badge variant="outline" className="text-green-500 border-green-500/30">Ativo</Badge>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between">
+                                    <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
+                                    {clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
+                                        <Badge variant={clinic.connectionStatus === 'connected' ? 'default' : 'destructive'} className={clinic.connectionStatus === 'connected' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border-0' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0'}>
+                                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${clinic.connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                            {clinic.connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Offline'}
+                                        </Badge>
+                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
