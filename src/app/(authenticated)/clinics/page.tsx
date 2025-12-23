@@ -42,6 +42,10 @@ interface Clinic {
     username: string
     created_at: string
     role?: string
+    // Stats (Mocked or Real)
+    totalPatients?: number
+    todayAppointments?: number
+    monthlyConversations?: number
 }
 
 interface InstanceStatus {
@@ -56,7 +60,7 @@ interface InstanceStatus {
 
 export default function ClinicsPage() {
     const { user } = useAuth()
-    const isAdmin = user?.role === 'admin' || !user?.role // Fallback to admin if role missing for main user
+    const isAdmin = user?.role === 'admin' || !user?.role
 
     // State
     const [clinics, setClinics] = useState<Clinic[]>([])
@@ -92,16 +96,26 @@ export default function ClinicsPage() {
         try {
             setLoading(true)
 
+            // Using correct table 'usuarios_site'
             const { data, error: fetchError } = await supabase
                 .from('usuarios_site')
                 .select('*')
                 .eq('role', 'client')
 
             if (fetchError) throw fetchError
-            setClinics(data || [])
+
+            // Map data to Clinic interface and add mock stats if missing
+            const mappedClinics: Clinic[] = (data || []).map((c: any) => ({
+                ...c,
+                totalPatients: c.totalPatients || 0, // Mock or actual if exists
+                todayAppointments: c.todayAppointments || 0,
+                monthlyConversations: c.monthlyConversations || 0
+            }))
+
+            setClinics(mappedClinics)
 
             // Auto check statuses
-            checkAllStatuses(data || [])
+            checkAllStatuses(mappedClinics)
 
         } catch (error) {
             console.error("Error fetching clinics:", error)
@@ -310,29 +324,64 @@ export default function ClinicsPage() {
                 </div>
             </div>
 
-            {/* List */}
+            {/* List with Detailed Cards */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredClinics.map((clinic) => {
                     const status = instanceStatuses[clinic.id]
                     return (
                         <Card key={clinic.id} className="overflow-hidden border-l-4 border-l-primary/50 hover:border-l-primary transition-all duration-300">
-                            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium truncate max-w-[150px]">
                                     {clinic.username || clinic.email}
                                 </CardTitle>
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold font-playfair">{status?.nome || '...'}</div>
-                                <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center gap-1">
                                     {status?.isLoading ? (
-                                        <Badge variant="outline" className="text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin mr-1" /> Verificando</Badge>
+                                        <Badge variant="outline" className="text-yellow-600 bg-yellow-500/10 border-yellow-500/20 px-1 py-0 text-[10px]">
+                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Verificando
+                                        </Badge>
                                     ) : status?.status === 'open' ? (
-                                        <Badge variant="default" className="bg-green-500 hover:bg-green-600"><CheckCircle className="h-3 w-3 mr-1" /> Online</Badge>
+                                        <Badge variant="default" className="bg-green-500/20 text-green-500 border-0 px-2 py-0 text-[10px] hover:bg-green-500/30">
+                                            <MessageSquare className="w-3 h-3 mr-1" />
+                                            Conectado
+                                        </Badge>
                                     ) : (
-                                        <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" /> Offline</Badge>
+                                        <Badge variant="destructive" className="bg-red-500/20 text-red-500 border-0 px-2 py-0 text-[10px] hover:bg-red-500/30">
+                                            <AlertTriangle className="w-3 h-3 mr-1" />
+                                            Offline
+                                        </Badge>
                                     )}
                                 </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-xl font-bold font-playfair">{status?.nome || '...'}</div>
+                                    <Building2 className="h-5 w-5 text-muted-foreground/50" />
+                                </div>
+
+                                {/* Stats Summary */}
+                                <div className="grid grid-cols-3 gap-2 text-center mt-2">
+                                    <div className="p-2 rounded-lg bg-muted/50 flex flex-col items-center justify-center">
+                                        <Users className="h-4 w-4 mb-1 text-muted-foreground" />
+                                        <p className="text-base font-bold">{clinic.totalPatients}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Clientes</p>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-muted/50 flex flex-col items-center justify-center">
+                                        <Calendar className="h-4 w-4 mb-1 text-muted-foreground" />
+                                        <p className="text-base font-bold">{clinic.todayAppointments}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Hoje</p>
+                                    </div>
+                                    <div className="p-2 rounded-lg bg-muted/50 flex flex-col items-center justify-center">
+                                        <MessageSquare className="h-4 w-4 mb-1 text-muted-foreground" />
+                                        <p className="text-base font-bold">{clinic.monthlyConversations}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Msgs</p>
+                                    </div>
+                                </div>
+
+                                <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground h-9 mt-2" variant="outline">
+                                    <span className="flex items-center">
+                                        Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
+                                    </span>
+                                </Button>
                             </CardContent>
                         </Card>
                     )
