@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_CHECK_STATUS
 
@@ -12,7 +12,11 @@ export async function GET() {
             )
         }
 
-        const response = await fetch(webhookUrl, {
+        const { searchParams } = new URL(request.url)
+        const queryString = searchParams.toString()
+        const finalUrl = queryString ? `${webhookUrl}?${queryString}` : webhookUrl
+
+        const response = await fetch(finalUrl, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

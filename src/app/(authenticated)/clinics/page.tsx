@@ -190,7 +190,7 @@ export default function ClinicsPage() {
         setIsCheckingStatus(true)
         try {
             // Use local API proxy to avoid CORS issues
-            const webhookUrl = '/api/check-status'
+            const webhookUrl = '/api/check-status?source=webapp'
 
             const response = await fetch(webhookUrl, {
                 method: 'GET',
