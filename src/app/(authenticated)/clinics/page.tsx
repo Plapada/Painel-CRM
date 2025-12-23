@@ -204,7 +204,7 @@ export default function ClinicsPage() {
                             disconnectedList.push(clinic.username || clinic.email?.split('@')[0] || clinic.instanceName)
                         }
 
-                        return { ...clinic, connectionStatus: isConnected ? 'connected' : 'disconnected' }
+                        return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
                     })
                     return updated
                 })
