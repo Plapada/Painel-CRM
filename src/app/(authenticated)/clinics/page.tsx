@@ -187,130 +187,114 @@ export default function ClinicsPage() {
     }
 
     const checkAllStatuses = async (currentClinics = clinics, force = false) => {
-        // Throttling Logic: Check if we verified in the last 15 minutes
+        let instances: any[] = []
+        let usedCache = false
+
+        // Throttling & Caching Logic
         if (!force) {
             const lastCheck = localStorage.getItem('last_status_check_time')
-            if (lastCheck) {
+            const cachedData = localStorage.getItem('cached_status_data')
+
+            if (lastCheck && cachedData) {
                 const msSinceLast = Date.now() - parseInt(lastCheck)
                 const minutesSinceLast = msSinceLast / 1000 / 60
+
                 if (minutesSinceLast < 15) {
-                    console.log(`Skipping auto-verification. Last check was ${minutesSinceLast.toFixed(1)} mins ago.`)
-                    return
+                    console.log(`Using cached status. Last check was ${minutesSinceLast.toFixed(1)} mins ago.`)
+                    try {
+                        instances = JSON.parse(cachedData)
+                        usedCache = true
+                    } catch (e) {
+                        console.error("Error parsing cached status:", e)
+                    }
                 }
             }
         }
 
-        setIsCheckingStatus(true)
-        try {
-            // Use local API proxy to avoid CORS issues
-            // Add source=webapp only for manual/forced checks to differentiate in N8N?
-            // User wanted "source=webapp" to tag checks. Let's keep it for both, 
-            // but N8N logic will determine notification based on "offline" status change vs manual request.
-            // Actually, if it's an auto-check (force=false), it's standard polling.
-            // If it's manual (force=true), user requested it.
-            const webhookUrl = force
-                ? '/api/check-status?source=webapp&manual=true'
-                : '/api/check-status?source=webapp&auto=true'
+        if (!usedCache) {
+            setIsCheckingStatus(true)
+            try {
+                // Use local API proxy to avoid CORS issues
+                // Add source=webapp only for manual/forced checks to differentiate in N8N?
+                // User wanted "source=webapp" to tag checks. Let's keep it for both, 
+                // but N8N logic will determine notification based on "offline" status change vs manual request.
+                // Actually, if it's an auto-check (force=false), it's standard polling.
+                // If it's manual (force=true), user requested it.
+                const webhookUrl = force
+                    ? '/api/check-status?source=webapp&manual=true'
+                    : '/api/check-status?source=webapp&auto=true'
 
-            const response = await fetch(webhookUrl, {
-                method: 'GET',
-            })
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}))
-                alert(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
-                return
-            }
-
-            const data = await response.json()
-            const instances = Array.isArray(data) ? data : (data.instances || data.data || [])
-
-            // Save timestamp of successful check
-            localStorage.setItem('last_status_check_time', Date.now().toString())
-
-            if (instances.length === 0) {
-                alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
-                return
-            }
-
-            let disconnectedList: string[] = []
-            let connectedList: string[] = []
-
-            // Calculate new state first
-            const updatedClinics = currentClinics.map(clinic => {
-                if (!clinic.instanceName) return clinic
-
-                // Find matching instance - try multiple field patterns
-                const match = instances.find((i: any) => {
-                    const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
-                    return iName === clinic.instanceName
+                const response = await fetch(webhookUrl, {
+                    method: 'GET',
                 })
 
-                let isConnected = false
-                if (match) {
-                    const state = match.instance?.state || match.state || match.status
-                    isConnected = state === 'open' || state === 'connected'
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}))
+                    alert(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
+                    return
                 }
 
-                if (!isConnected && clinic.instanceName) {
-                    disconnectedList.push(clinic.nome || clinic.username || clinic.instanceName)
-                } else if (isConnected && clinic.instanceName) {
-                    connectedList.push(clinic.nome || clinic.username || clinic.instanceName)
-                }
+                const data = await response.json()
+                instances = Array.isArray(data) ? data : (data.instances || data.data || [])
 
-                return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
+                // Save timestamp of successful check
+                localStorage.setItem('last_status_check_time', Date.now().toString())
+                localStorage.setItem('cached_status_data', JSON.stringify(instances))
+
+
+
+            } catch (error: any) {
+                console.error("Error checking statuses:", error)
+                // significant error, maybe verify internet? 
+                if (force) alert(`Erro ao verificar conexões: ${error.message}`)
+            } finally {
+                setIsCheckingStatus(false)
+            }
+        }
+
+        if (instances.length === 0 && !usedCache) {
+            if (force) alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
+            return
+        }
+
+        let disconnectedList: string[] = []
+        let connectedList: string[] = []
+
+        // Calculate new state first
+        const updatedClinics = currentClinics.map(clinic => {
+            if (!clinic.instanceName) return clinic
+
+            // Find matching instance - try multiple field patterns
+            const match = instances.find((i: any) => {
+                const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
+                return iName === clinic.instanceName
             })
 
-            setClinics(updatedClinics)
-
-            if (force) {
-                if (disconnectedList.length > 0) {
-                    setDisconnectedClinics(disconnectedList)
-                    setIsAlertOpen(true)
-                } else if (instances.length > 0) {
-                    setConnectedClinics(connectedList)
-                    setIsSuccessAlertOpen(true)
-                }
-            } else {
-                // For auto-checks, we probably DON'T want a popup interfering with the user, 
-                // UNLESS distinct from the previous state? 
-                // Current Requirement: "If that doesn't happen [15 min check], I only want it to happen when I click the button"
-                // Implies: Auto-check basically updates state silently or with minimal intrusion?
-                // The user complained about notifications. Let's suppress popups for auto-checks too, 
-                // OR only show them if something CHANGED. For now, suppressing popups on auto-check seems safest to avoid annoyance.
-                // But wait, if 3 checks fail, user wants to know?
-                // "I don't want a notification if I'm already looking at it." -> The popup IS the notification on site.
-                // Let's keep popup for now, or maybe suppress. 
-                // Decision: Suppress Success popup on auto check. Show Disconnected popup on auto check?
-                // Let's match manual behavior for now but suppress success.
-                if (disconnectedList.length > 0) {
-                    // Maybe don't show popup automatically?
-                    // setDisconnectedClinics(disconnectedList)
-                    // setIsAlertOpen(true)
-                }
+            let isConnected = false
+            if (match) {
+                const state = match.instance?.state || match.state || match.status
+                isConnected = state === 'open' || state === 'connected'
             }
 
-            // Re-evaluating popup logic based on user feedback:
-            // "I only want it to happen when I click the button" -> Refers to Verification.
-            // If auto-verification happens (every 15 mins), updating the indicators (Green/Red badges) is enough.
-            // Popups are annoying if auto.
-            // So: ONLY show popups if force === true.
-            if (force) {
-                if (disconnectedList.length > 0) {
-                    setDisconnectedClinics(disconnectedList)
-                    setIsAlertOpen(true)
-                } else if (instances.length > 0) {
-                    setConnectedClinics(connectedList)
-                    setIsSuccessAlertOpen(true)
-                }
+            if (!isConnected && clinic.instanceName) {
+                disconnectedList.push(clinic.nome || clinic.username || clinic.instanceName)
+            } else if (isConnected && clinic.instanceName) {
+                connectedList.push(clinic.nome || clinic.username || clinic.instanceName)
             }
 
-        } catch (error: any) {
-            console.error("Error checking statuses:", error)
-            // significant error, maybe verify internet? 
-            if (force) alert(`Erro ao verificar conexões: ${error.message}`)
-        } finally {
-            setIsCheckingStatus(false)
+            return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
+        })
+
+        setClinics(updatedClinics)
+
+        if (force) {
+            if (disconnectedList.length > 0) {
+                setDisconnectedClinics(disconnectedList)
+                setIsAlertOpen(true)
+            } else if (instances.length > 0) {
+                setConnectedClinics(connectedList)
+                setIsSuccessAlertOpen(true)
+            }
         }
     }
 
