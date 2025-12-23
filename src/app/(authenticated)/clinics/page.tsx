@@ -292,6 +292,21 @@ export default function ClinicsPage() {
         }
     }
 
+    const sendTestNotification = async () => {
+        if (!confirm("Enviar notificação de teste para todos os dispositivos inscritos?")) return;
+        try {
+            const res = await fetch('/api/test-push', { method: 'POST' });
+            if (res.ok) {
+                alert('Teste enviado! Verifique se chegou no seu celular/PC.');
+            } else {
+                const data = await res.json();
+                alert(`Erro ao testar: ${data.error || 'Falha no servidor'}`);
+            }
+        } catch (e: any) {
+            alert(`Erro ao testar: ${e.message}`);
+        }
+    }
+
     const createClinicAndGenerateLink = async () => {
         // Validation based on mode
         if (isSelectExisting) {
@@ -453,6 +468,19 @@ export default function ClinicsPage() {
                                     )}
                                     {subscription ? "Notificações Ativas" : "Ativar Notificações"}
                                 </Button>
+
+                            )}
+
+                            {subscription && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={sendTestNotification}
+                                    title="Testar Notificação"
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    <Smartphone className="h-4 w-4" />
+                                </Button>
                             )}
                         </div>
 
@@ -474,6 +502,13 @@ export default function ClinicsPage() {
                                         <DropdownMenuItem onClick={subscribeToNotifications} disabled={isPushLoading || !!subscription}>
                                             {subscription ? <Bell className="mr-2 h-4 w-4 text-green-500" /> : <BellOff className="mr-2 h-4 w-4" />}
                                             {subscription ? "Notificações Ativas" : "Ativar Notificações"}
+                                        </DropdownMenuItem>
+
+                                    )}
+                                    {subscription && (
+                                        <DropdownMenuItem onClick={sendTestNotification}>
+                                            <Smartphone className="mr-2 h-4 w-4" />
+                                            Testar Push
                                         </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
@@ -625,86 +660,88 @@ export default function ClinicsPage() {
                 </div>
             </div>
 
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <Card key={i} className="animate-pulse">
-                            <CardContent className="p-6">
-                                <div className="h-20 bg-muted rounded"></div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            ) : filteredClinics.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredClinics.map(clinic => (
-                        <Card key={clinic.id} className="group hover:shadow-lg transition-all duration-300 border-border/50">
-                            <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Building2 className="h-6 w-6 text-primary" />
+            {
+                loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map(i => (
+                            <Card key={i} className="animate-pulse">
+                                <CardContent className="p-6">
+                                    <div className="h-20 bg-muted rounded"></div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : filteredClinics.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredClinics.map(clinic => (
+                            <Card key={clinic.id} className="group hover:shadow-lg transition-all duration-300 border-border/50">
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <Building2 className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <CardTitle className="text-lg">
+                                                    {clinic.nome || clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
+                                                </CardTitle>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <CardTitle className="text-lg">
-                                                {clinic.nome || clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
-                                            </CardTitle>
+                                        <Badge variant="outline" className="text-green-500 border-green-500/30">Ativo</Badge>
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
+                                        {clinic.connectionStatus === 'checking' ? (
+                                            <Badge variant="outline" className="text-yellow-600 bg-yellow-500/10 border-yellow-500/20">
+                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Verificando
+                                            </Badge>
+                                        ) : clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
+                                            <Badge variant={clinic.connectionStatus === 'connected' ? 'default' : 'destructive'} className={clinic.connectionStatus === 'connected' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border-0' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0'}>
+                                                <MessageSquare className="w-3 h-3 mr-1" />
+                                                {clinic.connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Offline'}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div className="p-2 rounded-lg bg-muted/50">
+                                            <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                            <p className="text-lg font-bold">{clinic.totalPatients !== undefined ? clinic.totalPatients : '-'}</p>
+                                            <p className="text-[10px] text-muted-foreground">Pacientes</p>
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-muted/50">
+                                            <Calendar className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                            <p className="text-lg font-bold">{clinic.todayAppointments !== undefined ? clinic.todayAppointments : '-'}</p>
+                                            <p className="text-[10px] text-muted-foreground">Hoje</p>
+                                        </div>
+                                        <div className="p-2 rounded-lg bg-muted/50">
+                                            <MessageSquare className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                                            <p className="text-lg font-bold">{clinic.monthlyConversations !== undefined ? clinic.monthlyConversations : '-'}</p>
+                                            <p className="text-[10px] text-muted-foreground">Conversas/Mês</p>
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className="text-green-500 border-green-500/30">Ativo</Badge>
-                                </div>
-                                <div className="mt-2 flex items-center justify-between">
-                                    <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
-                                    {clinic.connectionStatus === 'checking' ? (
-                                        <Badge variant="outline" className="text-yellow-600 bg-yellow-500/10 border-yellow-500/20">
-                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Verificando
-                                        </Badge>
-                                    ) : clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
-                                        <Badge variant={clinic.connectionStatus === 'connected' ? 'default' : 'destructive'} className={clinic.connectionStatus === 'connected' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border-0' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0'}>
-                                            <MessageSquare className="w-3 h-3 mr-1" />
-                                            {clinic.connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Offline'}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-3 gap-2 text-center">
-                                    <div className="p-2 rounded-lg bg-muted/50">
-                                        <Users className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.totalPatients !== undefined ? clinic.totalPatients : '-'}</p>
-                                        <p className="text-[10px] text-muted-foreground">Pacientes</p>
-                                    </div>
-                                    <div className="p-2 rounded-lg bg-muted/50">
-                                        <Calendar className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.todayAppointments !== undefined ? clinic.todayAppointments : '-'}</p>
-                                        <p className="text-[10px] text-muted-foreground">Hoje</p>
-                                    </div>
-                                    <div className="p-2 rounded-lg bg-muted/50">
-                                        <MessageSquare className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
-                                        <p className="text-lg font-bold">{clinic.monthlyConversations !== undefined ? clinic.monthlyConversations : '-'}</p>
-                                        <p className="text-[10px] text-muted-foreground">Conversas/Mês</p>
-                                    </div>
-                                </div>
-                                <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">
-                                    <Link href={`/clinics/${clinic.id}`}>
-                                        Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                <Card className="border-dashed">
-                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                        <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                        <h3 className="text-lg font-semibold">Nenhuma clínica encontrada</h3>
-                        <p className="text-muted-foreground text-sm mt-1">
-                            {searchQuery ? "Tente ajustar sua busca." : "Clique em 'Novo Cliente' para adicionar."}
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
+                                    <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">
+                                        <Link href={`/clinics/${clinic.id}`}>
+                                            Ver Detalhes <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <Card className="border-dashed">
+                        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                            <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                            <h3 className="text-lg font-semibold">Nenhuma clínica encontrada</h3>
+                            <p className="text-muted-foreground text-sm mt-1">
+                                {searchQuery ? "Tente ajustar sua busca." : "Clique em 'Novo Cliente' para adicionar."}
+                            </p>
+                        </CardContent>
+                    </Card>
+                )
+            }
             {/* Disconnected Alert Dialog */}
             {/* Disconnected Alert Dialog */}
             <Modal open={isAlertOpen} onOpenChange={setIsAlertOpen}>
@@ -776,6 +813,6 @@ export default function ClinicsPage() {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-        </div>
+        </div >
     )
 }
