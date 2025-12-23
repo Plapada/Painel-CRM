@@ -74,19 +74,22 @@ export default function ClinicDetailPage() {
     const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
 
+    const [clinicRealName, setClinicRealName] = useState<string | null>(null)
+
     useEffect(() => {
         if (clinic) {
             checkWhatsAppStatus()
         }
-    }, [clinic])
+    }, [clinic, clinicRealName])
 
     const checkWhatsAppStatus = async () => {
         if (!clinic) return
 
-        const clinicName = clinic.username || clinic.email?.split('@')[0]
-        if (!clinicName) return
+        // Use the real clinic name from 'clinicas' table, falling back to username only if absolutely necessary
+        const nameSource = clinicRealName || clinic.username || clinic.email?.split('@')[0]
+        if (!nameSource) return
 
-        const instanceName = clinicName
+        const instanceName = nameSource
             .toLowerCase()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
@@ -130,9 +133,9 @@ export default function ClinicDetailPage() {
         setIsDeleting(true)
         try {
             // 1. Delete WhatsApp Instance (Fire and forget, or await if critical)
-            const clinicName = clinic.username || clinic.email?.split('@')[0]
-            if (clinicName) {
-                const instanceName = clinicName
+            const nameSource = clinicRealName || clinic.username || clinic.email?.split('@')[0]
+            if (nameSource) {
+                const instanceName = nameSource
                     .toLowerCase()
                     .normalize('NFD')
                     .replace(/[\u0300-\u036f]/g, '')
@@ -196,6 +199,17 @@ export default function ClinicDetailPage() {
             }
 
             const clinicUUID = clinicData.clinic_id
+
+            // Fetch real clinic name from 'clinicas' table
+            const { data: realClinic } = await supabase
+                .from('clinicas')
+                .select('nome_clinica')
+                .eq('clinic_id', clinicUUID)
+                .single()
+
+            if (realClinic?.nome_clinica) {
+                setClinicRealName(realClinic.nome_clinica)
+            }
 
             // 2. Fetch conversation stats
             const now = new Date()
