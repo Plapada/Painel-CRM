@@ -113,8 +113,9 @@ export default function RegisterPage() {
             setSuccess(true)
 
             // Redirect to WhatsApp connection page after 2 seconds
+            // Using window.location for more reliable navigation
             setTimeout(() => {
-                router.push(`/connect-whatsapp/${token}`)
+                window.location.href = `/connect-whatsapp/${token}`
             }, 2000)
         } catch (error: any) {
             form.setError("root", {
