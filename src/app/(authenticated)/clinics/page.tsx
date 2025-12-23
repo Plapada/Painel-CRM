@@ -171,54 +171,87 @@ export default function ClinicsPage() {
     const checkAllStatuses = async (currentClinics = clinics) => {
         setIsCheckingStatus(true)
         try {
-            const response = await fetch(process.env.NEXT_PUBLIC_WEBHOOK_CHECK_STATUS!, {
-                method: 'GET', // Or POST if webhook requires it.
+            const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_CHECK_STATUS
+
+            if (!webhookUrl) {
+                console.error("NEXT_PUBLIC_WEBHOOK_CHECK_STATUS is not defined")
+                alert("Erro: URL do webhook não está configurada.")
+                return
+            }
+
+            console.log("Calling webhook:", webhookUrl)
+
+            const response = await fetch(webhookUrl, {
+                method: 'GET',
             })
 
-            if (response.ok) {
-                const data = await response.json()
-                // Assume data returned by N8N matches what we need.
-                // If it returns an object with instances array or just array
-                const instances = Array.isArray(data) ? data : (data.instances || (data.data ? data.data : []))
+            console.log("Response status:", response.status)
 
-                let disconnectedList: string[] = []
-
-                setClinics(prev => {
-                    const updated = prev.map(clinic => {
-                        if (!clinic.instanceName) return clinic
-
-                        // Find matching instance
-                        // Evolution API structure: { instance: { instanceName: ... }, ... } OR { instance: "name", ... }
-                        // We try to match liberally
-                        const match = instances.find((i: any) => {
-                            const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
-                            return iName === clinic.instanceName
-                        })
-
-                        let isConnected = false
-                        if (match) {
-                            const state = match.instance?.state || match.state || match.status
-                            isConnected = state === 'open' || state === 'connected'
-                        }
-
-                        if (!isConnected && clinic.instanceName) {
-                            disconnectedList.push(clinic.username || clinic.email?.split('@')[0] || clinic.instanceName)
-                        }
-
-                        return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
-                    })
-                    return updated
-                })
-
-                if (disconnectedList.length > 0) {
-                    setDisconnectedClinics(disconnectedList)
-                    setIsAlertOpen(true)
-                } else if (instances.length > 0) {
-                    setIsSuccessAlertOpen(true)
-                }
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error("Webhook error response:", errorText)
+                alert(`Erro ao verificar conexões (${response.status}): ${errorText.slice(0, 100)}`)
+                return
             }
-        } catch (error) {
+
+            const data = await response.json()
+            console.log("Webhook response data:", data)
+
+            // Handle different possible response formats from N8N/Evolution API
+            const instances = Array.isArray(data) ? data : (data.instances || data.data || [])
+
+            console.log("Parsed instances:", instances)
+
+            if (instances.length === 0) {
+                alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
+                return
+            }
+
+            let disconnectedList: string[] = []
+
+            setClinics(prev => {
+                const updated = prev.map(clinic => {
+                    if (!clinic.instanceName) {
+                        console.log("Clinic without instanceName:", clinic.username || clinic.email)
+                        return clinic
+                    }
+
+                    console.log("Looking for instance:", clinic.instanceName)
+
+                    // Find matching instance - try multiple field patterns
+                    const match = instances.find((i: any) => {
+                        const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
+                        console.log("Comparing:", iName, "vs", clinic.instanceName)
+                        return iName === clinic.instanceName
+                    })
+
+                    let isConnected = false
+                    if (match) {
+                        const state = match.instance?.state || match.state || match.status
+                        console.log("Match found. State:", state)
+                        isConnected = state === 'open' || state === 'connected'
+                    } else {
+                        console.log("No match found for:", clinic.instanceName)
+                    }
+
+                    if (!isConnected && clinic.instanceName) {
+                        disconnectedList.push(clinic.username || clinic.email?.split('@')[0] || clinic.instanceName)
+                    }
+
+                    return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
+                })
+                return updated
+            })
+
+            if (disconnectedList.length > 0) {
+                setDisconnectedClinics(disconnectedList)
+                setIsAlertOpen(true)
+            } else if (instances.length > 0) {
+                setIsSuccessAlertOpen(true)
+            }
+        } catch (error: any) {
             console.error("Error checking statuses:", error)
+            alert(`Erro ao verificar conexões: ${error.message}`)
         } finally {
             setIsCheckingStatus(false)
         }
