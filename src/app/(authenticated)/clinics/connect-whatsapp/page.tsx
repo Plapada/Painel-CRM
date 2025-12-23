@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-context'
@@ -14,7 +14,7 @@ import Link from 'next/link'
 
 type Step = 'tutorial' | 'qrcode' | 'success'
 
-export default function AdminConnectWhatsAppPage() {
+function AdminConnectWhatsAppContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const { user } = useAuth()
@@ -239,5 +239,26 @@ export default function AdminConnectWhatsAppPage() {
                 </div>
             </Card>
         </div>
+    )
+}
+
+// Loading fallback for Suspense
+function LoadingFallback() {
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center p-4 bg-black dark">
+            <div className="flex items-center gap-3 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Carregando...</span>
+            </div>
+        </div>
+    )
+}
+
+// Main page component with Suspense boundary
+export default function AdminConnectWhatsAppPage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <AdminConnectWhatsAppContent />
+        </Suspense>
     )
 }
