@@ -171,15 +171,10 @@ export default function ClinicsPage() {
     const checkAllStatuses = async (currentClinics = clinics) => {
         setIsCheckingStatus(true)
         try {
-            const webhookUrl = process.env.NEXT_PUBLIC_WEBHOOK_CHECK_STATUS
+            // Use local API proxy to avoid CORS issues
+            const webhookUrl = '/api/check-status'
 
-            if (!webhookUrl) {
-                console.error("NEXT_PUBLIC_WEBHOOK_CHECK_STATUS is not defined")
-                alert("Erro: URL do webhook não está configurada.")
-                return
-            }
-
-            console.log("Calling webhook:", webhookUrl)
+            console.log("Calling API:", webhookUrl)
 
             const response = await fetch(webhookUrl, {
                 method: 'GET',
@@ -188,9 +183,9 @@ export default function ClinicsPage() {
             console.log("Response status:", response.status)
 
             if (!response.ok) {
-                const errorText = await response.text()
-                console.error("Webhook error response:", errorText)
-                alert(`Erro ao verificar conexões (${response.status}): ${errorText.slice(0, 100)}`)
+                const errorData = await response.json().catch(() => ({}))
+                console.error("API error response:", errorData)
+                alert(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
                 return
             }
 
