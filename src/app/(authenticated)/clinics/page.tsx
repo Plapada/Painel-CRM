@@ -39,7 +39,7 @@ interface Clinic {
     totalPatients?: number
     todayAppointments?: number
     monthlyConversations?: number
-    connectionStatus?: 'connected' | 'disconnected' | 'unknown'
+    connectionStatus?: 'connected' | 'disconnected' | 'unknown' | 'checking'
     instanceName?: string
 }
 
@@ -158,8 +158,8 @@ export default function ClinicsPage() {
                     totalPatients: patientCount ?? undefined,
                     todayAppointments: aptCount ?? undefined,
                     monthlyConversations: convCount ?? undefined,
-                    connectionStatus: 'unknown',
-                    connectionStatus: 'checked' as const, // Temporary, will be updated by checkAllStatuses
+
+                    connectionStatus: 'checking', // Initial state while checking
                     instanceName: generatedInstanceName,
                     nome: realName || c.username,
                 })
@@ -598,7 +598,11 @@ export default function ClinicsPage() {
                                 </div>
                                 <div className="mt-2 flex items-center justify-between">
                                     <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
-                                    {clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
+                                    {clinic.connectionStatus === 'checking' ? (
+                                        <Badge variant="outline" className="text-yellow-600 bg-yellow-500/10 border-yellow-500/20">
+                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Verificando
+                                        </Badge>
+                                    ) : clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
                                         <Badge variant={clinic.connectionStatus === 'connected' ? 'default' : 'destructive'} className={clinic.connectionStatus === 'connected' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border-0' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0'}>
                                             <MessageSquare className="w-3 h-3 mr-1" />
                                             {clinic.connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Offline'}
