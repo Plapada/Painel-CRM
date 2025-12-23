@@ -25,7 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone } from "lucide-react"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 interface Clinic {
@@ -72,6 +72,8 @@ export default function ClinicsPage() {
 
     const [loadingClinics, setLoadingClinics] = useState(false)
     const [isCheckingStatus, setIsCheckingStatus] = useState(false)
+    const [disconnectedClinics, setDisconnectedClinics] = useState<string[]>([])
+    const [isAlertOpen, setIsAlertOpen] = useState(false)
 
     useEffect(() => {
         if (!isAdmin) return
@@ -178,25 +180,39 @@ export default function ClinicsPage() {
                 // If it returns an object with instances array or just array
                 const instances = Array.isArray(data) ? data : (data.instances || (data.data ? data.data : []))
 
-                setClinics(prev => prev.map(clinic => {
-                    if (!clinic.instanceName) return clinic
+                let disconnectedList: string[] = []
 
-                    // Find matching instance
-                    // Evolution API structure: { instance: { instanceName: ... }, ... } OR { instance: "name", ... }
-                    // We try to match liberally
-                    const match = instances.find((i: any) => {
-                        const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
-                        return iName === clinic.instanceName
+                setClinics(prev => {
+                    const updated = prev.map(clinic => {
+                        if (!clinic.instanceName) return clinic
+
+                        // Find matching instance
+                        // Evolution API structure: { instance: { instanceName: ... }, ... } OR { instance: "name", ... }
+                        // We try to match liberally
+                        const match = instances.find((i: any) => {
+                            const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
+                            return iName === clinic.instanceName
+                        })
+
+                        let isConnected = false
+                        if (match) {
+                            const state = match.instance?.state || match.state || match.status
+                            isConnected = state === 'open' || state === 'connected'
+                        }
+
+                        if (!isConnected && clinic.instanceName) {
+                            disconnectedList.push(clinic.username || clinic.email?.split('@')[0] || clinic.instanceName)
+                        }
+
+                        return { ...clinic, connectionStatus: isConnected ? 'connected' : 'disconnected' }
                     })
+                    return updated
+                })
 
-                    let isConnected = false
-                    if (match) {
-                        const state = match.instance?.state || match.state || match.status
-                        isConnected = state === 'open' || state === 'connected'
-                    }
-
-                    return { ...clinic, connectionStatus: isConnected ? 'connected' : 'disconnected' }
-                }))
+                if (disconnectedList.length > 0) {
+                    setDisconnectedClinics(disconnectedList)
+                    setIsAlertOpen(true)
+                }
             }
         } catch (error) {
             console.error("Error checking statuses:", error)
@@ -584,6 +600,31 @@ export default function ClinicsPage() {
                     </CardContent>
                 </Card>
             )}
+            {/* Disconnected Alert Dialog */}
+            <Dialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" />
+                            Instâncias Desconectadas
+                        </DialogTitle>
+                        <DialogDescription>
+                            As seguintes clínicas estão com o WhatsApp desconectado ou instável:
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                        {disconnectedClinics.map((name, idx) => (
+                            <div key={idx} className="flex items-center gap-2 p-3 rounded bg-destructive/10 text-destructive text-sm font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                                {name}
+                            </div>
+                        ))}
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsAlertOpen(false)}>Fechar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
