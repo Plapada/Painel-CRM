@@ -58,8 +58,8 @@ export function MobileNav() {
     }
 
     return (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-sm md:hidden animate-in slide-in-from-bottom duration-300">
-            <div className="relative flex items-center justify-around bg-background/90 shadow-lg rounded-2xl p-2 border border-border/50 backdrop-blur-lg">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit sm:max-w-sm md:hidden animate-in slide-in-from-bottom duration-300">
+            <div className="relative flex items-center justify-around bg-background/90 shadow-lg rounded-full px-4 py-2 border border-border/50 backdrop-blur-lg gap-2">
 
                 {/* Visible Items */}
                 {visibleItems.map((item) => {
@@ -69,32 +69,32 @@ export function MobileNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[64px] gap-1",
+                                "flex flex-col items-center justify-center p-1.5 rounded-full transition-all duration-300 min-w-[50px] gap-0.5",
                                 isActive
                                     ? "bg-primary/10 text-primary"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             )}
                         >
-                            <item.icon className={cn("h-6 w-6", isActive && "fill-current")} />
-                            <span className="text-[10px] font-medium">{item.name}</span>
+                            <item.icon className={cn("h-5 w-5", isActive && "fill-current")} />
+                            <span className="text-[9px] font-medium leading-none mt-0.5">{item.name}</span>
                         </Link>
                     )
                 })}
 
                 {/* Divider */}
-                <div className="h-8 w-px bg-border/50 mx-1"></div>
+                <div className="h-6 w-px bg-border/50 mx-1"></div>
 
                 {/* Menu Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
                             className={cn(
-                                "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[64px] gap-1",
+                                "flex flex-col items-center justify-center p-1.5 rounded-full transition-all duration-300 min-w-[50px] gap-0.5",
                                 "text-muted-foreground hover:text-foreground hover:bg-muted/50 focus:outline-none"
                             )}
                         >
-                            <Menu className="h-6 w-6" />
-                            <span className="text-[10px] font-medium">Menu</span>
+                            <Menu className="h-5 w-5" />
+                            <span className="text-[9px] font-medium leading-none mt-0.5">Menu</span>
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="top" className="w-56 mb-2 rounded-xl p-2 shadow-xl border-border/50 bg-background/95 backdrop-blur">
@@ -116,13 +116,13 @@ export function MobileNav() {
                         <DropdownMenuItem asChild>
                             <Link href="/settings" className="flex items-center gap-2 p-2.5 cursor-pointer rounded-lg hover:bg-muted focus:bg-muted">
                                 <Settings className="h-4 w-4" />
-                                <span>Configurações</span>
+                                <span className="text-sm">Configurações</span>
                             </Link>
                         </DropdownMenuItem>
 
                         <DropdownMenuItem onClick={logout} className="flex items-center gap-2 p-2.5 cursor-pointer rounded-lg text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive">
                             <LogOut className="h-4 w-4" />
-                            <span>Sair</span>
+                            <span className="text-sm">Sair</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

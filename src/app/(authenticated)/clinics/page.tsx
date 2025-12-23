@@ -25,6 +25,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle, CheckCircle, Bell, BellOff } from "lucide-react"
 import Link from "next/link"
@@ -416,34 +424,62 @@ export default function ClinicsPage() {
                     </div>
 
                     {/* New Client Button */}
-                    {/* Check Status Button */}
-                    <Button
-                        variant="outline"
-                        onClick={() => checkAllStatuses()}
-                        disabled={isCheckingStatus || loading}
-                        className="mr-2"
-                    >
-                        <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
-                        Verificar Conexões
-                    </Button>
+                    {/* Responsive Actions: Desktop (Flex) vs Mobile (Dropdown) */}
+                    <div className="flex items-center gap-2">
+                        {/* Desktop Actions */}
+                        <div className="hidden md:flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => checkAllStatuses()}
+                                disabled={isCheckingStatus || loading}
+                            >
+                                <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+                                Verificar Conexões
+                            </Button>
 
-                    {isSupported && (
-                        <Button
-                            variant="outline"
-                            onClick={subscribeToNotifications}
-                            disabled={isPushLoading || !!subscription}
-                            className={`mr-2 ${subscription ? "text-green-500 border-green-500/30 bg-green-500/5" : ""}`}
-                        >
-                            {isPushLoading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : subscription ? (
-                                <Bell className="mr-2 h-4 w-4" />
-                            ) : (
-                                <BellOff className="mr-2 h-4 w-4" />
+                            {isSupported && (
+                                <Button
+                                    variant="outline"
+                                    onClick={subscribeToNotifications}
+                                    disabled={isPushLoading || !!subscription}
+                                    className={`${subscription ? "text-green-500 border-green-500/30 bg-green-500/5" : ""}`}
+                                >
+                                    {isPushLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : subscription ? (
+                                        <Bell className="mr-2 h-4 w-4" />
+                                    ) : (
+                                        <BellOff className="mr-2 h-4 w-4" />
+                                    )}
+                                    {subscription ? "Notificações Ativas" : "Ativar Notificações"}
+                                </Button>
                             )}
-                            {subscription ? "Notificações Ativas" : "Ativar Notificações"}
-                        </Button>
-                    )}
+                        </div>
+
+                        {/* Mobile Dropdown */}
+                        <div className="md:hidden">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon">
+                                        <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={() => checkAllStatuses()} disabled={isCheckingStatus}>
+                                        <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+                                        Verificar Conexões
+                                    </DropdownMenuItem>
+                                    {isSupported && (
+                                        <DropdownMenuItem onClick={subscribeToNotifications} disabled={isPushLoading || !!subscription}>
+                                            {subscription ? <Bell className="mr-2 h-4 w-4 text-green-500" /> : <BellOff className="mr-2 h-4 w-4" />}
+                                            {subscription ? "Notificações Ativas" : "Ativar Notificações"}
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
 
                     <Modal open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
                         <ModalTrigger asChild>
