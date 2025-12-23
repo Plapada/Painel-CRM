@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import {
     Building2, ArrowLeft, Users, Calendar, MessageSquare,
-    TrendingUp, Clock, Search, AlertCircle, Link2, Copy, Check, ExternalLink, MessageCircle
+    TrendingUp, Clock, Search, AlertCircle, Link2, Copy, Check, ExternalLink, MessageCircle, Settings, Trash2, Loader2
 } from "lucide-react"
 import Link from "next/link"
 import { ElegantStatsCard } from "@/components/dashboard/ElegantStatsCard"
@@ -72,6 +72,7 @@ export default function ClinicDetailPage() {
     // Copy link state
     const [copied, setCopied] = useState(false)
     const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         if (clinic) {
@@ -119,6 +120,55 @@ export default function ClinicDetailPage() {
             }
         } catch (error) {
             console.error('Error checking WhatsApp status:', error)
+        }
+    }
+
+    const handleDeleteClinic = async () => {
+        if (!clinic) return
+        if (!confirm("⚠️ ATENÇÃO: Tem certeza absoluta que deseja excluir esta clínica?\n\nEsta ação irá:\n1. Deletar a conta da clínica do sistema\n2. Deletar a instância do WhatsApp conectada\n3. Remover todos os dados associados\n\nEsta ação não pode ser desfeita.")) return
+
+        setIsDeleting(true)
+        try {
+            // 1. Delete WhatsApp Instance (Fire and forget, or await if critical)
+            const clinicName = clinic.username || clinic.email?.split('@')[0]
+            if (clinicName) {
+                const instanceName = clinicName
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '')
+
+                try {
+                    await fetch(process.env.NEXT_PUBLIC_WEBHOOK_DELETE_INSTANCE!, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ instanceName })
+                    })
+                } catch (e) {
+                    console.error("Error calling delete webhook:", e)
+                    // Continue deletion even if webhook fails, but maybe warn
+                }
+            }
+
+            // 2. Delete from Supabase
+            // Note: If you have RLS or foreign keys, ensure cascading is handled or multiple deletes are needed.
+            // Assuming cascading or simple user deletion for now.
+            const { error } = await supabase
+                .from('usuarios_site')
+                .delete()
+                .eq('id', clinicId)
+
+            if (error) throw error
+
+            // 3. Redirect
+            window.location.href = '/clinics'
+
+        } catch (error: any) {
+            console.error("Error deleting clinic:", error)
+            alert(`Erro ao deletar clínica: ${error.message}`)
+        } finally {
+            setIsDeleting(false)
         }
     }
 
@@ -415,6 +465,7 @@ export default function ClinicDetailPage() {
                     <TabsTrigger value="conversations">Conversas</TabsTrigger>
                     <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                     <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
+                    <TabsTrigger value="settings">Configurações</TabsTrigger>
                 </TabsList>
 
                 {/* Conversations Tab - NEW */}
@@ -529,6 +580,45 @@ export default function ClinicDetailPage() {
                             ) : (
                                 <p className="text-center text-muted-foreground py-8">Nenhum agendamento para hoje.</p>
                             )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="settings" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-destructive">
+                                <AlertCircle className="h-5 w-5" />
+                                Zona de Perigo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="font-semibold text-destructive">Deletar Clínica</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Ao deletar esta clínica, todos os dados de pacientes, conversas e a instância do WhatsApp serão removidos permanentemente.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDeleteClinic}
+                                    disabled={isDeleting}
+                                    className="shrink-0"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Deletando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Deletar Permanentemente
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
