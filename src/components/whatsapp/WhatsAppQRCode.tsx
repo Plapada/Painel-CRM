@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
-import { CheckCircle, RefreshCw, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, RefreshCw, ArrowLeft, AlertCircle, Loader2, Scan, ShieldCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface WhatsAppQRCodeProps {
     instanceName: string
@@ -190,7 +191,6 @@ export function WhatsAppQRCode({ instanceName, clinicName, onBack, onConnected }
     // Timer for QR refresh
     useEffect(() => {
         if (isConnected || isLoading || status !== 'checking') return
-
         const timer = setInterval(() => {
             setTimeLeft(prev => {
                 if (prev <= 1) {
@@ -200,7 +200,6 @@ export function WhatsAppQRCode({ instanceName, clinicName, onBack, onConnected }
                 return prev - 1
             })
         }, 1000)
-
         return () => clearInterval(timer)
     }, [isConnected, isLoading, status, refreshQRCode])
 
@@ -212,80 +211,88 @@ export function WhatsAppQRCode({ instanceName, clinicName, onBack, onConnected }
     // Connected state
     if (isConnected) {
         return (
-            <div className="flex flex-col items-center justify-center py-8 px-4 text-emerald-500">
-                <CheckCircle className="h-16 w-16 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Conexão Estabelecida!</h3>
-                <p className="text-sm text-muted-foreground text-center">
-                    Instância &quot;{clinicName}&quot; conectada com sucesso.
-                </p>
-            </div>
-        )
-    }
-
-    // Error state
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center py-8 px-4">
-                <AlertCircle className="h-16 w-16 mb-4 text-destructive" />
-                <h3 className="text-lg font-semibold mb-2 text-destructive">Erro</h3>
-                <p className="text-sm text-muted-foreground text-center mb-4">{error}</p>
-                <button
-                    onClick={createInstance}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                    <RefreshCw className="h-4 w-4" />
-                    Tentar Novamente
-                </button>
-            </div>
-        )
-    }
-
-    // Loading state
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-                <Loader2 className="h-8 w-8 mb-4 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">
-                    {status === 'creating' ? 'Criando instância...' : 'Gerando QR Code...'}
+            <div className="flex flex-col items-center justify-center p-8 text-emerald-500 animate-in zoom-in duration-500">
+                <div className="h-20 w-20 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6">
+                    <CheckCircle className="h-10 w-10 animate-pulse" />
+                </div>
+                <h3 className="text-2xl font-playfair font-bold mb-2 text-white">Conexão Estabelecida</h3>
+                <p className="text-neutral-400 text-center max-w-sm">
+                    A instância de <span className="text-emerald-400">{clinicName}</span> foi sincronizada com sucesso.
                 </p>
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col items-center space-y-4">
-            {/* QR Code Display */}
-            <div className="p-3 bg-white rounded-xl shadow-lg">
-                {qrCodeSrc ? (
-                    <img
-                        src={qrCodeSrc}
-                        alt="QR Code WhatsApp"
-                        className="w-[240px] h-[240px] object-contain"
-                    />
-                ) : (
-                    <div className="w-[240px] h-[240px] flex items-center justify-center bg-muted rounded-lg">
-                        <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+        <div className="relative w-full min-h-[700px] flex flex-col items-center justify-center p-8 bg-black text-white overflow-hidden">
+            {/* Background Grid */}
+            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
+                style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+            />
+
+            <div className="relative z-10 max-w-md w-full flex flex-col items-center space-y-8">
+                {/* Header */}
+                <div className="text-center space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-neutral-400 backdrop-blur-sm">
+                        <ShieldCheck className="h-3 w-3 text-green-500" />
+                        <span>Ambiente Seguro</span>
                     </div>
-                )}
-            </div>
+                    <div>
+                        <h2 className="text-3xl font-bold font-playfair mb-2">Conectar WhatsApp</h2>
+                        <p className="text-neutral-500 text-sm">
+                            Escaneie o QR Code para vincular <span className="text-white font-medium">{clinicName}</span>
+                        </p>
+                    </div>
+                </div>
 
-            {/* Timer Section */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-card/50 border rounded-lg">
-                <RefreshCw className="h-4 w-4 text-primary" />
-                <span className="text-sm text-muted-foreground">Atualiza em:</span>
-                <span className={`font-mono font-bold ${timeLeft <= 5 ? 'text-destructive' : 'text-primary'}`}>
-                    {timeLeft}s
-                </span>
-            </div>
+                {/* QR Display */}
+                <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-tr from-green-500/20 via-primary/20 to-purple-500/20 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
+                    <div className="relative bg-black border border-white/10 rounded-xl p-6 shadow-2xl backdrop-blur-xl">
+                        {status === 'error' ? (
+                            <div className="w-[260px] h-[260px] flex flex-col items-center justify-center text-center p-4">
+                                <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                                <p className="text-sm text-neutral-400 mb-4">{error}</p>
+                                <Button onClick={createInstance} variant="outline" className="border-white/10 hover:bg-white/5">
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Tentar Novamente
+                                </Button>
+                            </div>
+                        ) : qrCodeSrc ? (
+                            <div className="relative w-[260px] h-[260px]">
+                                <img
+                                    src={qrCodeSrc}
+                                    alt="QR Code WhatsApp"
+                                    className="w-full h-full object-contain rounded-lg bg-white p-2"
+                                />
+                                {/* Scan Line */}
+                                <div className="absolute inset-x-0 top-0 h-1 bg-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-scan pointer-events-none opacity-50"></div>
+                            </div>
+                        ) : (
+                            <div className="w-[260px] h-[260px] flex items-center justify-center bg-white/5 rounded-lg">
+                                <Loader2 className="h-8 w-8 text-neutral-500 animate-spin" />
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-            {/* Back Button */}
-            <button
-                onClick={onBack}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-            </button>
+                {/* Footer Controls */}
+                <div className="w-full flex items-center justify-between px-2">
+                    <Button
+                        variant="ghost"
+                        onClick={onBack}
+                        className="text-neutral-500 hover:text-white hover:bg-white/5 gap-2"
+                    >
+                        <ArrowLeft className="h-4 w-4" /> Voltar
+                    </Button>
+
+                    {!isConnected && status !== 'error' && (
+                        <div className="flex items-center gap-2 text-xs text-neutral-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                            <RefreshCw className={`h-3 w-3 ${timeLeft <= 5 ? 'text-red-500' : 'text-neutral-400'}`} />
+                            <span>Atualiza em <span className="text-white font-mono">{timeLeft}s</span></span>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

@@ -26,8 +26,9 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle, CheckCircle } from "lucide-react"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle, CheckCircle, Bell, BellOff } from "lucide-react"
 import Link from "next/link"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 interface Clinic {
     id: string
@@ -77,6 +78,8 @@ export default function ClinicsPage() {
     const [connectedClinics, setConnectedClinics] = useState<string[]>([])
     const [isAlertOpen, setIsAlertOpen] = useState(false)
     const [isSuccessAlertOpen, setIsSuccessAlertOpen] = useState(false)
+
+    const { isSupported, subscription, subscribeToNotifications, isLoading: isPushLoading } = usePushNotifications()
 
     useEffect(() => {
         if (!isAdmin) return
@@ -423,6 +426,24 @@ export default function ClinicsPage() {
                         <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
                         Verificar Conexões
                     </Button>
+
+                    {isSupported && (
+                        <Button
+                            variant="outline"
+                            onClick={subscribeToNotifications}
+                            disabled={isPushLoading || !!subscription}
+                            className={`mr-2 ${subscription ? "text-green-500 border-green-500/30 bg-green-500/5" : ""}`}
+                        >
+                            {isPushLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : subscription ? (
+                                <Bell className="mr-2 h-4 w-4" />
+                            ) : (
+                                <BellOff className="mr-2 h-4 w-4" />
+                            )}
+                            {subscription ? "Notificações Ativas" : "Ativar Notificações"}
+                        </Button>
+                    )}
 
                     <Modal open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
                         <ModalTrigger asChild>

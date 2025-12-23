@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Hexagon, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { GoldenParticlesBackground } from '@/components/whatsapp/GoldenParticlesBackground'
 import { WhatsAppTutorial } from '@/components/whatsapp/WhatsAppTutorial'
 import { WhatsAppQRCode } from '@/components/whatsapp/WhatsAppQRCode'
@@ -169,35 +169,9 @@ export default function ConnectWhatsAppPage() {
 
             {/* Main Card */}
             <Card
-                className={`w-[95%] relative z-10 transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${step === 'tutorial'
-                        ? 'max-w-7xl bg-[#F8FAFC] text-neutral-900 border-none shadow-2xl'
-                        : 'max-w-[460px] bg-black/60 backdrop-blur-xl border-white/[0.08] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)]'
-                    }`}
-                style={step === 'tutorial' ? {} : {
-                    boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(212, 175, 55, 0.08)',
-                }}
+                className="w-[95%] max-w-7xl relative z-10 bg-black text-white border border-white/10 shadow-2xl transition-all duration-700"
             >
-                {step !== 'tutorial' && (
-                    <CardHeader className="text-center pb-2">
-                        {/* Overline */}
-                        <span className="text-primary/80 text-[10px] uppercase tracking-[0.3em] font-semibold mb-2">
-                            Elegance
-                        </span>
-
-                        {/* Logo */}
-                        <div className="flex justify-center mb-3">
-                            <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-white/5 border border-white/10 shadow-lg shadow-black/50">
-                                <span className="text-primary font-serif font-bold italic text-xl">E</span>
-                            </div>
-                        </div>
-
-                        <CardDescription className="text-neutral-500 text-sm font-light">
-                            Escaneie o código para conectar
-                        </CardDescription>
-                    </CardHeader>
-                )}
-
-                <CardContent className={`pt-4 pb-8 ${step === 'tutorial' ? 'p-0' : ''}`}>
+                <CardContent className="p-0">
                     {step === 'tutorial' ? (
                         <WhatsAppTutorial
                             clinicName={registrationData.clinic_name}
@@ -212,17 +186,6 @@ export default function ConnectWhatsAppPage() {
                         />
                     )}
                 </CardContent>
-
-                {/* Footer */}
-                {step !== 'tutorial' && (
-                    <div className="px-6 md:px-12 pb-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-neutral-600 uppercase tracking-widest">
-                        <span>© Elegance</span>
-                        <div className="flex gap-2 items-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Online</span>
-                        </div>
-                    </div>
-                )}
             </Card>
         </div>
     )

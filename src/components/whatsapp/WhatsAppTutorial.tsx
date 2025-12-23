@@ -1,7 +1,7 @@
 "use client"
 
-import { Smartphone, MoreVertical, ScanLine, ArrowRight, ShieldCheck } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
+import { ArrowRight, Smartphone, MoreVertical, Scan, CheckCircle } from "lucide-react"
 
 interface WhatsAppTutorialProps {
     clinicName: string
@@ -10,86 +10,100 @@ interface WhatsAppTutorialProps {
 
 export function WhatsAppTutorial({ clinicName, onStart }: WhatsAppTutorialProps) {
     return (
-        <div className="relative w-full max-w-6xl mx-auto py-12 px-4 selection:bg-primary/20">
-            {/* Grid Background */}
-            <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
+        <div className="relative w-full h-full text-white p-8 md:p-12 lg:p-20 flex flex-col justify-center min-h-[700px] bg-black">
+            {/* Background Grid */}
+            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
+                style={{ backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+            />
 
-            {/* Header */}
-            <div className="mb-16">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 text-green-600 text-xs font-medium tracking-wide border border-green-500/20 mb-6">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    CONEXÃO SEGURA
-                </div>
-                <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground max-w-2xl leading-tight">
-                    Conecte sua <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-700">Inteligência.</span>
-                </h1>
-                <p className="mt-6 text-lg text-muted-foreground max-w-lg leading-relaxed">
-                    Vincule o WhatsApp da <span className="font-semibold text-foreground border-b border-green-500/30">{clinicName}</span> para começar a orquestrar seus atendimentos automaticamente.
-                </p>
+            {/* Content */}
+            <div className="relative z-10 max-w-6xl mx-auto w-full">
+                <div className="mb-16 space-y-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span className="text-xs font-medium tracking-wider text-green-500 uppercase border border-green-500/20 px-2 py-0.5 rounded-full bg-green-500/10">Conexão Segura</span>
+                    </div>
 
-                <div className="mt-8">
+                    <h1 className="text-5xl md:text-7xl font-bold tracking-tighter font-playfair text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/50">
+                        Inteligência.
+                    </h1>
+                    <p className="text-xl md:text-2xl text-neutral-400 font-light max-w-2xl leading-relaxed">
+                        Vincule o WhatsApp da <span className="text-green-400 font-medium">{clinicName}</span> para começar a orquestrar seus atendimentos automaticamente.
+                    </p>
+
                     <Button
                         onClick={onStart}
                         size="lg"
-                        className="rounded-full px-8 h-12 bg-foreground text-background hover:bg-foreground/90 transition-all shadow-xl shadow-black/5"
+                        className="rounded-full px-8 py-6 text-lg bg-white text-black hover:bg-neutral-200 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] mt-8"
                     >
-                        Gerar QR Code <ArrowRight className="ml-2 h-4 w-4" />
+                        Gerar QR Code <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                 </div>
-            </div>
 
-            {/* Steps Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                {/* Card 1 */}
-                <div className="group relative bg-white/60 backdrop-blur-sm border border-border/40 rounded-3xl p-8 hover:bg-white/80 transition-all duration-500 hover:shadow-2xl hover:shadow-green-900/5 hover:-translate-y-1">
-                    <span className="block text-7xl font-sans font-extralight text-foreground/5 mb-6 group-hover:text-green-500/10 transition-colors duration-500">01.</span>
-                    <div className="mb-4 h-10 w-10 text-green-600/80 group-hover:text-green-600 transition-colors">
-                        <Smartphone className="h-full w-full" strokeWidth={1.5} />
+                {/* Steps */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Step 1 */}
+                    <div className="group relative bg-neutral-900/50 border border-white/5 p-8 rounded-3xl hover:bg-white/5 transition-all duration-500 hover:border-white/20">
+                        <div className="absolute -top-4 -left-4 text-6xl font-black text-white/5 select-none group-hover:text-white/10 transition-colors">01</div>
+                        <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform duration-500">
+                            <Smartphone className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-xl font-medium mb-3 text-white">Abra o WhatsApp</h3>
+                        <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                            No seu celular, abra o aplicativo do WhatsApp que você deseja conectar.
+                        </p>
+                        {/* Visual */}
+                        <div className="relative h-24 w-full bg-black/60 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                            <Smartphone className="h-10 w-10 text-neutral-700 absolute opacity-20" />
+                            {/* Placeholder for real image */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                            <span className="relative text-xs text-neutral-500">Imagem do App</span>
+                        </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2 text-foreground/90">Abra o WhatsApp</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                        No seu celular, abra o aplicativo do WhatsApp que você deseja conectar ao sistema.
-                    </p>
-                </div>
 
-                {/* Card 2 */}
-                <div className="group relative bg-white/60 backdrop-blur-sm border border-border/40 rounded-3xl p-8 hover:bg-white/80 transition-all duration-500 hover:shadow-2xl hover:shadow-green-900/5 hover:-translate-y-1 delay-75">
-                    <span className="block text-7xl font-sans font-extralight text-foreground/5 mb-6 group-hover:text-green-500/10 transition-colors duration-500">02.</span>
-                    <div className="mb-4 h-10 w-10 text-green-600/80 group-hover:text-green-600 transition-colors">
-                        <MoreVertical className="h-full w-full" strokeWidth={1.5} />
+                    {/* Step 2 */}
+                    <div className="group relative bg-neutral-900/50 border border-white/5 p-8 rounded-3xl hover:bg-white/5 transition-all duration-500 hover:border-white/20">
+                        <div className="absolute -top-4 -left-4 text-6xl font-black text-white/5 select-none group-hover:text-white/10 transition-colors">02</div>
+                        <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform duration-500">
+                            <MoreVertical className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-xl font-medium mb-3 text-white">Menu de Opções</h3>
+                        <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                            Toque nos três pontinhos (Android) ou Configurações (iOS) e selecione <b>Aparelhos conectados</b>.
+                        </p>
+                        <div className="relative h-24 w-full bg-black/60 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                            <div className="flex flex-col gap-1 items-end p-4 w-full opacity-40">
+                                <div className="h-1 w-full bg-neutral-600 rounded"></div>
+                                <div className="h-1 w-2/3 bg-neutral-600 rounded"></div>
+                                <div className="h-1 w-1/2 bg-neutral-600 rounded"></div>
+                            </div>
+                            <span className="absolute text-xs text-neutral-500">Menu &gt; Conectar</span>
+                        </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2 text-foreground/90">Acesse o Menu</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                        Toque nos três pontinhos (Android) ou Configurações (iOS) e selecione <span className="font-medium text-foreground">Aparelhos conectados</span>.
-                    </p>
-                </div>
 
-                {/* Card 3 */}
-                <div className="group relative bg-white/60 backdrop-blur-sm border border-border/40 rounded-3xl p-8 hover:bg-white/80 transition-all duration-500 hover:shadow-2xl hover:shadow-green-900/5 hover:-translate-y-1 delay-150">
-                    <span className="block text-7xl font-sans font-extralight text-foreground/5 mb-6 group-hover:text-green-500/10 transition-colors duration-500">03.</span>
-                    <div className="mb-4 h-10 w-10 text-green-600/80 group-hover:text-green-600 transition-colors">
-                        <ScanLine className="h-full w-full" strokeWidth={1.5} />
+                    {/* Step 3 */}
+                    <div className="group relative bg-neutral-900/50 border border-white/5 p-8 rounded-3xl hover:bg-white/5 transition-all duration-500 hover:border-white/20">
+                        <div className="absolute -top-4 -left-4 text-6xl font-black text-white/5 select-none group-hover:text-white/10 transition-colors">03</div>
+                        <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform duration-500">
+                            <Scan className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-xl font-medium mb-3 text-white">Escaneie o Código</h3>
+                        <p className="text-neutral-400 text-sm leading-relaxed mb-6">
+                            Toque em <b>Conectar um aparelho</b> e aponte a câmera para o QR Code na próxima tela.
+                        </p>
+                        <div className="relative h-24 w-full bg-black/60 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                            <Scan className="h-10 w-10 text-neutral-700 absolute opacity-20" />
+                            <span className="relative text-xs text-neutral-500">Scanner</span>
+                        </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2 text-foreground/90">Escaneie</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                        Clique em <span className="font-medium text-foreground">Conectar um aparelho</span> na tela do seu celular e aponte a câmera para o QR Code.
-                    </p>
                 </div>
-            </div>
 
-            {/* Footer Note */}
-            <div className="mt-16 border-t border-border/40 pt-8 flex flex-col md:flex-row items-center justify-between text-muted-foreground gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                    <ShieldCheck className="h-4 w-4 text-green-500" />
-                    Criptografia de ponta a ponta garantida
+                <div className="mt-12 flex items-center justify-between text-xs text-neutral-600 border-t border-white/5 pt-8">
+                    <span className="flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3" /> Criptografia de ponta a ponta
+                    </span>
+                    <span>Tecnologia Metafore</span>
                 </div>
-                <p className="text-xs opacity-60">
-                    Tecnologia Metafore
-                </p>
             </div>
         </div>
     )
