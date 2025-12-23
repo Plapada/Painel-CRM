@@ -79,7 +79,7 @@ function AdminConnectWhatsAppContent() {
                 .replace(/[^a-z0-9]+/g, '_')
                 .replace(/^_+|_+$/g, '')
 
-            setInstanceName(`${sanitizedName}_${clinicId.slice(0, 8)}`)
+            setInstanceName(sanitizedName)
             setIsValid(true)
         } catch (err) {
             console.error('Error validating access:', err)

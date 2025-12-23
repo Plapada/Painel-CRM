@@ -55,7 +55,7 @@ export default function ConnectWhatsAppPage() {
                     .replace(/[\u0300-\u036f]/g, '') // Remove accents
                     .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric with underscore
                     .replace(/^_+|_+$/g, '') // Trim underscores
-                setInstanceName(`${sanitizedName}_${data.clinic_id.slice(0, 8)}`)
+                setInstanceName(sanitizedName)
             } else {
                 setIsValidToken(false)
             }
