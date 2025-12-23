@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, MessageSquare, Clock, CheckCircle } from "lucide-react"
+import { Send, MessageSquare, Clock, CheckCircle, ArrowLeft } from "lucide-react"
 
 interface Ticket {
     id: string
@@ -156,9 +156,10 @@ export default function SupportPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-6rem)] p-4 flex gap-4">
+        <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-6rem)] p-2 md:p-4 flex flex-col md:flex-row gap-2 md:gap-4">
             {/* Left Sidebar: Ticket List */}
-            <Card className="w-1/3 flex flex-col">
+            {/* On mobile: Hidden if creating or a ticket is selected (Detail View Active) */}
+            <Card className={`w-full md:w-1/3 flex flex-col ${(isCreating || selectedTicket) ? 'hidden md:flex' : 'flex'}`}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle>Chamados</CardTitle>
                     {!isAdmin && (
@@ -202,12 +203,23 @@ export default function SupportPage() {
             </Card>
 
             {/* Right Area: Content */}
-            <Card className="flex-1 flex flex-col">
+            {/* On mobile: Hidden if NOT creating and NO ticket selected (List View Active) */}
+            <Card className={`flex-1 w-full flex flex-col ${(!isCreating && !selectedTicket) ? 'hidden md:flex' : 'flex'}`}>
                 {isCreating ? (
-                    <div className="p-6 space-y-4 max-w-2xl mx-auto w-full">
-                        <div>
-                            <h2 className="text-2xl font-bold">Novo Chamado</h2>
-                            <p className="text-muted-foreground">Descreva sua solicitação para a equipe administrativa.</p>
+                    <div className="p-4 md:p-6 space-y-4 max-w-2xl mx-auto w-full">
+                        <div className="flex items-center gap-2 md:block">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="md:hidden p-0 h-auto"
+                                onClick={() => setIsCreating(false)}
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                            <div>
+                                <h2 className="text-xl md:text-2xl font-bold">Novo Chamado</h2>
+                                <p className="text-sm text-muted-foreground">Descreva sua solicitação para a equipe administrativa.</p>
+                            </div>
                         </div>
                         <div className="space-y-4 pt-4">
                             <div className="space-y-2">
@@ -235,15 +247,23 @@ export default function SupportPage() {
                     </div>
                 ) : selectedTicket ? (
                     <>
-                        <CardHeader className="border-b bg-muted/20 pb-4">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle>{selectedTicket.subject}</CardTitle>
+                        <CardHeader className="border-b bg-muted/20 pb-4 p-4">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="md:hidden p-0 h-auto mr-2"
+                                    onClick={() => setSelectedTicket(null)}
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </Button>
+                                <div className="flex-1 overflow-hidden">
+                                    <CardTitle className="truncate text-lg">{selectedTicket.subject}</CardTitle>
                                     <CardDescription>Ticket #{selectedTicket.id}</CardDescription>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 shrink-0">
                                     {isAdmin && (
-                                        <Button variant="outline" size="sm">Marcar como Resolvido</Button>
+                                        <Button variant="outline" size="sm" className="hidden sm:flex">Marcar como Resolvido</Button>
                                     )}
                                 </div>
                             </div>
@@ -255,8 +275,8 @@ export default function SupportPage() {
                                         const isMe = user?.id === msg.sender_id
                                         return (
                                             <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                                                <div className={`max-w-[80%] rounded-lg p-3 ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                                                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                                <div className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                                                    <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                                                     <p className={`text-[10px] mt-1 text-right ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
@@ -266,15 +286,15 @@ export default function SupportPage() {
                                     })}
                                 </div>
                             </ScrollArea>
-                            <div className="p-4 border-t bg-background">
+                            <div className="p-3 md:p-4 border-t bg-background">
                                 <div className="flex gap-2">
                                     <Textarea
                                         value={newMessage}
                                         onChange={e => setNewMessage(e.target.value)}
                                         placeholder="Digite sua resposta..."
-                                        className="min-h-[60px]"
+                                        className="min-h-[50px] md:min-h-[60px]"
                                     />
-                                    <Button className="h-auto" onClick={sendMessage}>
+                                    <Button className="h-auto px-3 md:px-4" onClick={sendMessage}>
                                         <Send className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -284,7 +304,7 @@ export default function SupportPage() {
                 ) : (
                     <div className="flex-1 flex items-center justify-center flex-col text-muted-foreground gap-2">
                         <MessageSquare className="h-12 w-12 opacity-20" />
-                        <p>Selecione um chamado para visualizar ou inicie um novo.</p>
+                        <p className="text-center px-4">Selecione um chamado para visualizar ou inicie um novo.</p>
                     </div>
                 )}
             </Card>

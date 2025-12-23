@@ -177,8 +177,8 @@ export default function ClinicsPage() {
             }
 
             setClinics(clinicsWithStats)
-            // Auto check statuses with the fresh list
-            checkAllStatuses(clinicsWithStats)
+            // Auto check statuses with the fresh list (throttled)
+            checkAllStatuses(clinicsWithStats, false)
         } catch (error) {
             console.error("Error fetching clinics:", error)
         } finally {
@@ -186,11 +186,31 @@ export default function ClinicsPage() {
         }
     }
 
-    const checkAllStatuses = async (currentClinics = clinics) => {
+    const checkAllStatuses = async (currentClinics = clinics, force = false) => {
+        // Throttling Logic: Check if we verified in the last 15 minutes
+        if (!force) {
+            const lastCheck = localStorage.getItem('last_status_check_time')
+            if (lastCheck) {
+                const msSinceLast = Date.now() - parseInt(lastCheck)
+                const minutesSinceLast = msSinceLast / 1000 / 60
+                if (minutesSinceLast < 15) {
+                    console.log(`Skipping auto-verification. Last check was ${minutesSinceLast.toFixed(1)} mins ago.`)
+                    return
+                }
+            }
+        }
+
         setIsCheckingStatus(true)
         try {
             // Use local API proxy to avoid CORS issues
-            const webhookUrl = '/api/check-status?source=webapp'
+            // Add source=webapp only for manual/forced checks to differentiate in N8N?
+            // User wanted "source=webapp" to tag checks. Let's keep it for both, 
+            // but N8N logic will determine notification based on "offline" status change vs manual request.
+            // Actually, if it's an auto-check (force=false), it's standard polling.
+            // If it's manual (force=true), user requested it.
+            const webhookUrl = force
+                ? '/api/check-status?source=webapp&manual=true'
+                : '/api/check-status?source=webapp&auto=true'
 
             const response = await fetch(webhookUrl, {
                 method: 'GET',
@@ -204,6 +224,9 @@ export default function ClinicsPage() {
 
             const data = await response.json()
             const instances = Array.isArray(data) ? data : (data.instances || data.data || [])
+
+            // Save timestamp of successful check
+            localStorage.setItem('last_status_check_time', Date.now().toString())
 
             if (instances.length === 0) {
                 alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
@@ -240,16 +263,52 @@ export default function ClinicsPage() {
 
             setClinics(updatedClinics)
 
-            if (disconnectedList.length > 0) {
-                setDisconnectedClinics(disconnectedList)
-                setIsAlertOpen(true)
-            } else if (instances.length > 0) {
-                setConnectedClinics(connectedList)
-                setIsSuccessAlertOpen(true)
+            if (force) {
+                if (disconnectedList.length > 0) {
+                    setDisconnectedClinics(disconnectedList)
+                    setIsAlertOpen(true)
+                } else if (instances.length > 0) {
+                    setConnectedClinics(connectedList)
+                    setIsSuccessAlertOpen(true)
+                }
+            } else {
+                // For auto-checks, we probably DON'T want a popup interfering with the user, 
+                // UNLESS distinct from the previous state? 
+                // Current Requirement: "If that doesn't happen [15 min check], I only want it to happen when I click the button"
+                // Implies: Auto-check basically updates state silently or with minimal intrusion?
+                // The user complained about notifications. Let's suppress popups for auto-checks too, 
+                // OR only show them if something CHANGED. For now, suppressing popups on auto-check seems safest to avoid annoyance.
+                // But wait, if 3 checks fail, user wants to know?
+                // "I don't want a notification if I'm already looking at it." -> The popup IS the notification on site.
+                // Let's keep popup for now, or maybe suppress. 
+                // Decision: Suppress Success popup on auto check. Show Disconnected popup on auto check?
+                // Let's match manual behavior for now but suppress success.
+                if (disconnectedList.length > 0) {
+                    // Maybe don't show popup automatically?
+                    // setDisconnectedClinics(disconnectedList)
+                    // setIsAlertOpen(true)
+                }
             }
+
+            // Re-evaluating popup logic based on user feedback:
+            // "I only want it to happen when I click the button" -> Refers to Verification.
+            // If auto-verification happens (every 15 mins), updating the indicators (Green/Red badges) is enough.
+            // Popups are annoying if auto.
+            // So: ONLY show popups if force === true.
+            if (force) {
+                if (disconnectedList.length > 0) {
+                    setDisconnectedClinics(disconnectedList)
+                    setIsAlertOpen(true)
+                } else if (instances.length > 0) {
+                    setConnectedClinics(connectedList)
+                    setIsSuccessAlertOpen(true)
+                }
+            }
+
         } catch (error: any) {
             console.error("Error checking statuses:", error)
-            alert(`Erro ao verificar conexões: ${error.message}`)
+            // significant error, maybe verify internet? 
+            if (force) alert(`Erro ao verificar conexões: ${error.message}`)
         } finally {
             setIsCheckingStatus(false)
         }
@@ -426,7 +485,7 @@ export default function ClinicsPage() {
                         <div className="hidden md:flex items-center gap-2">
                             <Button
                                 variant="outline"
-                                onClick={() => checkAllStatuses()}
+                                onClick={() => checkAllStatuses(clinics, true)}
                                 disabled={isCheckingStatus || loading}
                             >
                                 <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
@@ -475,7 +534,7 @@ export default function ClinicsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => checkAllStatuses()} disabled={isCheckingStatus}>
+                                    <DropdownMenuItem onClick={() => checkAllStatuses(clinics, true)} disabled={isCheckingStatus}>
                                         <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
                                         Verificar Conexões
                                     </DropdownMenuItem>
