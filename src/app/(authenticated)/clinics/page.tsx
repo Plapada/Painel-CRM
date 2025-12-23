@@ -91,21 +91,7 @@ export default function ClinicsPage() {
     const fetchClinics = async () => {
         try {
             setLoading(true)
-            const { data: users, error } = await supabase
-                .from('users_metadata') // Or auth.users if we have access via view? 
-                // Since this is client side, we might need a function or access to public.users table if exists.
-                // Assuming we use the 'clinics' table or users view
-                // For now, let's assume we query 'profiles' or similar. 
-                // Based on previous code, we might fetch from 'users' table if exposed.
-                // Let's rely on what was working: fetch from 'profiles' or RPC.
-                .select('*')
-            // .eq('role', 'client') // Filter?
 
-            if (data && !error) {
-                // ... map to Clinic
-            }
-
-            // Mock or Real fetch. Re-using logic from observed code or generic:
             const { data, error: fetchError } = await supabase
                 .from('profiles') // Adjust if table name is different
                 .select('*')
@@ -178,7 +164,7 @@ export default function ClinicsPage() {
                         if (isConn) connected.push(name)
                     }
                 } catch (e) {
-                    newStatuses[c.id] = { instanceName, status: 'unknown', mime: name, connectionStatus: 'unknown', isLoading: false }
+                    newStatuses[c.id] = { instanceName, status: 'unknown', nome: name, connectionStatus: 'unknown', isLoading: false }
                 }
             }))
 
@@ -272,7 +258,7 @@ export default function ClinicsPage() {
                             </Button>
                         )}
 
-                        <Modal open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
+                        <Modal open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) resetDialog(); }}>
                             <ModalTrigger asChild>
                                 <Button className="shrink-0 bg-primary hover:bg-primary/90 whitespace-nowrap">
                                     <Plus className="mr-2 h-4 w-4" />
