@@ -112,10 +112,10 @@ export default function RegisterPage() {
 
             setSuccess(true)
 
-            // Redirect to login after 3 seconds
+            // Redirect to WhatsApp connection page after 2 seconds
             setTimeout(() => {
-                router.push('/login')
-            }, 3000)
+                router.push(`/connect-whatsapp/${token}`)
+            }, 2000)
         } catch (error: any) {
             form.setError("root", {
                 message: error.message || "Erro ao criar conta.",
@@ -157,7 +157,7 @@ export default function RegisterPage() {
                         <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
                         <h2 className="text-xl font-bold text-green-500">Conta Criada!</h2>
                         <p className="text-muted-foreground text-sm">
-                            Sua conta foi criada com sucesso. Você será redirecionado para o login...
+                            Sua conta foi criada com sucesso. Agora vamos configurar o WhatsApp...
                         </p>
                     </CardContent>
                 </Card>
