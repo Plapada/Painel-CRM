@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
@@ -208,7 +208,7 @@ export default function ClinicsPage() {
             console.log("Parsed instances:", instances)
 
             if (instances.length === 0) {
-                alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
+                alert("Nenhuma inst├óncia retornada pelo webhook. Verifique a configura├º├úo do N8N.")
                 return
             }
 
@@ -260,7 +260,7 @@ export default function ClinicsPage() {
             }
         } catch (error: any) {
             console.error("Error checking statuses:", error)
-            alert(`Erro ao verificar conexões: ${error.message}`)
+            alert(`Erro ao verificar conex├Áes: ${error.message}`)
         } finally {
             setIsCheckingStatus(false)
         }
@@ -288,12 +288,12 @@ export default function ClinicsPage() {
         // Validation based on mode
         if (isSelectExisting) {
             if (!selectedClinicId) {
-                setErrorMsg("Selecione uma clínica existente.")
+                setErrorMsg("Selecione uma cl├¡nica existente.")
                 return
             }
         } else {
             if (!newClinicName.trim()) {
-                setErrorMsg("O nome da clínica é obrigatório.")
+                setErrorMsg("O nome da cl├¡nica ├® obrigat├│rio.")
                 return
             }
         }
@@ -309,7 +309,7 @@ export default function ClinicsPage() {
                 // Use the selected existing clinic
                 const selectedClinic = existingClinics.find(c => c.clinic_id === selectedClinicId)
                 if (!selectedClinic) {
-                    throw new Error("Clínica selecionada não encontrada.")
+                    throw new Error("Cl├¡nica selecionada n├úo encontrada.")
                 }
                 clinicId = selectedClinic.clinic_id
                 clinicName = selectedClinic.nome_clinica
@@ -363,7 +363,7 @@ export default function ClinicsPage() {
 
         } catch (error: any) {
             console.error("Error creating clinic:", error)
-            setErrorMsg(error.message || "Erro ao criar clínica.")
+            setErrorMsg(error.message || "Erro ao criar cl├¡nica.")
         } finally {
             setIsCreating(false)
         }
@@ -401,14 +401,14 @@ export default function ClinicsPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Clínicas</h1>
-                    <p className="text-muted-foreground">Gerencie suas clínicas parceiras.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Cl├¡nicas</h1>
+                    <p className="text-muted-foreground">Gerencie suas cl├¡nicas parceiras.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar clínica..."
+                            placeholder="Buscar cl├¡nica..."
                             className="pl-10"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
@@ -424,7 +424,7 @@ export default function ClinicsPage() {
                         className="mr-2"
                     >
                         <RefreshCw className={`mr-2 h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
-                        Verificar Conexões
+                        Verificar Conex├Áes
                     </Button>
 
                     {isSupported && (
@@ -441,7 +441,7 @@ export default function ClinicsPage() {
                             ) : (
                                 <BellOff className="mr-2 h-4 w-4" />
                             )}
-                            {subscription ? "Notificações Ativas" : "Ativar Notificações"}
+                            {subscription ? "Notifica├º├Áes Ativas" : "Ativar Notifica├º├Áes"}
                         </Button>
                     )}
 
@@ -453,9 +453,9 @@ export default function ClinicsPage() {
                         </ModalTrigger>
                         <ModalContent className="sm:max-w-md">
                             <ModalHeader>
-                                <ModalTitle>Cadastrar Nova Clínica</ModalTitle>
+                                <ModalTitle>Cadastrar Nova Cl├¡nica</ModalTitle>
                                 <ModalDescription>
-                                    Crie uma nova clínica ou selecione uma existente para gerar um link de registro.
+                                    Crie uma nova cl├¡nica ou selecione uma existente para gerar um link de registro.
                                 </ModalDescription>
                             </ModalHeader>
                             <ModalBody>
@@ -474,37 +474,37 @@ export default function ClinicsPage() {
                                             }}
                                         >
                                             <TabsList className="grid w-full grid-cols-2">
-                                                <TabsTrigger value="new">Nova Clínica</TabsTrigger>
-                                                <TabsTrigger value="existing">Clínica Existente</TabsTrigger>
+                                                <TabsTrigger value="new">Nova Cl├¡nica</TabsTrigger>
+                                                <TabsTrigger value="existing">Cl├¡nica Existente</TabsTrigger>
                                             </TabsList>
                                         </Tabs>
 
                                         {!isSelectExisting ? (
                                             // Create New Clinic Form
                                             <div className="space-y-2">
-                                                <Label htmlFor="clinicName">Nome da Clínica</Label>
+                                                <Label htmlFor="clinicName">Nome da Cl├¡nica</Label>
                                                 <Input
                                                     id="clinicName"
-                                                    placeholder="Ex: Clínica Saúde Total"
+                                                    placeholder="Ex: Cl├¡nica Sa├║de Total"
                                                     value={newClinicName}
                                                     onChange={e => setNewClinicName(e.target.value)}
                                                 />
                                                 <p className="text-xs text-muted-foreground">
-                                                    Este nome será usado para criar o registro no banco de dados.
+                                                    Este nome ser├í usado para criar o registro no banco de dados.
                                                 </p>
                                             </div>
                                         ) : (
                                             // Select Existing Clinic Form
                                             <div className="space-y-2">
-                                                <Label>Selecione a Clínica</Label>
+                                                <Label>Selecione a Cl├¡nica</Label>
                                                 {loadingClinics ? (
                                                     <div className="flex items-center justify-center py-4">
                                                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                                        <span className="ml-2 text-sm text-muted-foreground">Carregando clínicas...</span>
+                                                        <span className="ml-2 text-sm text-muted-foreground">Carregando cl├¡nicas...</span>
                                                     </div>
                                                 ) : existingClinics.length === 0 ? (
                                                     <div className="text-center py-4 text-sm text-muted-foreground">
-                                                        Nenhuma clínica encontrada no banco de dados.
+                                                        Nenhuma cl├¡nica encontrada no banco de dados.
                                                     </div>
                                                 ) : (
                                                     <>
@@ -513,7 +513,7 @@ export default function ClinicsPage() {
                                                             onValueChange={setSelectedClinicId}
                                                         >
                                                             <SelectTrigger>
-                                                                <SelectValue placeholder="Selecione uma clínica..." />
+                                                                <SelectValue placeholder="Selecione uma cl├¡nica..." />
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {existingClinics.map((clinic) => (
@@ -527,7 +527,7 @@ export default function ClinicsPage() {
                                                             </SelectContent>
                                                         </Select>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {existingClinics.length} clínica(s) disponível(is).
+                                                            {existingClinics.length} cl├¡nica(s) dispon├¡vel(is).
                                                         </p>
                                                     </>
                                                 )}
@@ -559,7 +559,7 @@ export default function ClinicsPage() {
                                                 </Button>
                                             </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Envie este link para o cliente. Ele criará o usuário e senha.
+                                                Envie este link para o cliente. Ele criar├í o usu├írio e senha.
                                             </p>
                                         </div>
                                     </div>
@@ -646,7 +646,7 @@ export default function ClinicsPage() {
                                     <div className="p-2 rounded-lg bg-muted/50">
                                         <MessageSquare className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                                         <p className="text-lg font-bold">{clinic.monthlyConversations !== undefined ? clinic.monthlyConversations : '-'}</p>
-                                        <p className="text-[10px] text-muted-foreground">Conversas/Mês</p>
+                                        <p className="text-[10px] text-muted-foreground">Conversas/M├¬s</p>
                                     </div>
                                 </div>
                                 <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">
@@ -662,7 +662,7 @@ export default function ClinicsPage() {
                 <Card className="border-dashed">
                     <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                         <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                        <h3 className="text-lg font-semibold">Nenhuma clínica encontrada</h3>
+                        <h3 className="text-lg font-semibold">Nenhuma cl├¡nica encontrada</h3>
                         <p className="text-muted-foreground text-sm mt-1">
                             {searchQuery ? "Tente ajustar sua busca." : "Clique em 'Novo Cliente' para adicionar."}
                         </p>
@@ -676,10 +676,10 @@ export default function ClinicsPage() {
                     <ModalHeader>
                         <ModalTitle className="flex items-center gap-2 text-destructive">
                             <AlertTriangle className="h-5 w-5" />
-                            Instâncias Desconectadas
+                            Inst├óncias Desconectadas
                         </ModalTitle>
                         <ModalDescription>
-                            As seguintes clínicas estão com o WhatsApp desconectado ou instável:
+                            As seguintes cl├¡nicas est├úo com o WhatsApp desconectado ou inst├ível:
                         </ModalDescription>
                     </ModalHeader>
                     <ModalBody>
@@ -708,7 +708,7 @@ export default function ClinicsPage() {
                             Tudo Conectado!
                         </ModalTitle>
                         <ModalDescription>
-                            Todas as instâncias verificadas estão conectadas e operando normalmente.
+                            Todas as inst├óncias verificadas est├úo conectadas e operando normalmente.
                         </ModalDescription>
                     </ModalHeader>
                     <ModalBody>
@@ -721,7 +721,7 @@ export default function ClinicsPage() {
 
                             <div className="space-y-2 max-h-[40vh] overflow-y-auto px-1">
                                 <p className="text-center text-sm font-medium mb-4 text-muted-foreground">
-                                    Todas as suas instâncias estão orquestrando perfeitamente:
+                                    Todas as suas inst├óncias est├úo orquestrando perfeitamente:
                                 </p>
                                 {connectedClinics.map((name, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-green-500/5 border border-green-500/20">
@@ -736,7 +736,7 @@ export default function ClinicsPage() {
                         </div>
                     </ModalBody>
                     <ModalFooter>
-                        <Button onClick={() => setIsSuccessAlertOpen(false)} className="bg-green-500 hover:bg-green-600 text-white">Ótimo!</Button>
+                        <Button onClick={() => setIsSuccessAlertOpen(false)} className="bg-green-500 hover:bg-green-600 text-white">├ôtimo!</Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
