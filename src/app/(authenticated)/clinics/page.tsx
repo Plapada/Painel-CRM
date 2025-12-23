@@ -93,7 +93,7 @@ export default function ClinicsPage() {
             setLoading(true)
 
             const { data, error: fetchError } = await supabase
-                .from('profiles') // Adjust if table name is different
+                .from('usuarios_site')
                 .select('*')
                 .eq('role', 'client')
 
@@ -105,7 +105,6 @@ export default function ClinicsPage() {
 
         } catch (error) {
             console.error("Error fetching clinics:", error)
-            // Fallback for demo if table missing
         } finally {
             setLoading(false)
         }
