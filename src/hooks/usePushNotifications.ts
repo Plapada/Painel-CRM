@@ -9,7 +9,7 @@ export function usePushNotifications() {
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
+        if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
             setIsSupported(true)
             registerServiceWorker()
         }
@@ -28,12 +28,33 @@ export function usePushNotifications() {
     const subscribeToNotifications = async () => {
         if (!isSupported) return
 
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        if (!vapidKey) {
+            console.error('Missing VAPID key')
+            alert('Erro interno: Chave de notificação não encontrada.')
+            return
+        }
+
         setIsLoading(true)
         try {
+            // Check Permissions
+            let permission = Notification.permission
+            if (permission === 'default') {
+                permission = await Notification.requestPermission()
+            }
+
+            if (permission !== 'granted') {
+                alert('Permissão para notificações foi negada. Por favor, habilite nas configurações do site (ícone de cadeado).')
+                setIsLoading(false)
+                return
+            }
+
             const registration = await navigator.serviceWorker.ready
+
+            // Attempt subscription
             const sub = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!)
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
             })
 
             setSubscription(sub)
@@ -41,15 +62,20 @@ export function usePushNotifications() {
             // Save to Supabase
             if (sub) {
                 const { keys, endpoint } = sub.toJSON() as any
-                await supabase.from('push_subscriptions').insert({
+                const { error } = await supabase.from('push_subscriptions').insert({
                     endpoint,
                     p256dh: keys?.p256dh,
                     auth: keys?.auth
                 })
+
+                if (error) {
+                    console.error('Database error:', error)
+                    // We don't alert user about DB error usually, but maybe we should if critical.
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Subscription failed:', error)
-            alert('Não foi possível ativar as notificações. Verifique as permissões do navegador.')
+            alert(`Falha ao ativar notificações: ${error.message || 'Erro desconhecido'}`)
         } finally {
             setIsLoading(false)
         }
