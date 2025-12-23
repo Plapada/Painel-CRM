@@ -25,7 +25,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle } from "lucide-react"
+import { Building2, Search, ArrowRight, Users, Calendar, MessageSquare, Plus, Copy, Check, Link as LinkIcon, Loader2, RefreshCw, Smartphone, AlertTriangle, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
 interface Clinic {
@@ -74,6 +74,7 @@ export default function ClinicsPage() {
     const [isCheckingStatus, setIsCheckingStatus] = useState(false)
     const [disconnectedClinics, setDisconnectedClinics] = useState<string[]>([])
     const [isAlertOpen, setIsAlertOpen] = useState(false)
+    const [isSuccessAlertOpen, setIsSuccessAlertOpen] = useState(false)
 
     useEffect(() => {
         if (!isAdmin) return
@@ -212,6 +213,8 @@ export default function ClinicsPage() {
                 if (disconnectedList.length > 0) {
                     setDisconnectedClinics(disconnectedList)
                     setIsAlertOpen(true)
+                } else if (instances.length > 0) {
+                    setIsSuccessAlertOpen(true)
                 }
             }
         } catch (error) {
@@ -556,7 +559,7 @@ export default function ClinicsPage() {
                                     <p className="text-xs text-muted-foreground">{clinic.email || clinic.username}</p>
                                     {clinic.connectionStatus && clinic.connectionStatus !== 'unknown' && (
                                         <Badge variant={clinic.connectionStatus === 'connected' ? 'default' : 'destructive'} className={clinic.connectionStatus === 'connected' ? 'bg-green-500/20 text-green-500 hover:bg-green-500/30 border-0' : 'bg-red-500/20 text-red-500 hover:bg-red-500/30 border-0'}>
-                                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${clinic.connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                            <MessageSquare className="w-3 h-3 mr-1" />
                                             {clinic.connectionStatus === 'connected' ? 'WhatsApp Conectado' : 'WhatsApp Offline'}
                                         </Badge>
                                     )}
@@ -622,6 +625,29 @@ export default function ClinicsPage() {
                     </div>
                     <DialogFooter>
                         <Button onClick={() => setIsAlertOpen(false)}>Fechar</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Success Alert Dialog */}
+            <Dialog open={isSuccessAlertOpen} onOpenChange={setIsSuccessAlertOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-green-500">
+                            <CheckCircle className="h-5 w-5" />
+                            Tudo Conectado!
+                        </DialogTitle>
+                        <DialogDescription>
+                            Todas as instâncias verificadas estão conectadas e operando normalmente.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 flex justify-center">
+                        <div className="bg-green-500/10 p-4 rounded-full">
+                            <CheckCircle className="h-12 w-12 text-green-500" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsSuccessAlertOpen(false)} className="bg-green-500 hover:bg-green-600 text-white">Ótimo!</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
