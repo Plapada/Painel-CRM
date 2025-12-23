@@ -74,6 +74,7 @@ export default function ClinicsPage() {
     const [loadingClinics, setLoadingClinics] = useState(false)
     const [isCheckingStatus, setIsCheckingStatus] = useState(false)
     const [disconnectedClinics, setDisconnectedClinics] = useState<string[]>([])
+    const [connectedClinics, setConnectedClinics] = useState<string[]>([])
     const [isAlertOpen, setIsAlertOpen] = useState(false)
     const [isSuccessAlertOpen, setIsSuccessAlertOpen] = useState(false)
 
@@ -123,6 +124,7 @@ export default function ClinicsPage() {
                         totalPatients: undefined,
                         todayAppointments: undefined,
                         monthlyConversations: undefined,
+                        nome: realName || c.username,
                     })
                     continue
                 }
@@ -157,11 +159,15 @@ export default function ClinicsPage() {
                     todayAppointments: aptCount ?? undefined,
                     monthlyConversations: convCount ?? undefined,
                     connectionStatus: 'unknown',
-                    instanceName: generatedInstanceName
+                    connectionStatus: 'checked' as const, // Temporary, will be updated by checkAllStatuses
+                    instanceName: generatedInstanceName,
+                    nome: realName || c.username,
                 })
             }
 
             setClinics(clinicsWithStats)
+            // Auto check statuses with the fresh list
+            checkAllStatuses(clinicsWithStats)
         } catch (error) {
             console.error("Error fetching clinics:", error)
         } finally {
@@ -204,6 +210,7 @@ export default function ClinicsPage() {
             }
 
             let disconnectedList: string[] = []
+            let connectedList: string[] = []
 
             setClinics(prev => {
                 const updated = prev.map(clinic => {
@@ -231,7 +238,9 @@ export default function ClinicsPage() {
                     }
 
                     if (!isConnected && clinic.instanceName) {
-                        disconnectedList.push(clinic.username || clinic.email?.split('@')[0] || clinic.instanceName)
+                        disconnectedList.push(clinic.nome || clinic.username || clinic.instanceName)
+                    } else if (isConnected && clinic.instanceName) {
+                        connectedList.push(clinic.nome || clinic.username || clinic.instanceName)
                     }
 
                     return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
@@ -243,6 +252,7 @@ export default function ClinicsPage() {
                 setDisconnectedClinics(disconnectedList)
                 setIsAlertOpen(true)
             } else if (instances.length > 0) {
+                setConnectedClinics(connectedList)
                 setIsSuccessAlertOpen(true)
             }
         } catch (error: any) {
@@ -580,7 +590,7 @@ export default function ClinicsPage() {
                                         </div>
                                         <div>
                                             <CardTitle className="text-lg">
-                                                {clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
+                                                {clinic.nome || clinic.username || clinic.email?.split('@')[0] || 'Cliente'}
                                             </CardTitle>
                                         </div>
                                     </div>
@@ -677,9 +687,26 @@ export default function ClinicsPage() {
                         </ModalDescription>
                     </ModalHeader>
                     <ModalBody>
-                        <div className="py-4 flex justify-center">
-                            <div className="bg-green-500/10 p-4 rounded-full">
-                                <CheckCircle className="h-12 w-12 text-green-500" />
+                        <div className="py-4 space-y-4">
+                            <div className="flex justify-center">
+                                <div className="bg-green-500/10 p-4 rounded-full animate-pulse">
+                                    <CheckCircle className="h-12 w-12 text-green-500" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 max-h-[40vh] overflow-y-auto px-1">
+                                <p className="text-center text-sm font-medium mb-4 text-muted-foreground">
+                                    Todas as suas instâncias estão orquestrando perfeitamente:
+                                </p>
+                                {connectedClinics.map((name, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                                        <span className="font-medium text-sm">{name}</span>
+                                        <Badge variant="outline" className="text-green-600 bg-green-500/10 border-0 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                            Conectado
+                                        </Badge>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </ModalBody>
