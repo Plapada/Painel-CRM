@@ -192,28 +192,18 @@ export default function ClinicsPage() {
             // Use local API proxy to avoid CORS issues
             const webhookUrl = '/api/check-status'
 
-            console.log("Calling API:", webhookUrl)
-
             const response = await fetch(webhookUrl, {
                 method: 'GET',
             })
 
-            console.log("Response status:", response.status)
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}))
-                console.error("API error response:", errorData)
                 alert(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
                 return
             }
 
             const data = await response.json()
-            console.log("Webhook response data:", data)
-
-            // Handle different possible response formats from N8N/Evolution API
             const instances = Array.isArray(data) ? data : (data.instances || data.data || [])
-
-            console.log("Parsed instances:", instances)
 
             if (instances.length === 0) {
                 alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
@@ -223,41 +213,32 @@ export default function ClinicsPage() {
             let disconnectedList: string[] = []
             let connectedList: string[] = []
 
-            setClinics(prev => {
-                const updated = prev.map(clinic => {
-                    if (!clinic.instanceName) {
-                        console.log("Clinic without instanceName:", clinic.username || clinic.email)
-                        return clinic
-                    }
+            // Calculate new state first
+            const updatedClinics = currentClinics.map(clinic => {
+                if (!clinic.instanceName) return clinic
 
-                    console.log("Looking for instance:", clinic.instanceName)
-
-                    // Find matching instance - try multiple field patterns
-                    const match = instances.find((i: any) => {
-                        const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
-                        console.log("Comparing:", iName, "vs", clinic.instanceName)
-                        return iName === clinic.instanceName
-                    })
-
-                    let isConnected = false
-                    if (match) {
-                        const state = match.instance?.state || match.state || match.status
-                        console.log("Match found. State:", state)
-                        isConnected = state === 'open' || state === 'connected'
-                    } else {
-                        console.log("No match found for:", clinic.instanceName)
-                    }
-
-                    if (!isConnected && clinic.instanceName) {
-                        disconnectedList.push(clinic.nome || clinic.username || clinic.instanceName)
-                    } else if (isConnected && clinic.instanceName) {
-                        connectedList.push(clinic.nome || clinic.username || clinic.instanceName)
-                    }
-
-                    return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
+                // Find matching instance - try multiple field patterns
+                const match = instances.find((i: any) => {
+                    const iName = i.instance?.instanceName || i.instanceName || i.name || i.instance
+                    return iName === clinic.instanceName
                 })
-                return updated
+
+                let isConnected = false
+                if (match) {
+                    const state = match.instance?.state || match.state || match.status
+                    isConnected = state === 'open' || state === 'connected'
+                }
+
+                if (!isConnected && clinic.instanceName) {
+                    disconnectedList.push(clinic.nome || clinic.username || clinic.instanceName)
+                } else if (isConnected && clinic.instanceName) {
+                    connectedList.push(clinic.nome || clinic.username || clinic.instanceName)
+                }
+
+                return { ...clinic, connectionStatus: (isConnected ? 'connected' : 'disconnected') as 'connected' | 'disconnected' }
             })
+
+            setClinics(updatedClinics)
 
             if (disconnectedList.length > 0) {
                 setDisconnectedClinics(disconnectedList)
