@@ -308,20 +308,73 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                                     <label className="text-sm font-medium text-muted-foreground">Status IA</label>
                                     <div className="mt-1 text-sm">{client.atendimento_ia || '-'}</div>
                                 </div>
-                                <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Resumo da Conversa</label>
-                                    <div className="mt-1 p-3 bg-muted/30 rounded-md text-sm">
-                                        {client.resumo_conversa || 'Nenhum resumo disponível.'}
+
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30">
+                                        <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                     </div>
+                                    <span className="text-sm font-semibold text-foreground uppercase tracking-wider">RESUMO DA CONVERSA</span>
                                 </div>
 
+                                {(() => {
+                                    const sections = client.resumo_conversa ? parseSummary(client.resumo_conversa) : [];
+                                    const getSectionContent = (type: 'target' | 'alert' | 'file') => {
+                                        const section = sections.find(s => s.icon === type);
+                                        return section ? section.content : 'Nenhuma';
+                                    }
+
+                                    return (
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {/* Queixa Card */}
+                                                <div className="bg-card border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Target className="h-4 w-4 text-red-500" />
+                                                        <span className="font-medium text-sm">Queixa</span>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground line-clamp-4">
+                                                        {getSectionContent('target')}
+                                                    </p>
+                                                </div>
+
+                                                {/* Objeções Card */}
+                                                <div className="bg-card border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                                                        <span className="font-medium text-sm">Objeções</span>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground line-clamp-4">
+                                                        {getSectionContent('alert')}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Interação Card */}
+                                            <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg p-3 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="p-1 rounded bg-blue-100 dark:bg-blue-800">
+                                                        <FileText className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                                    </div>
+                                                    <span className="font-medium text-sm text-blue-900 dark:text-blue-100">Interação</span>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                                    {getSectionContent('file') === 'Nenhuma' && client.resumo_conversa
+                                                        ? client.resumo_conversa // Fallback if parsing failed but we have text
+                                                        : getSectionContent('file')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
+                                })()}
+
+
                                 {/* Summarize Button */}
-                                <div className="pt-3 border-t">
+                                <div className="pt-2">
                                     <Button
                                         onClick={handleSummarizeConversation}
                                         disabled={isSummarizing}
-                                        className="w-full"
-                                        variant="outline"
+                                        className="w-full bg-[#1e293b] hover:bg-[#0f172a] text-white"
+                                        size="lg"
                                     >
                                         {isSummarizing ? (
                                             <>
@@ -330,8 +383,8 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                                             </>
                                         ) : (
                                             <>
-                                                <Sparkles className="h-4 w-4 mr-2" />
-                                                Gerar Resumo da Conversa
+                                                <Sparkles className="h-4 w-4 mr-2 text-yellow-500" />
+                                                GERAR RESUMO
                                             </>
                                         )}
                                     </Button>
@@ -426,6 +479,6 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     )
 }
