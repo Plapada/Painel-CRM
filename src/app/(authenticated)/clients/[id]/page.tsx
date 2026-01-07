@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Calendar, MessageSquare, User, Tag, Clock, Loader2, Sparkles, FileText, Target, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Calendar, MessageSquare, User, Tag, Clock, Loader2, Sparkles, FileText, Target, AlertTriangle, PauseCircle, PlayCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -156,6 +156,48 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
     }
 
     // Handle summarize conversation
+    // AI Toggle state
+    const [isTogglingAI, setIsTogglingAI] = useState(false)
+
+    const handleToggleAI = async () => {
+        if (!client?.telefone || !user?.clinic_id) return
+
+        const isPaused = client.atendimento_ia === 'pause'
+        const endpoint = isPaused
+            ? 'https://ia-n8n.jje6ux.easypanel.host/webhook/webhookreativarconversa'
+            : 'https://ia-n8n.jje6ux.easypanel.host/webhook/webhookpausarconversa'
+
+        const statusValue = isPaused ? 'reativada' : 'pause'
+
+        setIsTogglingAI(true)
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telefone: client.telefone,
+                    atendimento_ia: statusValue
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Falha ao alterar status da IA')
+            }
+
+            // Wait a moment for the webhook to process
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Re-fetch client data to get updated status
+            await fetchClientData();
+
+        } catch (error: any) {
+            console.error('Error toggling AI:', error)
+        } finally {
+            setIsTogglingAI(false)
+        }
+    }
+
     const handleSummarizeConversation = async () => {
         if (!client?.telefone || !user?.clinic_id) {
             setSummaryError('Cliente sem telefone registrado.')
@@ -307,6 +349,34 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                                 <div>
                                     <label className="text-sm font-medium text-muted-foreground">Status IA</label>
                                     <div className="mt-1 text-sm">{client.atendimento_ia || '-'}</div>
+                                    <div className="mt-2">
+                                        <Button
+                                            onClick={handleToggleAI}
+                                            disabled={isTogglingAI}
+                                            variant={client.atendimento_ia === 'pause' ? 'default' : 'destructive'}
+                                            size="sm"
+                                            className={client.atendimento_ia === 'pause'
+                                                ? "w-full bg-green-600 hover:bg-green-700 text-white"
+                                                : "w-full bg-red-600 hover:bg-red-700 text-white"}
+                                        >
+                                            {isTogglingAI ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    Processando...
+                                                </>
+                                            ) : client.atendimento_ia === 'pause' ? (
+                                                <>
+                                                    <PlayCircle className="h-4 w-4 mr-2" />
+                                                    Reativar IA
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <PauseCircle className="h-4 w-4 mr-2" />
+                                                    Pausar IA
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-2 mb-3">
