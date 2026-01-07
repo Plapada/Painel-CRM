@@ -205,9 +205,79 @@ export default function DashboardPage() {
             const newPatientsCount = clients ? clients.length : 0
             const today = new Date().toISOString().split('T')[0]
             const todayAppointmentsCount = appointments ? appointments.filter(a => a.data_inicio?.startsWith(today)).length : 0
-            const confirmedAppointments = appointments ? appointments.filter(a => a.status === 'confirmada').length : 0
-            const estimatedRevenue = confirmedAppointments * 450
-            const avgTicket = 450
+
+            // Procedure Price Mapping
+            const PROCEDURE_PRICES: Record<string, number> = {
+                'COLPOSCOPIA': 150,
+                'EXAME A FRESCO': 150,
+                'VULVOSCOPIA': 150,
+                'VAGINOSCOPIA': 180,
+                'CITOLOGIA': 150, // Shortened for match
+                'CITOLOGIA E MICROFLORA VAGINAL': 150,
+                'CITOLOGIA HORMONAL ISOLADA': 150,
+                'COLETA DE MATERIAL': 120,
+                'ELETROCAUTERIZAÇÃO': 500,
+                'CAUTERIZAÇÃO QUIMICA': 250,
+                'BIOPSIA DE COLO': 500,
+                'BIOPSIA DE COLO UTERINO COM PINÇA': 500,
+                'BIOPSIA DE COLO UTERINO COM LEEP': 800,
+                'BIOPSIA DE VULVA': 600,
+                'BIOPSIA DE VULVA COM PINÇA': 600,
+                'BIOPSIA DE VULVA COM LEEP': 800,
+                'BIOPSIA DA VAGINA': 600,
+                'BIOPSIA DA VAGINA COM PINÇA': 600,
+                'BIOPSIA DA VAGINA COM LEEP': 800,
+                'EXERESE DE LESÃO': 900,
+                'DRENAGEM BARTHOLIN': 1200,
+                'RETIRADA DE CORPO ESTRANHO': 900,
+                'RETIRADA DE POLIPO': 600,
+                'CONIZAÇÃO': 1500,
+                'TRAQUELECTOMIA': 1500,
+                'TRAQUELECTOMIA COM LEEP (CONIZAÇÃO) EM CONSULTORIO': 1500,
+                'TRAQUELECTOMIA COM LEEP (CONIZAÇÃO) DAYHOSPITAL': 3000,
+                'DIU DE COBRE': 1000,
+                'INSERÇÃO DIU T/COBRE': 1000,
+                'DIU DE PRATA': 1000,
+                'INSERÇÃO DIU PRATA': 1000,
+                'DIU MIRENA': 1300,
+                'INSERÇÃO DIU MIRENA': 1300,
+                'IMPLANON': 1300,
+                'INSERÇÃO DIU IMPLANON': 1300,
+                'RETIRADA DIU': 400,
+                'RETIRADA IMPLANON': 600,
+                'BIOIMPEDANCIA': 150,
+                'ORTOMOLECULAR': 800,
+                'CONSULTA GINECOLOGICA': 530,
+                'CONSULTA': 530, // Fallback for simple "Consulta"
+                'CONSULTA E PREVENTIVO': 830,
+                'PREVENTIVO': 300,
+            }
+
+            const getPrice = (type: string | null) => {
+                if (!type) return 0
+                const normalizedType = type.toUpperCase().trim()
+
+                // Direct match
+                if (PROCEDURE_PRICES[normalizedType]) return PROCEDURE_PRICES[normalizedType]
+
+                // Partial match (check if any key is part of the type string)
+                for (const key of Object.keys(PROCEDURE_PRICES)) {
+                    if (normalizedType.includes(key)) {
+                        return PROCEDURE_PRICES[key]
+                    }
+                }
+
+                return 0 // Default if unknown
+            }
+
+            let estimatedRevenue = 0
+            if (appointments) {
+                appointments.forEach(apt => {
+                    if (apt.status === 'confirmada') {
+                        estimatedRevenue += getPrice(apt.tipo_consulta)
+                    }
+                })
+            }
 
             // Fetch monthly conversations
             const monthStart = new Date(new Date().setDate(1)).toISOString()
