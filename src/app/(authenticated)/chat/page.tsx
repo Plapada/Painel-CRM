@@ -235,12 +235,15 @@ export default function ChatPage() {
             })
 
             if (!response.ok) {
-                throw new Error('Falha ao resumir conversa')
+                throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            const data = await response.text()
-            setSummaryData(data)
-            setShowSummaryModal(true)
+            // Wait 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Re-fetch popover client to get updated summary
+            await fetchPopoverClient(phone);
+
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)
             setSummaryError(error.message || 'Erro ao resumir conversa.')
@@ -318,12 +321,15 @@ export default function ChatPage() {
             })
 
             if (!response.ok) {
-                throw new Error('Falha ao resumir conversa')
+                throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            const data = await response.text()
-            setSummaryData(data)
-            setShowSummaryModal(true)
+            // Wait 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Re-fetch client details
+            await fetchClientDetails(selectedSession);
+
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)
             setSummaryError(error.message || 'Erro ao resumir conversa.')
@@ -444,7 +450,7 @@ export default function ChatPage() {
                                                                         {isSummarizing ? (
                                                                             <>
                                                                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                                                Resumindo...
+                                                                                Gerando resumo. Aguarde...
                                                                             </>
                                                                         ) : (
                                                                             <>
@@ -582,7 +588,7 @@ export default function ChatPage() {
                                                 {isSummarizing ? (
                                                     <>
                                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                        Resumindo...
+                                                        Gerando resumo. Aguarde...
                                                     </>
                                                 ) : (
                                                     <>
@@ -620,7 +626,7 @@ export default function ChatPage() {
                                         {isSummarizing ? (
                                             <>
                                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Resumindo...
+                                                Gerando resumo. Aguarde...
                                             </>
                                         ) : (
                                             <>

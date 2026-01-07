@@ -78,9 +78,9 @@ export default function ClientsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Pacientes</h1>
                 <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Novo Cliente
+                    <Plus className="mr-2 h-4 w-4" /> Novo Paciente
                 </Button>
             </div>
 
@@ -88,7 +88,7 @@ export default function ClientsPage() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Buscar clientes..."
+                        placeholder="Buscar pacientes..."
                         className="pl-8"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -100,7 +100,7 @@ export default function ClientsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Nome (WhatsApp)</TableHead>
+                            <TableHead>Nome do Paciente</TableHead>
                             <TableHead>Telefone</TableHead>
                             <TableHead>Status IA</TableHead>
                             <TableHead>Resumo</TableHead>
@@ -115,7 +115,7 @@ export default function ClientsPage() {
                             </TableRow>
                         ) : filteredClients.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8">Nenhum cliente encontrado.</TableCell>
+                                <TableCell colSpan={6} className="text-center py-8">Nenhum paciente encontrado.</TableCell>
                             </TableRow>
                         ) : (
                             filteredClients.map((client) => (

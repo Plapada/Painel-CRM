@@ -351,7 +351,7 @@ export default function AppointmentsPage() {
                         {clientId && (
                             <Button onClick={handleGoToClientDetails}>
                                 <ExternalLink className="h-4 w-4 mr-2" />
-                                Ver Detalhes do Cliente
+                                Ver Detalhes do Paciente
                             </Button>
                         )}
                     </DialogFooter>

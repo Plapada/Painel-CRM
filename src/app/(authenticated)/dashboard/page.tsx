@@ -486,7 +486,7 @@ export default function DashboardPage() {
                     description="Para hoje"
                 />
                 <ElegantStatsCard
-                    title="Total de Clientes"
+                    title="Total de Pacientes"
                     value={stats.newPatients !== null ? stats.newPatients.toString() : '-'}
                     icon={Users}
                     description="Base de cadastros"
@@ -555,7 +555,7 @@ export default function DashboardPage() {
                     {/* Recent Patients List */}
                     <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
                         <CardHeader>
-                            <CardTitle className="text-lg font-medium text-foreground">Clientes Recentes</CardTitle>
+                            <CardTitle className="text-lg font-medium text-foreground">Pacientes Recentes</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">

@@ -32,7 +32,7 @@ const navItems = [
     { name: "Funil", href: "/funnel", icon: Filter },
     { name: "Conversas", href: "/chat", icon: MessageSquare },
     { name: "Agendamentos", href: "/appointments", icon: Calendar },
-    { name: "Clientes", href: "/clients", icon: ClipboardList },
+    { name: "Pacientes", href: "/clients", icon: ClipboardList },
     { name: "Clínicas", href: "/clinics", icon: Users },
     { name: "Suporte", href: "/support", icon: LifeBuoy },
 ]

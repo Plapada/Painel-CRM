@@ -166,6 +166,7 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
         setSummaryError(null)
 
         try {
+            // 1. Trigger the webhook
             const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/webhookresumirconversas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -176,12 +177,23 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
             })
 
             if (!response.ok) {
-                throw new Error('Falha ao resumir conversa')
+                throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            const data = await response.text()
-            setSummaryData(data)
-            setShowSummaryModal(true)
+            // 2. Swab the "workflow started" message and show our own feedback (using the button state)
+            // We are already in isSummarizing=true state which shows "Resumindo..."
+
+            // 3. Wait 5 seconds
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // 4. Re-fetch client data to get the new summary
+            await fetchClientData();
+
+            // We don't manually setSummaryData or showModal here because the UI updates 
+            // based on the client.resumo_conversa field which is updated by fetchClientData.
+            // If the user wants to see the modal immediately, we could pull it from the new client data.
+            // However, the user said "reload the summary part". The summary part is visible on the screen.
+
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)
             setSummaryError(error.message || 'Erro ao resumir conversa.')
@@ -314,7 +326,7 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                                         {isSummarizing ? (
                                             <>
                                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Resumindo...
+                                                Gerando resumo. Aguarde...
                                             </>
                                         ) : (
                                             <>
