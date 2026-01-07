@@ -177,7 +177,8 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     telefone: client.telefone,
-                    atendimento_ia: statusValue
+                    atendimento_ia: statusValue,
+                    clinic_id: user.clinic_id
                 })
             })
 
@@ -222,19 +223,16 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
                 throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            // 2. Swab the "workflow started" message and show our own feedback (using the button state)
-            // We are already in isSummarizing=true state which shows "Resumindo..."
+            // 2. Get the summary directly from the response
+            const newSummary = await response.text();
 
-            // 3. Wait 5 seconds
-            await new Promise(resolve => setTimeout(resolve, 5000));
-
-            // 4. Re-fetch client data to get the new summary
-            await fetchClientData();
-
-            // We don't manually setSummaryData or showModal here because the UI updates 
-            // based on the client.resumo_conversa field which is updated by fetchClientData.
-            // If the user wants to see the modal immediately, we could pull it from the new client data.
-            // However, the user said "reload the summary part". The summary part is visible on the screen.
+            // 3. Update local state immediately
+            if (newSummary) {
+                setClient((prev: any) => prev ? ({ ...prev, resumo_conversa: newSummary }) : prev);
+            } else {
+                // If empty response, fallback to refetch
+                await fetchClientData();
+            }
 
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)

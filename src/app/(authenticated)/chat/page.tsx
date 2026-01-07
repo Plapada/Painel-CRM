@@ -238,11 +238,15 @@ export default function ChatPage() {
                 throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            // Wait 5 seconds
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // 2. Get the summary directly from the response
+            const newSummary = await response.text();
 
-            // Re-fetch popover client to get updated summary
-            await fetchPopoverClient(phone);
+            // 3. Update local state immediately
+            if (newSummary) {
+                setPopoverClient((prev: any) => prev ? ({ ...prev, resumo_conversa: newSummary }) : prev);
+            } else {
+                await fetchPopoverClient(phone);
+            }
 
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)
@@ -324,11 +328,15 @@ export default function ChatPage() {
                 throw new Error('Falha ao iniciar geração do resumo')
             }
 
-            // Wait 5 seconds
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // 2. Get the summary directly from the response
+            const newSummary = await response.text();
 
-            // Re-fetch client details
-            await fetchClientDetails(selectedSession);
+            // 3. Update local state immediately
+            if (newSummary) {
+                setClientDetails((prev: any) => prev ? ({ ...prev, resumo_conversa: newSummary }) : prev);
+            } else {
+                await fetchClientDetails(selectedSession);
+            }
 
         } catch (error: any) {
             console.error('Error summarizing conversation:', error)
