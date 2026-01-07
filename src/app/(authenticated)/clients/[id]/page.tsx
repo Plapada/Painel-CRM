@@ -171,15 +171,18 @@ export default function ClientDetailsPage({ params }: { params: Promise<{ id: st
 
         setIsTogglingAI(true)
 
+        const payload = {
+            telefone: client.telefone,
+            atendimento_ia: statusValue,
+            clinic_id: user.clinic_id
+        }
+        console.log("Toggling AI with payload:", payload)
+
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telefone: client.telefone,
-                    atendimento_ia: statusValue,
-                    clinic_id: user.clinic_id
-                })
+                body: JSON.stringify(payload)
             })
 
             if (!response.ok) {
