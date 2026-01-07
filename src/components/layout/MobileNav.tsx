@@ -50,7 +50,7 @@ export function MobileNav() {
     if (isClient) {
         // Client: Dashboard, Chat, Calendar visible. Rest in Menu.
         visibleItems = navItems.filter(i => ['Dashboard', 'Conversas', 'Agendamentos'].includes(i.name))
-        menuItems = navItems.filter(i => ['Funil', 'Clientes', 'Suporte'].includes(i.name))
+        menuItems = navItems.filter(i => ['Funil', 'Pacientes', 'Suporte'].includes(i.name))
     } else {
         // Admin: Show all (3 items)
         visibleItems = navItems.filter(i => ['Dashboard', 'Clínicas', 'Suporte'].includes(i.name))

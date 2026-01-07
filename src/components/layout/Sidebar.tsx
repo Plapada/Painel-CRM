@@ -38,8 +38,8 @@ export function Sidebar() {
     // Filter items based on role
     const filteredNavItems = navItems.filter(item => {
         if (isClient) {
-            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Clientes, Suporte
-            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Clientes', 'Suporte'].includes(item.name)
+            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Pacientes, Suporte
+            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Pacientes', 'Suporte'].includes(item.name)
         } else {
             // Admin sees: Dashboard, Clínicas, Suporte (NO Conversas - access via clinic details)
             return ['Dashboard', 'Clínicas', 'Suporte'].includes(item.name)
