@@ -49,7 +49,6 @@ export default function MessageConversation({
     onSendMessage,
     onShowDetails
 }: MessageConversationProps) {
-    const [newMessage, setNewMessage] = useState("")
     const scrollRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -57,20 +56,6 @@ export default function MessageConversation({
             scrollRef.current.scrollIntoView({ behavior: "smooth" })
         }
     }, [messages])
-
-    const handleSend = () => {
-        if (newMessage.trim()) {
-            onSendMessage?.(newMessage)
-            setNewMessage("")
-        }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault()
-            handleSend()
-        }
-    }
 
     return (
         <Card className={cn("flex flex-col overflow-hidden bg-background", className)}>
@@ -161,38 +146,12 @@ export default function MessageConversation({
                 </ScrollArea>
             </CardContent>
 
-            {/* Input Area */}
-            <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="flex items-end gap-2">
-                    <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
-                        <Paperclip className="h-5 w-5" />
-                    </Button>
-                    <div className="relative flex-1">
-                        <Input
-                            placeholder="Digite sua mensagem..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            className="pr-10 min-h-[44px] py-3"
-                        />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-1 top-1 h-9 w-9 text-muted-foreground hover:text-foreground"
-                        >
-                            <Smile className="h-5 w-5" />
-                        </Button>
-                    </div>
-                    {newMessage.trim() ? (
-                        <Button onClick={handleSend} size="icon" className="shrink-0">
-                            <Send className="h-5 w-5" />
-                        </Button>
-                    ) : (
-                        <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground">
-                            <Mic className="h-5 w-5" />
-                        </Button>
-                    )}
-                </div>
+            {/* Read-only footer */}
+            <div className="p-4 border-t bg-background/95 backdrop-blur text-center ">
+                <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Modo Leitura: O envio de mensagens está desabilitado nesta visualização.
+                </p>
             </div>
         </Card>
     )

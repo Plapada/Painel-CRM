@@ -333,9 +333,7 @@ export function AppointmentScheduler({
                     )}
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-border animate-fade-in animate-delay-300">
-                    <p className="text-xs text-muted-foreground text-right">powered by {brandName}</p>
-                </div>
+                {/* Removed powered by footer */}
             </div>
         </div>
     )

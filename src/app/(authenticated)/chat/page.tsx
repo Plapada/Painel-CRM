@@ -654,31 +654,20 @@ export default function ChatPage() {
 
                     <ScrollArea className="flex-1 pr-4">
                         {summaryData && (
-                            <div className="space-y-4 py-4">
+                            <div className="space-y-6 py-4">
                                 {parseSummary(summaryData).map((section, index) => (
                                     <div
                                         key={index}
-                                        className="rounded-lg border bg-card p-4 space-y-2"
+                                        className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                                        style={{ animationDelay: `${index * 100}ms` }}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            {section.icon === 'target' && (
-                                                <div className="p-1.5 rounded-full bg-blue-500/10">
-                                                    <Target className="h-4 w-4 text-blue-500" />
-                                                </div>
-                                            )}
-                                            {section.icon === 'alert' && (
-                                                <div className="p-1.5 rounded-full bg-amber-500/10">
-                                                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                                                </div>
-                                            )}
-                                            {section.icon === 'file' && (
-                                                <div className="p-1.5 rounded-full bg-green-500/10">
-                                                    <FileText className="h-4 w-4 text-green-500" />
-                                                </div>
-                                            )}
-                                            <h4 className="font-semibold text-sm">{section.title}</h4>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {section.icon === 'target' && <Target className="h-5 w-5 text-primary" />}
+                                            {section.icon === 'alert' && <AlertTriangle className="h-5 w-5 text-amber-500" />}
+                                            {section.icon === 'file' && <FileText className="h-5 w-5 text-green-500" />}
+                                            <h4 className="font-playfair font-semibold text-lg text-foreground">{section.title}</h4>
                                         </div>
-                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                        <p className="text-muted-foreground leading-relaxed pl-7 border-l-2 border-primary/20">
                                             {section.content}
                                         </p>
                                     </div>
