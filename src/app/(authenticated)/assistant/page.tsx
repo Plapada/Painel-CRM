@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,20 +31,84 @@ interface Message {
 
 export default function AssistantPage() {
     const { user } = useAuth()
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: '1',
-            text: 'Olá! Sou seu assistente virtual. Como posso ajudar hoje? Você pode me enviar textos, imagens, vídeos ou documentos.',
-            sender: 'assistant',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'text'
-        }
-    ])
+    const [messages, setMessages] = useState<Message[]>([])
     const [inputValue, setInputValue] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    // Fetch initial messages
+    useEffect(() => {
+        const fetchMessages = async () => {
+            const { data, error } = await supabase
+                .from('assistant_messages')
+                .select('*')
+                .order('created_at', { ascending: true })
+
+            if (error) {
+                console.error('Error fetching messages:', error)
+                toast.error('Erro ao carregar mensagens')
+                return
+            }
+
+            if (data) {
+                const formattedMessages: Message[] = data.map(msg => ({
+                    id: msg.id,
+                    text: msg.content,
+                    sender: msg.sender_type === 'user' ? 'me' : 'assistant',
+                    time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    type: msg.message_type as any,
+                    fileUrl: msg.media_url,
+                    fileName: msg.file_name
+                }))
+                setMessages(formattedMessages)
+            }
+        }
+
+        fetchMessages()
+
+        // Realtime subscription
+        const channel = supabase
+            .channel('assistant_messages_channel')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'assistant_messages'
+                },
+                (payload) => {
+                    const newMsg = payload.new
+                    const formattedMsg: Message = {
+                        id: newMsg.id,
+                        text: newMsg.content,
+                        sender: newMsg.sender_type === 'user' ? 'me' : 'assistant',
+                        time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        type: newMsg.message_type as any,
+                        fileUrl: newMsg.media_url,
+                        fileName: newMsg.file_name
+                    }
+
+                    setMessages(prev => {
+                        // Avoid duplicates if we inserted it optimistically (though we aren't doing optimistic anymore to keep it simple with ID sync)
+                        if (prev.some(m => m.id === formattedMsg.id)) return prev
+                        return [...prev, formattedMsg]
+                    })
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    // Auto-scroll to bottom
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages])
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -82,33 +147,40 @@ export default function AssistantPage() {
     const handleSendMessage = async () => {
         if ((!inputValue.trim() && !selectedFile) || isLoading) return
 
-        const newMessageId = Date.now().toString()
-        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-        // Optimistic UI update
-        let messageType: Message['type'] = 'text'
-        if (selectedFile) {
-            if (selectedFile.type.startsWith('image/')) messageType = 'image'
-            else if (selectedFile.type.startsWith('video/')) messageType = 'video'
-            else if (selectedFile.type.startsWith('audio/')) messageType = 'audio'
-            else messageType = 'document'
-        }
-
-        const newMessage: Message = {
-            id: newMessageId,
-            text: inputValue,
-            sender: 'me',
-            time: currentTime,
-            type: messageType,
-            fileUrl: previewUrl || undefined,
-            fileName: selectedFile?.name
-        }
-
-        setMessages(prev => [...prev, newMessage])
-        setInputValue("")
         setIsLoading(true)
 
         try {
+            // 1. Prepare n8n payload
+            const newMessageId = Date.now().toString() // This ID is for WhatsApp reference
+
+            let messageType = 'text'
+            if (selectedFile) {
+                if (selectedFile.type.startsWith('image/')) messageType = 'image'
+                else if (selectedFile.type.startsWith('video/')) messageType = 'video'
+                else if (selectedFile.type.startsWith('audio/')) messageType = 'audio'
+                else messageType = 'document'
+            }
+
+            // 2. Insert into Supabase (Persistence) first or parallel
+            // We'll insert with 'user' sender_type which implies "Admin da Clínica"
+            const { error: dbError } = await supabase
+                .from('assistant_messages')
+                .insert({
+                    content: inputValue,
+                    sender_type: 'user',
+                    message_type: messageType,
+                    media_url: previewUrl, // Ideally should upload to storage, but using previewUrl for local consistency or if file upload implemented later
+                    file_name: selectedFile?.name,
+                    clinic_id: user?.clinic_id
+                })
+
+            if (dbError) {
+                console.error('Error saving message:', dbError)
+                toast.error('Erro ao salvar mensagem.')
+                throw dbError
+            }
+
+            // 3. Send to n8n (External API)
             let payload: any = {
                 "event": "messages.upsert",
                 "instance": "clinica_dra_margarida_matos",
@@ -140,7 +212,7 @@ export default function AssistantPage() {
                     payload.data.message = {
                         "imageMessage": {
                             "mimetype": selectedFile.type,
-                            "url": "https://mmg.whatsapp.net/v/t62.7118-24/placeholder.enc", // Mock URL as per example structure
+                            "url": "https://mmg.whatsapp.net/v/t62.7118-24/placeholder.enc",
                             "caption": inputValue
                         }
                     }
@@ -151,11 +223,10 @@ export default function AssistantPage() {
                             "mimetype": selectedFile.type,
                             "url": "https://mmg.whatsapp.net/v/t62.7161-24/placeholder.enc",
                             "caption": inputValue,
-                            "seconds": 10 // Mock duration
+                            "seconds": 10
                         }
                     }
                 } else {
-                    // Document or Audio fallback structure
                     payload.data.messageType = "documentMessage"
                     payload.data.message = {
                         "documentMessage": {
@@ -173,7 +244,6 @@ export default function AssistantPage() {
                 }
             }
 
-            // Using the user provided webhook URL
             const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/w-api-webhook', {
                 method: 'POST',
                 headers: {
@@ -187,13 +257,14 @@ export default function AssistantPage() {
             }
 
             toast.success("Mensagem enviada com sucesso!")
+            setInputValue("")
+            clearFile()
 
         } catch (error) {
             console.error("Error sending message:", error)
             toast.error("Erro ao enviar mensagem para o assistente.")
         } finally {
             setIsLoading(false)
-            clearFile()
         }
     }
 
@@ -268,6 +339,7 @@ export default function AssistantPage() {
                                     </div>
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                             {isLoading && (
                                 <div className="flex justify-end w-full">
                                     <div className="bg-primary/50 text-primary-foreground rounded-2xl rounded-tr-none p-3 shadow-md flex items-center gap-2">
