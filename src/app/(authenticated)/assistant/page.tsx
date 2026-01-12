@@ -182,7 +182,7 @@ export default function AssistantPage() {
 
             if (dbError) {
                 console.error('Error saving message:', dbError)
-                toast.error('Erro ao salvar mensagem.')
+                toast.error(`Erro ao salvar: ${dbError.message || JSON.stringify(dbError)}`)
                 throw dbError
             }
 
@@ -259,16 +259,17 @@ export default function AssistantPage() {
             })
 
             if (!response.ok) {
-                throw new Error('Falha ao enviar mensagem')
+                const errorText = await response.text()
+                throw new Error(`n8n Error: ${errorText}`)
             }
 
             toast.success("Mensagem enviada com sucesso!")
             setInputValue("")
             clearFile()
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error sending message:", error)
-            toast.error("Erro ao enviar mensagem para o assistente.")
+            toast.error(`Erro: ${error.message || "Falha desconhecida"}`)
         } finally {
             setIsLoading(false)
         }
