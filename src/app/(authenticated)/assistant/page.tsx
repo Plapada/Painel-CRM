@@ -121,7 +121,7 @@ export default function AssistantPage() {
                         "participant": "",
                         "addressingMode": "lid"
                     },
-                    "pushName": user?.name || "Usuário CRM",
+                    "pushName": user?.username || "Usuário CRM",
                     "status": "DELIVERY_ACK",
                     "messageTimestamp": Math.floor(Date.now() / 1000),
                     "instanceId": "5fa7e47b-1e1e-41d1-977d-4623b9d0dd26",
