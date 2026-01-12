@@ -163,15 +163,21 @@ export default function AssistantPage() {
 
             // 2. Insert into Supabase (Persistence) first or parallel
             // We'll insert with 'user' sender_type which implies "Admin da Clínica"
+            // Ensure clinic_id is acceptable (null if undefined)
+            const clinicId = user?.clinic_id || null
+
+            // Don't save blob: URLs to database as they expire
+            const savedMediaUrl = previewUrl && !previewUrl.startsWith('blob:') ? previewUrl : null
+
             const { error: dbError } = await supabase
                 .from('assistant_messages')
                 .insert({
                     content: inputValue,
                     sender_type: 'user',
                     message_type: messageType,
-                    media_url: previewUrl, // Ideally should upload to storage, but using previewUrl for local consistency or if file upload implemented later
+                    media_url: savedMediaUrl,
                     file_name: selectedFile?.name,
-                    clinic_id: user?.clinic_id
+                    clinic_id: clinicId
                 })
 
             if (dbError) {
