@@ -11,7 +11,8 @@ import {
     ClipboardList,
     Settings,
     LogOut,
-    Hexagon
+    Hexagon,
+    Sparkles
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -27,6 +28,7 @@ const navItems = [
     { name: "Pacientes", href: "/clients", icon: ClipboardList },
     { name: "Clínicas", href: "/clinics", icon: Users },
     { name: "Suporte", href: "/support", icon: MessageSquare },
+    { name: "Assistente IA", href: "/assistant", icon: Sparkles },
 ]
 
 export function Sidebar() {
@@ -38,11 +40,11 @@ export function Sidebar() {
     // Filter items based on role
     const filteredNavItems = navItems.filter(item => {
         if (isClient) {
-            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Pacientes, Suporte
-            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Pacientes', 'Suporte'].includes(item.name)
+            // Clients see: Dashboard, Funil, Conversas, Agendamentos, Pacientes, Suporte, Assistente IA
+            return ['Dashboard', 'Funil', 'Conversas', 'Agendamentos', 'Pacientes', 'Suporte', 'Assistente IA'].includes(item.name)
         } else {
-            // Admin sees: Dashboard, Clínicas, Suporte (NO Conversas - access via clinic details)
-            return ['Dashboard', 'Clínicas', 'Suporte'].includes(item.name)
+            // Admin sees: Dashboard, Clínicas, Suporte, Assistente IA
+            return ['Dashboard', 'Clínicas', 'Suporte', 'Assistente IA'].includes(item.name)
         }
     })
 
