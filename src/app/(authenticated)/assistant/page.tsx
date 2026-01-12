@@ -115,11 +115,8 @@ export default function AssistantPage() {
                 "data": {
                     "key": {
                         "remoteJid": "5581988718023@s.whatsapp.net",
-                        "remoteJidAlt": "5581988718023@s.whatsapp.net",
                         "fromMe": false,
-                        "id": newMessageId, // Use consistent ID
-                        "participant": "",
-                        "addressingMode": "lid"
+                        "id": newMessageId
                     },
                     "pushName": user?.username || "Usuário CRM",
                     "status": "DELIVERY_ACK",
@@ -224,7 +221,7 @@ export default function AssistantPage() {
 
                 <CardContent className="flex-1 p-0 overflow-hidden relative bg-[url('/whatsapp-bg.png')] bg-repeat bg-opacity-5">
                     {/* Chat Background Pattern Overlay if needed */}
-                    <div className="absolute inset-0 bg-white/90 z-0" />
+                    <div className="absolute inset-0 bg-background/90 z-0" />
 
                     <ScrollArea className="h-full p-4 relative z-10">
                         <div className="space-y-4 pb-4">
@@ -241,7 +238,7 @@ export default function AssistantPage() {
                                             "max-w-[80%] rounded-2xl p-3 shadow-sm relative",
                                             msg.sender === 'me'
                                                 ? "bg-primary text-primary-foreground rounded-tr-none"
-                                                : "bg-white text-foreground rounded-tl-none border"
+                                                : "bg-card text-card-foreground rounded-tl-none border"
                                         )}
                                     >
                                         {msg.type === 'image' && msg.fileUrl && (
