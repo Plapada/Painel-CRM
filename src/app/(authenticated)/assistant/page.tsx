@@ -45,8 +45,8 @@ export default function AssistantPage() {
         console.log('Clinic ID:', user?.clinic_id)
 
         if (!user?.clinic_id) {
-            console.warn('No clinic_id found for user. Skipping fetch or fetching all (debug mode).')
-            // return // Commented out to debug if it's just missing clinic_id
+            console.warn('No clinic_id found for user. Skipping fetch.')
+            return
         }
 
         const fetchMessages = async () => {
