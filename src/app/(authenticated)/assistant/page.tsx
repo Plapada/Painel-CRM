@@ -154,20 +154,36 @@ export default function AssistantPage() {
 
         setIsLoading(true)
 
+        // Generate ID consistent with UUID format for Supabase
+        const newMessageId = crypto.randomUUID()
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+        // Optimistic Update
+        let messageType: Message['type'] = 'text'
+        if (selectedFile) {
+            if (selectedFile.type.startsWith('image/')) messageType = 'image'
+            else if (selectedFile.type.startsWith('video/')) messageType = 'video'
+            else if (selectedFile.type.startsWith('audio/')) messageType = 'audio'
+            else messageType = 'document'
+        }
+
+        const optimisticMessage: Message = {
+            id: newMessageId,
+            text: inputValue,
+            sender: 'me',
+            time: currentTime,
+            type: messageType,
+            fileUrl: previewUrl || undefined,
+            fileName: selectedFile?.name
+        }
+
+        setMessages(prev => [...prev, optimisticMessage])
+        setInputValue("")
+        const tempSelectedFile = selectedFile // keep ref for upload
+        clearFile() // Clear input immediately for UX
+
         try {
-            // 1. Prepare n8n payload
-            const newMessageId = Date.now().toString() // This ID is for WhatsApp reference
-
-            let messageType = 'text'
-            if (selectedFile) {
-                if (selectedFile.type.startsWith('image/')) messageType = 'image'
-                else if (selectedFile.type.startsWith('video/')) messageType = 'video'
-                else if (selectedFile.type.startsWith('audio/')) messageType = 'audio'
-                else messageType = 'document'
-            }
-
-            // 2. Insert into Supabase (Persistence) first or parallel
-            // We'll insert with 'user' sender_type which implies "Admin da Clínica"
+            // 2. Insert into Supabase (Persistence)
             // Ensure clinic_id is acceptable (null if undefined)
             const clinicId = user?.clinic_id || null
 
@@ -177,17 +193,20 @@ export default function AssistantPage() {
             const { error: dbError } = await supabase
                 .from('assistant_messages')
                 .insert({
+                    id: newMessageId, // Enforce same ID
                     content: inputValue,
                     sender_type: 'user',
                     message_type: messageType,
                     media_url: savedMediaUrl,
-                    file_name: selectedFile?.name,
+                    file_name: tempSelectedFile?.name,
                     clinic_id: clinicId
                 })
 
             if (dbError) {
                 console.error('Error saving message:', dbError)
                 toast.error(`Erro ao salvar: ${dbError.message || JSON.stringify(dbError)}`)
+                // If DB fails, we should probably remove the optimistic message or show error state
+                setMessages(prev => prev.filter(m => m.id !== newMessageId))
                 throw dbError
             }
 
@@ -214,37 +233,38 @@ export default function AssistantPage() {
                 "apikey": "C06D52EA-023C-4AAD-A7CA-08F03D8160C5"
             }
 
-            if (selectedFile) {
-                const base64 = await convertToBase64(selectedFile)
+            if (tempSelectedFile) {
+                const base64 = await convertToBase64(tempSelectedFile)
                 payload.data.base64 = base64
 
-                if (selectedFile.type.startsWith('image/')) {
+                if (tempSelectedFile.type.startsWith('image/')) {
                     payload.data.messageType = "imageMessage"
                     payload.data.message = {
                         "imageMessage": {
-                            "mimetype": selectedFile.type,
+                            "mimetype": tempSelectedFile.type,
                             "url": "https://mmg.whatsapp.net/v/t62.7118-24/placeholder.enc",
                             "caption": inputValue
                         }
                     }
-                } else if (selectedFile.type.startsWith('video/')) {
+                } else if (tempSelectedFile.type.startsWith('video/')) {
                     payload.data.messageType = "videoMessage"
                     payload.data.message = {
                         "videoMessage": {
-                            "mimetype": selectedFile.type,
+                            "mimetype": tempSelectedFile.type,
                             "url": "https://mmg.whatsapp.net/v/t62.7161-24/placeholder.enc",
                             "caption": inputValue,
                             "seconds": 10
                         }
                     }
                 } else {
+                    // Document or Audio fallback structure
                     payload.data.messageType = "documentMessage"
                     payload.data.message = {
                         "documentMessage": {
-                            "mimetype": selectedFile.type,
+                            "mimetype": tempSelectedFile.type,
                             "url": "https://mmg.whatsapp.net/v/placeholder.enc",
                             "caption": inputValue,
-                            "fileName": selectedFile.name
+                            "fileName": tempSelectedFile.name
                         }
                     }
                 }
@@ -255,6 +275,7 @@ export default function AssistantPage() {
                 }
             }
 
+            // Using the user provided webhook URL
             const response = await fetch('https://ia-n8n.jje6ux.easypanel.host/webhook/w-api-webhook', {
                 method: 'POST',
                 headers: {
@@ -269,12 +290,12 @@ export default function AssistantPage() {
             }
 
             toast.success("Mensagem enviada com sucesso!")
-            setInputValue("")
-            clearFile()
 
         } catch (error: any) {
             console.error("Error sending message:", error)
             toast.error(`Erro: ${error.message || "Falha desconhecida"}`)
+            // Rollback optimistic if general failure
+            setMessages(prev => prev.filter(m => m.id !== newMessageId))
         } finally {
             setIsLoading(false)
         }
