@@ -41,10 +41,13 @@ export default function AssistantPage() {
 
     // Fetch initial messages
     useEffect(() => {
+        if (!user?.clinic_id) return
+
         const fetchMessages = async () => {
             const { data, error } = await supabase
                 .from('assistant_messages')
                 .select('*')
+                .eq('clinic_id', user.clinic_id!)
                 .order('created_at', { ascending: true })
 
             if (error) {
@@ -77,23 +80,25 @@ export default function AssistantPage() {
                 {
                     event: 'INSERT',
                     schema: 'public',
-                    table: 'assistant_messages'
+                    table: 'assistant_messages',
+                    filter: `clinic_id=eq.${user.clinic_id}`
                 },
                 (payload) => {
                     const newMsg = payload.new
-                    const formattedMsg: Message = {
-                        id: newMsg.id,
-                        text: newMsg.content,
-                        sender: newMsg.sender_type === 'user' ? 'me' : 'assistant',
-                        time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        type: newMsg.message_type as any,
-                        fileUrl: newMsg.media_url,
-                        fileName: newMsg.file_name
-                    }
 
+                    // Prevent duplicate if ID matches
                     setMessages(prev => {
-                        // Avoid duplicates if we inserted it optimistically (though we aren't doing optimistic anymore to keep it simple with ID sync)
-                        if (prev.some(m => m.id === formattedMsg.id)) return prev
+                        if (prev.some(m => m.id === newMsg.id)) return prev
+
+                        const formattedMsg: Message = {
+                            id: newMsg.id,
+                            text: newMsg.content,
+                            sender: newMsg.sender_type === 'user' ? 'me' : 'assistant',
+                            time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            type: newMsg.message_type as any,
+                            fileUrl: newMsg.media_url,
+                            fileName: newMsg.file_name
+                        }
                         return [...prev, formattedMsg]
                     })
                 }
@@ -103,7 +108,7 @@ export default function AssistantPage() {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [])
+    }, [user?.clinic_id])
 
     // Auto-scroll to bottom
     useEffect(() => {
