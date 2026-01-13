@@ -41,18 +41,34 @@ export default function AssistantPage() {
 
     // Fetch initial messages
     useEffect(() => {
-        if (!user?.clinic_id) return
+        console.log('AssistantPage mounted. User:', user)
+        console.log('Clinic ID:', user?.clinic_id)
+
+        if (!user?.clinic_id) {
+            console.warn('No clinic_id found for user. Skipping fetch or fetching all (debug mode).')
+            // return // Commented out to debug if it's just missing clinic_id
+        }
 
         const fetchMessages = async () => {
-            const { data, error } = await supabase
+            console.log('Fetching messages...')
+            let query = supabase
                 .from('assistant_messages')
                 .select('*')
-                .eq('clinic_id', user.clinic_id!)
                 .order('created_at', { ascending: true })
+
+            if (user?.clinic_id) {
+                query = query.eq('clinic_id', user.clinic_id)
+            } else {
+                console.warn('Fetching ALL messages (no clinic_id filter)')
+            }
+
+            const { data, error } = await query
+
+            console.log('Fetch result:', { data, error })
 
             if (error) {
                 console.error('Error fetching messages:', error)
-                toast.error('Erro ao carregar mensagens')
+                toast.error(`Erro ao carregar mensagens: ${error.message}`)
                 return
             }
 
