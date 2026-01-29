@@ -3,360 +3,399 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
-import { AppointmentScheduler, AvailableDate, TimeSlot } from "@/components/ui/appointment-scheduler"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Calendar, Clock, Phone, MapPin, FileText, ExternalLink, X } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar } from "@/components/ui/calendar"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog"
+    User,
+    Calendar as CalendarIcon,
+    Clock,
+    Phone,
+    MapPin,
+    FileText,
+    ExternalLink,
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
+    PlayCircle,
+    CheckSquare,
+    MessageCircle
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { ptBR } from "date-fns/locale"
+
+// --- Types ---
+type AppointmentStatus =
+    | 'pendente'
+    | 'confirmado'
+    | 'faltou'
+    | 'compareceu'
+    | 'atrasado'
+    | 'em_atendimento'
+    | 'finalizado'
+
+interface Appointment {
+    id: number
+    data_inicio: string
+    nome_cliente: string
+    telefone_cliente?: string
+    email_cliente?: string
+    tipo_consulta: string
+    status: AppointmentStatus
+    convenio?: string
+    observacoes?: string
+    clinic_id: string
+}
+
+const STATUS_CONFIG: Record<AppointmentStatus, { label: string, color: string, icon: any }> = {
+    'pendente': { label: 'Pendente', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: Clock },
+    'confirmado': { label: 'Confirmado', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
+    'compareceu': { label: 'Compareceu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: MapPin },
+    'em_atendimento': { label: 'Em Atendimento', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: PlayCircle },
+    'finalizado': { label: 'Finalizado', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400', icon: CheckSquare },
+    'atrasado': { label: 'Atrasado', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertCircle },
+    'faltou': { label: 'Faltou', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+}
 
 export default function AppointmentsPage() {
     const { user } = useAuth()
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-    const [appointments, setAppointments] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
     const router = useRouter()
 
-    // Appointment details modal state
-    const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
-    const [showDetailsModal, setShowDetailsModal] = useState(false)
-    const [clientId, setClientId] = useState<number | null>(null)
-    const [loadingClient, setLoadingClient] = useState(false)
+    // State
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+    const [appointments, setAppointments] = useState<Appointment[]>([])
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [searchTerm, setSearchTerm] = useState("")
 
+    // Fetch Appointments
     useEffect(() => {
         if (user?.clinic_id) {
             fetchAppointments()
         }
-    }, [user?.clinic_id])
+    }, [user?.clinic_id, selectedDate])
 
     async function fetchAppointments() {
-        if (!user?.clinic_id) {
-            setLoading(false)
-            return
-        }
+        if (!user?.clinic_id) return
+        setLoading(true)
 
-        console.log("Fetching appointments for clinic:", user.clinic_id)
+        // Filter by selected date (entire day)
+        const startOfDay = new Date(selectedDate)
+        startOfDay.setHours(0, 0, 0, 0)
+
+        const endOfDay = new Date(selectedDate)
+        endOfDay.setHours(23, 59, 59, 999)
 
         const { data, error } = await supabase
             .from('consultas')
             .select('*')
             .eq('clinic_id', user.clinic_id)
+            .gte('data_inicio', startOfDay.toISOString())
+            .lte('data_inicio', endOfDay.toISOString())
+            .order('data_inicio', { ascending: true })
 
-        if (error) {
-            console.error("Error fetching appointments:", error)
-        } else {
-            console.log("Appointments fetched:", data)
-        }
-
-        if (data) {
-            setAppointments(data)
+        if (!error && data) {
+            // Cast to formatted type if needed or keep raw
+            setAppointments(data as Appointment[])
+            // Auto-select first if none selected
+            if (data.length > 0 && !selectedAppointment) {
+                // optionally auto select first: setSelectedAppointment(data[0] as Appointment)
+            }
         }
         setLoading(false)
     }
 
-    // Get dates that have appointments for the current month/year only
-    const getAvailableDates = (): AvailableDate[] => {
-        const datesWithAppointments = new Set<number>()
-
-        appointments.forEach(app => {
-            if (app.data_inicio) {
-                const d = new Date(app.data_inicio)
-                // Only include if the appointment is in the current viewed month/year
-                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                    datesWithAppointments.add(d.getDate())
-                }
-            }
-        })
-
-        return Array.from(datesWithAppointments).map(date => ({
-            date,
-            hasSlots: true // We use "hasSlots" to indicate "has appointments"
-        }))
-    }
-
-    // Filter appointments for selected date to create timeSlots
-    const getTimeSlotsForDate = (): TimeSlot[] => {
-        return appointments
-            .filter(app => {
-                if (!app.data_inicio) return false
-                const appDate = new Date(app.data_inicio)
-                return appDate.getDate() === selectedDate.getDate() &&
-                    appDate.getMonth() === selectedDate.getMonth() &&
-                    appDate.getFullYear() === selectedDate.getFullYear()
-            })
-            .map(app => ({
-                time: new Date(app.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-                available: true,
-                data: app
-            }))
-            .sort((a, b) => a.time.localeCompare(b.time))
-    }
-
-    // Get upcoming appointments (next 7 days)
-    const getUpcomingAppointments = () => {
-        const now = new Date()
-        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-        return appointments
-            .filter(app => {
-                if (!app.data_inicio) return false
-                const appDate = new Date(app.data_inicio)
-                return appDate >= now && appDate <= nextWeek
-            })
-            .sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime())
-            .slice(0, 5) // Show max 5 upcoming
-    }
-
-    const handleAppointmentClick = async (appointment: any) => {
-        setSelectedAppointment(appointment)
-        setShowDetailsModal(true)
-        setClientId(null)
-        setLoadingClient(true)
-
-        // Try to find client by phone
-        if (appointment.telefone_cliente) {
-            const { data: client, error } = await supabase
-                .from('dados_cliente')
-                .select('id')
-                .eq('telefone', appointment.telefone_cliente)
-                .single()
-
-            if (client) {
-                setClientId(client.id)
-            }
-        }
-        setLoadingClient(false)
-    }
-
-    const handleGoToClientDetails = () => {
-        if (clientId) {
-            router.push(`/clients/${clientId}`)
+    // Handlers
+    const handleDateSelect = (date: Date | undefined) => {
+        if (date) {
+            setSelectedDate(date)
+            setSelectedAppointment(null) // Clear selection on date change
         }
     }
 
-    const handleDateSelect = (day: number) => {
-        const newDate = new Date(currentYear, currentMonth, day)
+    const handlePrevDay = () => {
+        const newDate = new Date(selectedDate)
+        newDate.setDate(selectedDate.getDate() - 1)
         setSelectedDate(newDate)
     }
 
-    const handleMonthChange = (month: number, year: number) => {
-        setCurrentMonth(month)
-        setCurrentYear(year)
+    const handleNextDay = () => {
+        const newDate = new Date(selectedDate)
+        newDate.setDate(selectedDate.getDate() + 1)
+        setSelectedDate(newDate)
     }
 
-    const upcomingAppointments = getUpcomingAppointments()
+    const handleStatusUpdate = async (newStatus: AppointmentStatus) => {
+        if (!selectedAppointment) return
 
+        // Optimistic update
+        const updatedApp = { ...selectedAppointment, status: newStatus }
+        setSelectedAppointment(updatedApp)
+        setAppointments(prev => prev.map(app => app.id === updatedApp.id ? updatedApp : app))
+
+        // DB update
+        const { error } = await supabase
+            .from('consultas')
+            .update({ status: newStatus })
+            .eq('id', selectedAppointment.id)
+
+        if (error) {
+            console.error("Failed to update status", error)
+            // Revert on error would go here
+        }
+    }
+
+    const openWhatsApp = (phone: string | undefined) => {
+        if (!phone) return
+        // Remove non-digits
+        const cleanPhone = phone.replace(/\D/g, '')
+        window.open(`https://wa.me/${cleanPhone}`, '_blank')
+    }
+
+    // -- Render --
     return (
-        <div className="flex flex-col gap-6 p-4">
-            <h1 className="text-2xl font-bold">Agendamentos</h1>
-
-            {/* Calendar Section */}
-            <div className="w-full">
-                <AppointmentScheduler
-                    userName="Agenda da Clínica"
-                    meetingTitle="Agendamentos"
-                    meetingType="Visualização Mensal"
-                    duration="-"
-                    availableDates={getAvailableDates()}
-                    timeSlots={getTimeSlotsForDate()}
-                    hideSidebar={true}
-                    onDateSelect={handleDateSelect}
-                    onMonthChange={handleMonthChange}
-                    loading={loading}
-                    renderSlot={(slot) => (
-                        <div
-                            className="flex w-full flex-col gap-1 rounded-lg border bg-card p-3 text-left shadow-sm transition-all hover:bg-accent cursor-pointer"
-                            onClick={() => handleAppointmentClick(slot.data)}
-                        >
-                            <div className="flex items-center justify-between">
-                                <span className="font-bold text-primary">{slot.time}</span>
-                                <Badge variant={slot.data.status === 'confirmada' ? 'default' : 'secondary'}>
-                                    {slot.data.status || 'Pendente'}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">{slot.data.nome_cliente || "Paciente sem nome"}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                                {slot.data.tipo_consulta || "Consulta Geral"}
-                            </div>
+        <div className="flex h-[calc(100vh-2rem)] gap-4 p-4 overflow-hidden">
+            {/* LEFT PANEL - LIST */}
+            <Card className="w-1/3 min-w-[350px] flex flex-col border-0 shadow-lg bg-card/50 backdrop-blur-sm">
+                <CardHeader className="pb-2 border-b">
+                    <div className="flex items-center justify-between mb-2">
+                        <Button variant="ghost" size="icon" onClick={handlePrevDay}>
+                            <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <div className="text-center">
+                            <h2 className="text-xl font-bold capitalize text-foreground">
+                                {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' })}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                {selectedDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
                         </div>
-                    )}
-                />
-            </div>
-
-            {/* Upcoming Appointments Section */}
-            <Card className="border-0 bg-card shadow-xl">
-                <CardHeader>
-                    <CardTitle className="text-lg font-medium text-foreground flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-primary" />
-                        Próximas Consultas
-                    </CardTitle>
+                        <Button variant="ghost" size="icon" onClick={handleNextDay}>
+                            <ChevronRight className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </CardHeader>
-                <CardContent>
-                    {upcomingAppointments.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">
-                            Nenhuma consulta marcada para os próximos 7 dias.
-                        </p>
-                    ) : (
-                        <div className="space-y-3">
-                            {upcomingAppointments.map((apt) => {
-                                const aptDate = new Date(apt.data_inicio)
-                                return (
-                                    <div
-                                        key={apt.id}
-                                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                                        onClick={() => handleAppointmentClick(apt)}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-primary/20 text-primary p-2 rounded-lg flex flex-col items-center justify-center min-w-14">
-                                                <span className="text-xs font-medium">
-                                                    {aptDate.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase()}
-                                                </span>
-                                                <span className="font-bold text-lg">
-                                                    {aptDate.getDate()}
-                                                </span>
+
+                <CardContent className="flex-1 p-0 overflow-hidden">
+                    <ScrollArea className="h-full">
+                        <div className="flex flex-col">
+                            {loading ? (
+                                <div className="p-8 text-center text-muted-foreground">Carregando...</div>
+                            ) : appointments.length === 0 ? (
+                                <div className="p-8 text-center text-muted-foreground">Nenhum agendamento para hoje.</div>
+                            ) : (
+                                appointments.map((apt) => {
+                                    const statusStyle = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
+                                    const isSelected = selectedAppointment?.id === apt.id
+                                    const time = new Date(apt.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+                                    return (
+                                        <div
+                                            key={apt.id}
+                                            onClick={() => setSelectedAppointment(apt)}
+                                            className={cn(
+                                                "flex items-center gap-3 p-4 border-b cursor-pointer transition-all hover:bg-accent/50",
+                                                isSelected && "bg-accent border-l-4 border-l-primary"
+                                            )}
+                                        >
+                                            <div className="font-mono text-lg font-bold text-foreground w-14">
+                                                {time}
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-foreground">
-                                                    {apt.nome_cliente || "Paciente sem nome"}
-                                                </p>
-                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    <Clock className="h-3 w-3" />
-                                                    <span>
-                                                        {aptDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span>{apt.tipo_consulta || "Consulta Geral"}</span>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="font-semibold text-foreground truncate">{apt.nome_cliente}</p>
+                                                    {apt.status && (
+                                                        <div className={cn("w-2 h-2 rounded-full", statusStyle.color.split(' ')[0].replace('bg-', 'bg-'))} />
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                                    <span className="truncate">{apt.tipo_consulta || "Consulta"}</span>
+                                                    {apt.convenio && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="font-medium text-primary">{apt.convenio}</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
-                                        <Badge variant={apt.status === 'confirmada' ? 'default' : 'secondary'}>
-                                            {apt.status || 'Pendente'}
-                                        </Badge>
-                                    </div>
-                                )
-                            })}
+                                    )
+                                })
+                            )}
                         </div>
-                    )}
+                    </ScrollArea>
                 </CardContent>
             </Card>
 
-            {/* Appointment Details Modal */}
-            <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Calendar className="h-5 w-5 text-primary" />
-                            Detalhes do Agendamento
-                        </DialogTitle>
-                        {selectedAppointment && (
-                            <DialogDescription>
-                                {new Date(selectedAppointment.data_inicio).toLocaleDateString('pt-BR', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </DialogDescription>
-                        )}
-                    </DialogHeader>
-
-                    {selectedAppointment && (
-                        <div className="space-y-4 py-4">
-                            {/* Status */}
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Status</span>
-                                <Badge variant={selectedAppointment.status === 'confirmada' ? 'default' : 'secondary'}>
-                                    {selectedAppointment.status || 'Pendente'}
-                                </Badge>
-                            </div>
-
-                            {/* Time */}
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                <div className="p-2 rounded-full bg-primary/10">
-                                    <Clock className="h-4 w-4 text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Horário</p>
-                                    <p className="font-medium">
-                                        {new Date(selectedAppointment.data_inicio).toLocaleTimeString('pt-BR', {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Client */}
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                <div className="p-2 rounded-full bg-blue-500/10">
-                                    <User className="h-4 w-4 text-blue-500" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Paciente</p>
-                                    <p className="font-medium">{selectedAppointment.nome_cliente || 'Não informado'}</p>
-                                </div>
-                            </div>
-
-                            {/* Phone */}
-                            {selectedAppointment.telefone_cliente && (
-                                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                    <div className="p-2 rounded-full bg-green-500/10">
-                                        <Phone className="h-4 w-4 text-green-500" />
-                                    </div>
+            {/* RIGHT PANEL - DETAIL */}
+            <Card className="flex-1 flex flex-col border-0 shadow-lg overflow-hidden bg-card">
+                {selectedAppointment ? (
+                    <div className="flex flex-col h-full">
+                        {/* Header Tabs */}
+                        <div className="border-b px-6 pt-4 bg-muted/20">
+                            <Tabs defaultValue="detalhes" className="w-full">
+                                <div className="flex items-center justify-between mb-4">
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Telefone</p>
-                                        <p className="font-medium">{selectedAppointment.telefone_cliente}</p>
+                                        <h1 className="text-2xl font-bold text-foreground">
+                                            {new Date(selectedAppointment.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </h1>
+                                        <p className="text-muted-foreground capitalize">
+                                            {selectedAppointment.tipo_consulta || "Consulta Geral"}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <TabsList>
+                                            <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+                                            <TabsTrigger value="clinico">Prontuário</TabsTrigger>
+                                        </TabsList>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Type */}
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                                <div className="p-2 rounded-full bg-amber-500/10">
-                                    <FileText className="h-4 w-4 text-amber-500" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Tipo de Consulta</p>
-                                    <p className="font-medium">{selectedAppointment.tipo_consulta || 'Consulta Geral'}</p>
-                                </div>
-                            </div>
+                                <TabsContent value="detalhes" className="mt-0 h-[calc(100vh-14rem)] overflow-y-auto">
+                                    <div className="flex gap-6 py-6">
+                                        {/* Main Info Column */}
+                                        <div className="flex-1 space-y-6">
+                                            {/* Patient Search / Name */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-muted-foreground">Paciente</label>
+                                                <div className="relative">
+                                                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                    <Input
+                                                        value={selectedAppointment.nome_cliente}
+                                                        readOnly
+                                                        className="pl-9 font-semibold text-lg h-12 bg-accent/20 border-accent"
+                                                    />
+                                                </div>
+                                            </div>
 
-                            {/* Notes */}
-                            {selectedAppointment.observacoes && (
-                                <div className="p-3 rounded-lg bg-muted/50">
-                                    <p className="text-sm text-muted-foreground mb-1">Observações</p>
-                                    <p className="text-sm">{selectedAppointment.observacoes}</p>
-                                </div>
-                            )}
+                                            {/* Contact Grid */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-medium text-muted-foreground">Celular</label>
+                                                    <div className="flex gap-2">
+                                                        <Input value={selectedAppointment.telefone_cliente || ''} readOnly />
+                                                        <Button
+                                                            size="icon"
+                                                            className="bg-green-600 hover:bg-green-700 text-white shrink-0"
+                                                            onClick={() => openWhatsApp(selectedAppointment.telefone_cliente)}
+                                                            title="Abrir WhatsApp"
+                                                        >
+                                                            <MessageCircle className="h-5 w-5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-medium text-muted-foreground">Email</label>
+                                                    <Input value={selectedAppointment.email_cliente || ''} readOnly placeholder="Não informado" />
+                                                </div>
+                                            </div>
+
+                                            {/* Insurance Info */}
+                                            <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Convênio</span>
+                                                    <Badge variant="outline" className="border-orange-200 text-orange-700 bg-white/50">{selectedAppointment.convenio || "Particular"}</Badge>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Clique para ver detalhes da carteirinha</p>
+                                            </div>
+
+                                            {/* Obs */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-muted-foreground">Observações</label>
+                                                <div className="p-3 rounded-md bg-muted/30 text-sm min-h-[80px]">
+                                                    {selectedAppointment.observacoes || "Nenhuma observação."}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions / Status Column */}
+                                        <div className="w-72 space-y-6 border-l pl-6">
+                                            <div className="space-y-4">
+                                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Status do Atendimento</h3>
+
+                                                <div className="space-y-2">
+                                                    {(Object.keys(STATUS_CONFIG) as AppointmentStatus[]).map((statusKey) => {
+                                                        const config = STATUS_CONFIG[statusKey]
+                                                        const Icon = config.icon
+                                                        const isActive = selectedAppointment.status === statusKey
+
+                                                        return (
+                                                            <button
+                                                                key={statusKey}
+                                                                onClick={() => handleStatusUpdate(statusKey)}
+                                                                className={cn(
+                                                                    "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
+                                                                    isActive
+                                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                                        : "border-transparent hover:bg-muted text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={cn(
+                                                                        "p-1.5 rounded-full bg-muted",
+                                                                        isActive && "bg-primary text-white"
+                                                                    )}>
+                                                                        <Icon className="h-4 w-4" />
+                                                                    </div>
+                                                                    <span>{config.label}</span>
+                                                                </div>
+                                                                {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-6 border-t">
+                                                <div className="bg-card border rounded-lg p-2 flex justify-center">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={selectedDate}
+                                                        onSelect={handleDateSelect}
+                                                        locale={ptBR}
+                                                        className="rounded-md"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TabsContent>
+
+                                <TabsContent value="clinico">
+                                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                                        <div className="text-center">
+                                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                            <p>Acesse o prontuário completo para visualizar históricos.</p>
+                                            <Button variant="link" className="mt-2 text-primary" onClick={() => {
+                                                // Navigate logic if needed
+                                            }}>
+                                                Ir para Prontuário
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
                         </div>
-                    )}
-
-                    <DialogFooter className="flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
-                            Fechar
-                        </Button>
-                        {clientId && (
-                            <Button onClick={handleGoToClientDetails}>
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Ver Detalhes do Paciente
-                            </Button>
-                        )}
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/5">
+                        <CalendarIcon className="h-16 w-16 mb-4 opacity-20" />
+                        <h3 className="text-xl font-semibold mb-2">Selecione um Agendamento</h3>
+                        <p className="max-w-xs text-center text-sm opacity-70">
+                            Clique em um horário na lista à esquerda para ver detalhes e gerenciar o atendimento.
+                        </p>
+                    </div>
+                )}
+            </Card>
         </div>
     )
 }
