@@ -18,7 +18,10 @@ import {
     Building2,
     MessageSquare,
     ArrowRight,
-    CreditCard
+    CreditCard,
+    Clock,
+    CheckCircle2,
+    User
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -212,7 +215,7 @@ export default function DashboardPage() {
                 'EXAME A FRESCO': 150,
                 'VULVOSCOPIA': 150,
                 'VAGINOSCOPIA': 180,
-                'CITOLOGIA': 150, // Shortened for match
+                'CITOLOGIA': 150,
                 'CITOLOGIA E MICROFLORA VAGINAL': 150,
                 'CITOLOGIA HORMONAL ISOLADA': 150,
                 'COLETA DE MATERIAL': 120,
@@ -248,7 +251,7 @@ export default function DashboardPage() {
                 'BIOIMPEDANCIA': 150,
                 'ORTOMOLECULAR': 800,
                 'CONSULTA GINECOLOGICA': 530,
-                'CONSULTA': 530, // Fallback for simple "Consulta"
+                'CONSULTA': 530,
                 'CONSULTA E PREVENTIVO': 830,
                 'PREVENTIVO': 300,
             }
@@ -336,16 +339,36 @@ export default function DashboardPage() {
         }
     }
 
+    // Status color helper
+    const getStatusStyle = (status: string) => {
+        const normalized = status?.toLowerCase()
+        if (normalized === 'confirmada' || normalized === 'confirmado') {
+            return 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700'
+        }
+        if (normalized === 'pendente') {
+            return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700'
+        }
+        if (normalized === 'cancelada' || normalized === 'cancelado') {
+            return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700'
+        }
+        return 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600'
+    }
+
     // --- ADMIN VIEW ---
     if (isAdmin) {
         return (
-            <div className="space-y-8 p-2 animate-in fade-in duration-500">
+            <div className="space-y-8 p-4 animate-in fade-in duration-500">
+                {/* Header */}
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Painel Administrativo</h1>
-                        <Badge className="bg-primary text-primary-foreground">ADMIN</Badge>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white font-playfair">
+                            Painel Administrativo
+                        </h1>
+                        <Badge className="bg-amber-500 text-white border-0 shadow-lg">ADMIN</Badge>
                     </div>
-                    <p className="text-muted-foreground">Visão global de todas as clínicas gerenciadas.</p>
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">
+                        Visão global de todas as clínicas gerenciadas.
+                    </p>
                 </div>
 
                 {/* Admin Overview Stats */}
@@ -382,7 +405,7 @@ export default function DashboardPage() {
                         title="Conversas por Clínica"
                         data={conversationsByClinic.length > 0 ? conversationsByClinic : [{ name: 'Sem dados', value: 0 }]}
                         dataKey="value"
-                        color="#d4af37"
+                        color="#f59e0b"
                     />
                     <ElegantBarChart
                         title="Agendamentos (Últimos 7 dias)"
@@ -395,45 +418,45 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                         {/* Clinics List Table */}
-                        <Card className="border-0 bg-card shadow-xl">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-xl font-medium text-foreground">Clínicas Ativas</CardTitle>
-                                <Button variant="outline" size="sm" asChild>
+                        <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
+                            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-slate-700">
+                                <CardTitle className="text-xl font-bold text-slate-800 dark:text-white">Clínicas Ativas</CardTitle>
+                                <Button variant="outline" size="sm" asChild className="border-slate-300 dark:border-slate-600">
                                     <Link href="/clinics">Ver Todas</Link>
                                 </Button>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-0">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-xs text-muted-foreground uppercase bg-muted/30">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-slate-50 dark:bg-slate-700/50">
                                             <tr>
-                                                <th className="px-4 py-3 text-black dark:text-gray-400">Clínica</th>
-                                                <th className="px-4 py-3 text-black dark:text-gray-400">Conversas</th>
-                                                <th className="px-4 py-3 text-black dark:text-gray-400">Pacientes</th>
-                                                <th className="px-4 py-3 text-black dark:text-gray-400">Hoje</th>
-                                                <th className="px-4 py-3 text-black dark:text-gray-400">Ação</th>
+                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Clínica</th>
+                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Conversas</th>
+                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Pacientes</th>
+                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Hoje</th>
+                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Ação</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                             {clinics.length > 0 ? clinics.slice(0, 5).map((clinic) => (
-                                                <tr key={clinic.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                                                    <td className="px-4 py-3 font-medium text-foreground">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                                                <tr key={clinic.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                                                 {clinic.name.substring(0, 2).toUpperCase()}
                                                             </div>
-                                                            {clinic.name}
+                                                            <span className="font-semibold text-slate-800 dark:text-white">{clinic.name}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3 text-black dark:text-gray-300">{clinic.totalConversations}</td>
-                                                    <td className="px-4 py-3 text-black dark:text-gray-300">{clinic.totalPatients}</td>
-                                                    <td className="px-4 py-3">
-                                                        <Badge variant="outline" className="border-green-500/30 text-green-500">
+                                                    <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{clinic.totalConversations}</td>
+                                                    <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{clinic.totalPatients}</td>
+                                                    <td className="px-6 py-4">
+                                                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700">
                                                             {clinic.todayAppointments} agend.
                                                         </Badge>
                                                     </td>
-                                                    <td className="px-4 py-3">
-                                                        <Button variant="ghost" size="sm" asChild className="h-8">
+                                                    <td className="px-6 py-4">
+                                                        <Button variant="ghost" size="sm" asChild className="h-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20">
                                                             <Link href={`/clinics/${clinic.id}`}>
                                                                 Ver <ArrowRight className="ml-1 h-3 w-3" />
                                                             </Link>
@@ -442,7 +465,7 @@ export default function DashboardPage() {
                                                 </tr>
                                             )) : (
                                                 <tr>
-                                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                                                         {loading ? "Carregando..." : "Nenhuma clínica encontrada."}
                                                     </td>
                                                 </tr>
@@ -465,10 +488,15 @@ export default function DashboardPage() {
 
     // --- CLIENT VIEW (Original Dashboard with Charts) ---
     return (
-        <div className="space-y-8 p-2 animate-in fade-in duration-500">
+        <div className="space-y-8 p-4 animate-in fade-in duration-500">
+            {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-foreground font-playfair">Visão Geral</h1>
-                <p className="text-muted-foreground">Bem-vindo ao CRM Elegance. Dados atualizados em tempo real.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white font-playfair">
+                    Visão Geral
+                </h1>
+                <p className="text-slate-600 dark:text-slate-400 font-medium">
+                    Bem-vindo ao CRM Elegance. Dados atualizados em tempo real.
+                </p>
             </div>
 
             {/* Primary Stats Row */}
@@ -508,38 +536,40 @@ export default function DashboardPage() {
                         title="Distribuição do Funil"
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 0 }]}
                         dataKey="value"
-                        color="#d4af37"
+                        color="#f59e0b"
                     />
 
-                    {/* Removed mock AI Performance and Channel charts - no real data source available */}
-
                     {/* Recent Appointments Table */}
-                    <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
-                        <CardHeader>
-                            <CardTitle className="text-lg font-medium text-foreground">Próximos Agendamentos</CardTitle>
+                    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
+                        <CardHeader className="border-b border-slate-100 dark:border-slate-700">
+                            <CardTitle className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <Calendar className="h-5 w-5 text-amber-500" />
+                                Próximos Agendamentos
+                            </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-slate-100 dark:divide-slate-700">
                                 {recentAppointments.length > 0 ? recentAppointments.map((apt) => (
-                                    <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+                                    <div key={apt.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className="bg-primary/20 text-primary-foreground dark:text-primary p-3 rounded-lg flex flex-col items-center justify-center w-14 h-14">
-                                                <span className="font-bold text-black dark:text-orange-100">{apt.time}</span>
+                                            <div className="bg-amber-500 text-white p-3 rounded-xl flex flex-col items-center justify-center min-w-[60px] shadow-lg shadow-amber-500/30">
+                                                <Clock className="h-4 w-4 mb-1" />
+                                                <span className="font-bold text-sm">{apt.time}</span>
                                             </div>
                                             <div>
-                                                <p className="font-medium text-black dark:text-white">{apt.patient}</p>
-                                                <p className="text-sm text-gray-800 dark:text-muted-foreground">{apt.type} • {apt.condition}</p>
+                                                <p className="font-semibold text-slate-800 dark:text-white">{apt.patient}</p>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400">{apt.type} • {apt.condition}</p>
                                             </div>
                                         </div>
-                                        <span className={`text-xs px-2 py-1 rounded-full border ${(apt.status === 'confirmada' || apt.status === 'confirmado')
-                                            ? 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
-                                            : 'bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-500'
-                                            }`}>
+                                        <Badge className={`font-medium border ${getStatusStyle(apt.status)}`}>
                                             {apt.status}
-                                        </span>
+                                        </Badge>
                                     </div>
                                 )) : (
-                                    <p className="text-muted-foreground text-center py-4">Nenhum agendamento próximo.</p>
+                                    <div className="px-6 py-8 text-center">
+                                        <Calendar className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                                        <p className="text-slate-500 dark:text-slate-400">Nenhum agendamento próximo.</p>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>
@@ -553,28 +583,38 @@ export default function DashboardPage() {
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 1 }]}
                     />
 
-                    {/* Stats - only showing real data */}
-
                     {/* Recent Patients List */}
-                    <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300">
-                        <CardHeader>
-                            <CardTitle className="text-lg font-medium text-foreground">Pacientes Recentes</CardTitle>
+                    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
+                        <CardHeader className="border-b border-slate-100 dark:border-slate-700">
+                            <CardTitle className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                <Users className="h-5 w-5 text-amber-500" />
+                                Pacientes Recentes
+                            </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
+                        <CardContent className="p-0">
+                            <div className="divide-y divide-slate-100 dark:divide-slate-700">
                                 {recentPatients.length > 0 ? recentPatients.map((patient) => (
-                                    <div key={patient.id} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-black dark:text-orange-100 text-xs font-bold">
+                                    <div key={patient.id} className="flex items-center gap-3 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                             {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium text-black dark:text-white">{patient.name}</p>
-                                            <p className="text-xs text-gray-800 dark:text-muted-foreground">{patient.condition}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+                                                {patient.name}
+                                            </p>
+                                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                                                {patient.condition}
+                                            </p>
                                         </div>
-                                        <span className="text-[10px] text-gray-600 dark:text-muted-foreground">{patient.date}</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                            {patient.date}
+                                        </span>
                                     </div>
                                 )) : (
-                                    <p className="text-muted-foreground text-center py-4">Nenhum cliente recente.</p>
+                                    <div className="px-6 py-8 text-center">
+                                        <User className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                                        <p className="text-slate-500 dark:text-slate-400">Nenhum cliente recente.</p>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>
