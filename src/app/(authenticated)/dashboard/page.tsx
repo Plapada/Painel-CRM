@@ -372,7 +372,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Admin Overview Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <ElegantStatsCard
                         title="Total de Clínicas"
                         value={totalClinics.toString()}
@@ -386,12 +386,6 @@ export default function DashboardPage() {
                         description="Base global"
                     />
                     <ElegantStatsCard
-                        title="Conversas (Total)"
-                        value={totalConversations.toString()}
-                        icon={MessageSquare}
-                        description="Todas as clínicas"
-                    />
-                    <ElegantStatsCard
                         title="Agendamentos Hoje"
                         value={totalAppointments.toString()}
                         icon={Calendar}
@@ -401,12 +395,6 @@ export default function DashboardPage() {
 
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ElegantBarChart
-                        title="Conversas por Clínica"
-                        data={conversationsByClinic.length > 0 ? conversationsByClinic : [{ name: 'Sem dados', value: 0 }]}
-                        dataKey="value"
-                        color="#f59e0b"
-                    />
                     <ElegantBarChart
                         title="Agendamentos (Últimos 7 dias)"
                         data={appointmentsByDay.length > 0 ? appointmentsByDay : [{ name: 'Sem dados', value: 0 }]}
@@ -431,7 +419,6 @@ export default function DashboardPage() {
                                         <thead className="bg-slate-50 dark:bg-slate-700/50">
                                             <tr>
                                                 <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Clínica</th>
-                                                <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Conversas</th>
                                                 <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Pacientes</th>
                                                 <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Hoje</th>
                                                 <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-200 uppercase text-xs tracking-wider">Ação</th>
@@ -448,7 +435,6 @@ export default function DashboardPage() {
                                                             <span className="font-semibold text-slate-800 dark:text-white">{clinic.name}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{clinic.totalConversations}</td>
                                                     <td className="px-6 py-4 font-medium text-slate-700 dark:text-slate-300">{clinic.totalPatients}</td>
                                                     <td className="px-6 py-4">
                                                         <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700">
@@ -518,12 +504,6 @@ export default function DashboardPage() {
                     value={stats.newPatients !== null ? stats.newPatients.toString() : '-'}
                     icon={Users}
                     description="Base de cadastros"
-                />
-                <ElegantStatsCard
-                    title="Conversas (Mês)"
-                    value={stats.monthlyConversations !== null ? stats.monthlyConversations.toString() : '-'}
-                    icon={MessageSquare}
-                    description="Atendimentos"
                 />
             </div>
 
