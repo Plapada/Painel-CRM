@@ -477,7 +477,7 @@ export default function DashboardPage() {
         <div className="space-y-8 p-4 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                <h1 className="text-3xl font-bold tracking-tight text-black">
                     Visão Geral
                 </h1>
                 <p className="text-gray-700 dark:text-slate-400 font-medium">
@@ -520,7 +520,7 @@ export default function DashboardPage() {
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 0 }]}
                         dataKey="value"
                         color="#FFD700"
-                        className="bg-zinc-900 border-zinc-800 text-white"
+                        className="bg-zinc-900 border-zinc-900 text-white shadow-lg"
                     />
 
                     {/* Recent Appointments Table */}
@@ -565,7 +565,7 @@ export default function DashboardPage() {
                     <ElegantDonutChart
                         title="Etapas do Funil"
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 1 }]}
-                        className="bg-zinc-900 border-zinc-800 text-white"
+                        className="bg-zinc-900 border-zinc-900 text-white shadow-lg"
                         colors={['#FFD700', '#FFFFFF', '#A1A1AA', '#52525B', '#27272A', '#E4E4E7']}
                     />
 
