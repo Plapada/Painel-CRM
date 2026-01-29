@@ -27,7 +27,8 @@ import {
     PlayCircle,
     CheckSquare,
     MessageCircle,
-    Plus
+    Plus,
+    Trash2
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -218,6 +219,60 @@ export default function AppointmentsPage() {
             setLoadingHistory(false)
         }
     }
+
+    const handleCancelAppointment = async () => {
+        if (!selectedAppointment) return
+
+        const confirmed = window.confirm(
+            `Deseja realmente CANCELAR o agendamento de ${selectedAppointment.nome_cliente}?\n\nEsta ação irá alterar o status para "Cancelada".`
+        )
+        if (!confirmed) return
+
+        try {
+            const { error } = await supabase
+                .from('consultas')
+                .update({ status: 'cancelada' })
+                .eq('id', selectedAppointment.id)
+
+            if (error) throw error
+
+            // Update local state
+            const updated = { ...selectedAppointment, status: 'cancelada' as AppointmentStatus }
+            setSelectedAppointment(updated)
+            setAppointments(prev => prev.map(app => app.id === updated.id ? updated : app))
+            alert("Agendamento cancelado com sucesso.")
+        } catch (error) {
+            console.error("Error canceling appointment:", error)
+            alert("Erro ao cancelar agendamento.")
+        }
+    }
+
+    const handleDeleteAppointment = async () => {
+        if (!selectedAppointment) return
+
+        const confirmed = window.confirm(
+            `Deseja realmente EXCLUIR o agendamento de ${selectedAppointment.nome_cliente}?\n\n⚠️ Esta ação é IRREVERSÍVEL e removerá o registro permanentemente.`
+        )
+        if (!confirmed) return
+
+        try {
+            const { error } = await supabase
+                .from('consultas')
+                .delete()
+                .eq('id', selectedAppointment.id)
+
+            if (error) throw error
+
+            // Remove from local state
+            setAppointments(prev => prev.filter(app => app.id !== selectedAppointment.id))
+            setSelectedAppointment(null)
+            alert("Agendamento excluído com sucesso.")
+        } catch (error) {
+            console.error("Error deleting appointment:", error)
+            alert("Erro ao excluir agendamento.")
+        }
+    }
+
 
     const handleCreateAppointment = async () => {
         if (!user?.clinic_id || !newAppointment.nome_cliente) {
@@ -488,7 +543,7 @@ export default function AppointmentsPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="pt-6 border-t">
+                                            <div className="pt-6 border-t space-y-3">
                                                 <Button
                                                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
                                                     onClick={handleSaveDetails}
@@ -496,6 +551,25 @@ export default function AppointmentsPage() {
                                                 >
                                                     {isSaving ? "Salvando..." : "Salvar Alterações"}
                                                 </Button>
+
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                        onClick={handleCancelAppointment}
+                                                    >
+                                                        <XCircle className="h-4 w-4 mr-2" />
+                                                        Cancelar
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                        onClick={handleDeleteAppointment}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" />
+                                                        Excluir
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
