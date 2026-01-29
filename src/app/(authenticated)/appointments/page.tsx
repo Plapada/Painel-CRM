@@ -26,7 +26,8 @@ import {
     AlertCircle,
     PlayCircle,
     CheckSquare,
-    MessageCircle
+    MessageCircle,
+    Plus
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -36,6 +37,7 @@ import { ptBR } from "date-fns/locale"
 type AppointmentStatus =
     | 'pendente'
     | 'confirmado'
+    | 'confirmada' // Compatibility
     | 'faltou'
     | 'compareceu'
     | 'atrasado'
@@ -57,7 +59,8 @@ interface Appointment {
 
 const STATUS_CONFIG: Record<AppointmentStatus, { label: string, color: string, icon: any }> = {
     'pendente': { label: 'Pendente', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: Clock },
-    'confirmado': { label: 'Confirmado', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: CheckCircle2 },
+    'confirmado': { label: 'Confirmado', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: CheckCircle2 },
+    'confirmada': { label: 'Confirmada', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: CheckCircle2 },
     'compareceu': { label: 'Compareceu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: MapPin },
     'em_atendimento': { label: 'Em Atendimento', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: PlayCircle },
     'finalizado': { label: 'Finalizado', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400', icon: CheckSquare },
@@ -74,7 +77,20 @@ export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<Appointment[]>([])
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
     const [loading, setLoading] = useState(true)
-    const [searchTerm, setSearchTerm] = useState("")
+
+    // New Appointment State
+    const [showCreateModal, setShowCreateModal] = useState(false)
+    const [isCreating, setIsCreating] = useState(false)
+    const [newAppointment, setNewAppointment] = useState({
+        nome_cliente: '',
+        telefone_cliente: '',
+        email_cliente: '',
+        tipo_consulta: '',
+        data_inicio: new Date().toISOString().split('T')[0],
+        hora_inicio: '09:00',
+        observacoes: '',
+        convenio: ''
+    })
 
     // Fetch Appointments
     useEffect(() => {
@@ -103,12 +119,7 @@ export default function AppointmentsPage() {
             .order('data_inicio', { ascending: true })
 
         if (!error && data) {
-            // Cast to formatted type if needed or keep raw
             setAppointments(data as Appointment[])
-            // Auto-select first if none selected
-            if (data.length > 0 && !selectedAppointment) {
-                // optionally auto select first: setSelectedAppointment(data[0] as Appointment)
-            }
         }
         setLoading(false)
     }
@@ -117,7 +128,7 @@ export default function AppointmentsPage() {
     const handleDateSelect = (date: Date | undefined) => {
         if (date) {
             setSelectedDate(date)
-            setSelectedAppointment(null) // Clear selection on date change
+            setSelectedAppointment(null)
         }
     }
 
@@ -149,29 +160,85 @@ export default function AppointmentsPage() {
 
         if (error) {
             console.error("Failed to update status", error)
-            // Revert on error would go here
+        }
+    }
+
+    const handleCreateAppointment = async () => {
+        if (!user?.clinic_id || !newAppointment.nome_cliente) {
+            alert("Nome do cliente é obrigatório.")
+            return
+        }
+        setIsCreating(true)
+
+        try {
+            const startDateTime = new Date(`${newAppointment.data_inicio}T${newAppointment.hora_inicio}:00`)
+            const endDateTime = new Date(startDateTime.getTime() + 30 * 60000) // Default 30 min duration
+
+            const payload = {
+                clinic_id: user.clinic_id,
+                nome_cliente: newAppointment.nome_cliente,
+                telefone_cliente: newAppointment.telefone_cliente,
+                email_cliente: newAppointment.email_cliente,
+                tipo_consulta: newAppointment.tipo_consulta || 'Consulta',
+                data_inicio: startDateTime.toISOString(),
+                data_fim: endDateTime.toISOString(), // Standardizing on data_fim based on schema request
+                status: 'pendente',
+                observacoes: newAppointment.observacoes,
+                convenio: newAppointment.convenio
+            }
+
+            const { error } = await supabase
+                .from('consultas')
+                .insert([payload])
+
+            if (error) throw error
+
+            // Success
+            fetchAppointments()
+            setShowCreateModal(false)
+            setNewAppointment({
+                nome_cliente: '',
+                telefone_cliente: '',
+                email_cliente: '',
+                tipo_consulta: '',
+                data_inicio: new Date().toISOString().split('T')[0],
+                hora_inicio: '09:00',
+                observacoes: '',
+                convenio: ''
+            })
+
+        } catch (error) {
+            console.error("Error creating appointment:", error)
+            alert("Erro ao criar agendamento.")
+        } finally {
+            setIsCreating(false)
         }
     }
 
     const openWhatsApp = (phone: string | undefined) => {
         if (!phone) return
-        // Remove non-digits
         const cleanPhone = phone.replace(/\D/g, '')
         window.open(`https://wa.me/${cleanPhone}`, '_blank')
     }
 
     // -- Render --
     return (
-        <div className="flex h-[calc(100vh-2rem)] gap-4 p-4 overflow-hidden">
+        <div className="flex h-[calc(100vh-2rem)] gap-4 p-4 overflow-hidden relative">
             {/* LEFT PANEL - LIST */}
             <Card className="w-1/3 min-w-[350px] flex flex-col border-0 shadow-lg bg-card/50 backdrop-blur-sm">
-                <CardHeader className="pb-2 border-b">
+                <CardHeader className="pb-2 border-b space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold">Agenda</h2>
+                        <Button onClick={() => setShowCreateModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">
+                            <Plus className="w-4 h-4 mr-2" /> Novo
+                        </Button>
+                    </div>
                     <div className="flex items-center justify-between mb-2">
                         <Button variant="ghost" size="icon" onClick={handlePrevDay}>
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
                         <div className="text-center">
-                            <h2 className="text-xl font-bold capitalize text-foreground">
+                            <h2 className="text-lg font-bold capitalize text-foreground">
                                 {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long' })}
                             </h2>
                             <p className="text-sm text-muted-foreground">
@@ -375,9 +442,7 @@ export default function AppointmentsPage() {
                                         <div className="text-center">
                                             <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                                             <p>Acesse o prontuário completo para visualizar históricos.</p>
-                                            <Button variant="link" className="mt-2 text-primary" onClick={() => {
-                                                // Navigate logic if needed
-                                            }}>
+                                            <Button variant="link" className="mt-2 text-primary" onClick={() => { }}>
                                                 Ir para Prontuário
                                             </Button>
                                         </div>
@@ -396,6 +461,86 @@ export default function AppointmentsPage() {
                     </div>
                 )}
             </Card>
+
+            {/* CREATE APPOINTMENT MODAL OVERLAY */}
+            {showCreateModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Novo Agendamento</CardTitle>
+                            <CardDescription>Preencha os dados para criar um novo agendamento.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Nome do Paciente</label>
+                                <Input
+                                    value={newAppointment.nome_cliente}
+                                    onChange={(e) => setNewAppointment({ ...newAppointment, nome_cliente: e.target.value })}
+                                    placeholder="Ex: Maria Silva"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Telefone</label>
+                                    <Input
+                                        value={newAppointment.telefone_cliente}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
+                                        placeholder="(11) 99999-9999"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Tipo</label>
+                                    <Input
+                                        value={newAppointment.tipo_consulta}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, tipo_consulta: e.target.value })}
+                                        placeholder="Ex: Consulta, Retorno"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Data</label>
+                                    <Input
+                                        type="date"
+                                        value={newAppointment.data_inicio}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, data_inicio: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Hora</label>
+                                    <Input
+                                        type="time"
+                                        value={newAppointment.hora_inicio}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, hora_inicio: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Convênio</label>
+                                <Input
+                                    value={newAppointment.convenio}
+                                    onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
+                                    placeholder="Particular, Unimed..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Observações</label>
+                                <Input
+                                    value={newAppointment.observacoes}
+                                    onChange={(e) => setNewAppointment({ ...newAppointment, observacoes: e.target.value })}
+                                    placeholder="Opcional"
+                                />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+                            <Button onClick={handleCreateAppointment} disabled={isCreating}>
+                                {isCreating ? 'Criando...' : 'Agendar'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            )}
         </div>
     )
 }
