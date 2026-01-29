@@ -1,59 +1,28 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
 import { LucideIcon } from "lucide-react"
 
 interface ElegantStatsCardProps {
     title: string
-    value: string | number
-    icon?: LucideIcon
-    description?: string
-    trend?: string
-    trendUp?: boolean
-    className?: string
-    children?: React.ReactNode
+    value: string
+    icon: LucideIcon
+    description: string
 }
 
-export function ElegantStatsCard({
-    title,
-    value,
-    icon: Icon,
-    description,
-    trend,
-    trendUp,
-    className,
-    children
-}: ElegantStatsCardProps) {
+export function ElegantStatsCard({ title, value, icon: Icon, description }: ElegantStatsCardProps) {
     return (
-        <Card className={cn(
-            "relative overflow-hidden border border-border/50 shadow-sm transition-all duration-300 hover:shadow-md",
-            "bg-white dark:bg-zinc-950",
-            className
-        )}>
-            <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-4">
-                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                            {title}
-                        </p>
-                        <div className="space-y-1">
-                            <h3 className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
-                                {value}
-                            </h3>
-                            {description && (
-                                <p className="text-sm text-muted-foreground font-medium">
-                                    {description}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                    {Icon && (
-                        <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                            <Icon className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-                        </div>
-                    )}
+        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl hover:shadow-primary/5 transition-all duration-300 group overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
+
+            <CardHeader className="flex flex-row items-center justify-between pb-2 z-10">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                    <Icon className="h-4 w-4 text-primary" />
                 </div>
-                {/* Visual accent bar at the bottom or side? Image shows mostly clean. */}
-                {/* Let's keep it clean as per the image description provided (white, gold icon circle) */}
+            </CardHeader>
+            <CardContent className="z-10 relative">
+                <div className="text-2xl font-playfair font-bold text-foreground">{value}</div>
+                <p className="text-xs text-muted-foreground mt-1">{description}</p>
             </CardContent>
         </Card>
     )
