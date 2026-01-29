@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { notify } from "@/lib/notify"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "@/components/ui/calendar"
@@ -187,12 +188,12 @@ export default function AppointmentsPage() {
 
             // Success feedback could be a toast, for now just silent or console
             console.log("Appointment saved successfully")
-            alert("Alterações salvas com sucesso!")
+            notify.success("Alterações salvas com sucesso!")
 
             // Refresh history if we are in that tab? Not strictly needed for status change.
         } catch (error) {
             console.error("Error saving appointment:", error)
-            alert("Erro ao salvar alterações.")
+            notify.error("Erro ao salvar alterações.")
         } finally {
             setIsSaving(false)
         }
@@ -240,10 +241,10 @@ export default function AppointmentsPage() {
             const updated = { ...selectedAppointment, status: 'cancelada' as AppointmentStatus }
             setSelectedAppointment(updated)
             setAppointments(prev => prev.map(app => app.id === updated.id ? updated : app))
-            alert("Agendamento cancelado com sucesso.")
+            notify.success("Agendamento cancelado com sucesso.")
         } catch (error) {
             console.error("Error canceling appointment:", error)
-            alert("Erro ao cancelar agendamento.")
+            notify.error("Erro ao cancelar agendamento.")
         }
     }
 
@@ -266,17 +267,17 @@ export default function AppointmentsPage() {
             // Remove from local state
             setAppointments(prev => prev.filter(app => app.id !== selectedAppointment.id))
             setSelectedAppointment(null)
-            alert("Agendamento excluído com sucesso.")
+            notify.success("Agendamento excluído com sucesso.")
         } catch (error) {
             console.error("Error deleting appointment:", error)
-            alert("Erro ao excluir agendamento.")
+            notify.error("Erro ao excluir agendamento.")
         }
     }
 
 
     const handleCreateAppointment = async () => {
         if (!user?.clinic_id || !newAppointment.nome_cliente) {
-            alert("Nome do cliente é obrigatório.")
+            notify.warning("Nome do cliente é obrigatório.")
             return
         }
         setIsCreating(true)
@@ -320,7 +321,7 @@ export default function AppointmentsPage() {
 
         } catch (error) {
             console.error("Error creating appointment:", error)
-            alert("Erro ao criar agendamento.")
+            notify.error("Erro ao criar agendamento.")
         } finally {
             setIsCreating(false)
         }

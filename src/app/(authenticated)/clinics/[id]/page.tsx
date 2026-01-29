@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { notify } from "@/lib/notify"
 import { Input } from "@/components/ui/input"
 import {
     Building2, ArrowLeft, Users, Calendar, MessageSquare,
@@ -169,7 +170,7 @@ export default function ClinicDetailPage() {
 
         } catch (error: any) {
             console.error("Error deleting clinic:", error)
-            alert(`Erro ao deletar clínica: ${error.message}`)
+            notify.error(`Erro ao deletar clínica: ${error.message}`)
         } finally {
             setIsDeleting(false)
         }

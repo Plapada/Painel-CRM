@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { notify } from "@/lib/notify"
 import { Label } from "@/components/ui/label"
 import {
     Modal,
@@ -230,7 +231,7 @@ export default function ClinicsPage() {
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}))
-                    alert(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
+                    notify.error(`Erro na API (${response.status}): ${errorData.details || errorData.error || 'Erro desconhecido'}`)
                     return
                 }
 
@@ -246,14 +247,14 @@ export default function ClinicsPage() {
             } catch (error: any) {
                 console.error("Error checking statuses:", error)
                 // significant error, maybe verify internet? 
-                if (force) alert(`Erro ao verificar conexões: ${error.message}`)
+                if (force) notify.error(`Erro ao verificar conexões: ${error.message}`)
             } finally {
                 setIsCheckingStatus(false)
             }
         }
 
         if (instances.length === 0 && !usedCache) {
-            if (force) alert("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
+            if (force) notify.warning("Nenhuma instância retornada pelo webhook. Verifique a configuração do N8N.")
             return
         }
 
@@ -321,13 +322,13 @@ export default function ClinicsPage() {
         try {
             const res = await fetch('/api/test-push', { method: 'POST' });
             if (res.ok) {
-                alert('Teste enviado! Verifique se chegou no seu celular/PC.');
+                notify.success('Teste enviado! Verifique se chegou no seu celular/PC.');
             } else {
                 const data = await res.json();
-                alert(`Erro ao testar: ${data.error || 'Falha no servidor'}`);
+                notify.error(`Erro ao testar: ${data.error || 'Falha no servidor'}`);
             }
         } catch (e: any) {
-            alert(`Erro ao testar: ${e.message}`);
+            notify.error(`Erro ao testar: ${e.message}`);
         }
     }
 
