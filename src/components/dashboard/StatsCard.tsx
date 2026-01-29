@@ -11,30 +11,37 @@ interface StatsCardProps {
     trendUp?: boolean
     className?: string
     children?: React.ReactNode
-    variant?: 'default' | 'highlight'
+    variant?: 'default' | 'highlight' | 'dark'
     icon?: LucideIcon
 }
 
 export function StatsCard({ title, value, description, trend, trendUp, className, children, variant = 'default', icon: Icon }: StatsCardProps) {
     const isHighlight = variant === 'highlight'
+    const isDark = variant === 'dark'
 
     return (
         <Card className={cn(
             "overflow-hidden border-0 shadow-sm transition-all duration-200 hover:shadow-md",
-            isHighlight ? "bg-primary text-primary-foreground" : "bg-card text-card-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50",
+            isHighlight ? "bg-primary text-primary-foreground" :
+                isDark ? "bg-zinc-900 text-white border border-zinc-800" :
+                    "bg-card text-card-foreground hover:bg-slate-50 dark:hover:bg-slate-800/50",
             className
         )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className={cn(
                     "text-sm font-medium",
-                    isHighlight ? "text-primary-foreground/80" : "text-muted-foreground"
+                    isHighlight ? "text-primary-foreground/80" :
+                        isDark ? "text-zinc-400" :
+                            "text-muted-foreground"
                 )}>
                     {title}
                 </CardTitle>
                 {Icon && (
                     <Icon className={cn(
                         "h-4 w-4",
-                        isHighlight ? "text-primary-foreground/80" : "text-muted-foreground"
+                        isHighlight ? "text-primary-foreground/80" :
+                            isDark ? "text-zinc-400" :
+                                "text-muted-foreground"
                     )} />
                 )}
             </CardHeader>
@@ -43,7 +50,9 @@ export function StatsCard({ title, value, description, trend, trendUp, className
                 {(description || trend) && (
                     <div className={cn(
                         "flex items-center text-xs mt-1",
-                        isHighlight ? "text-primary-foreground/70" : "text-muted-foreground"
+                        isHighlight ? "text-primary-foreground/70" :
+                            isDark ? "text-zinc-500" :
+                                "text-muted-foreground"
                     )}>
                         {description && <span>{description}</span>}
                         {trend && (

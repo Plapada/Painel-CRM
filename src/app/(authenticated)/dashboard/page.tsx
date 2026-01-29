@@ -499,12 +499,14 @@ export default function DashboardPage() {
                     value={stats.todayAppointments !== null ? stats.todayAppointments.toString() : '-'}
                     icon={Calendar}
                     description="Para hoje"
+                    variant="dark"
                 />
                 <ElegantStatsCard
                     title="Total de Pacientes"
                     value={stats.newPatients !== null ? stats.newPatients.toString() : '-'}
                     icon={Users}
                     description="Base de cadastros"
+                    variant="dark"
                 />
             </div>
 
@@ -517,29 +519,30 @@ export default function DashboardPage() {
                         title="Distribuição do Funil"
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 0 }]}
                         dataKey="value"
-                        color="#f59e0b"
+                        color="#FFD700"
+                        className="bg-zinc-900 border-zinc-800 text-white"
                     />
 
                     {/* Recent Appointments Table */}
-                    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
-                        <CardHeader className="border-b border-slate-100 dark:border-slate-700">
-                            <CardTitle className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <Calendar className="h-5 w-5 text-amber-500" />
+                    <Card className="border border-zinc-800 bg-zinc-900 shadow-lg text-white">
+                        <CardHeader className="border-b border-zinc-800">
+                            <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                                <Calendar className="h-5 w-5 text-amber-400" />
                                 Próximos Agendamentos
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                            <div className="divide-y divide-zinc-800">
                                 {recentAppointments.length > 0 ? recentAppointments.map((apt) => (
-                                    <div key={apt.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <div key={apt.id} className="flex items-center justify-between px-6 py-4 hover:bg-zinc-800/80 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="bg-amber-500 text-white p-3 rounded-xl flex flex-col items-center justify-center min-w-[60px] shadow-lg shadow-amber-500/30">
                                                 <Clock className="h-4 w-4 mb-1" />
                                                 <span className="font-bold text-sm">{apt.time}</span>
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-slate-800 dark:text-white">{apt.patient}</p>
-                                                <p className="text-sm text-slate-600 dark:text-slate-400">{apt.type} • {apt.condition}</p>
+                                                <p className="font-semibold text-white">{apt.patient}</p>
+                                                <p className="text-sm text-zinc-400">{apt.type} • {apt.condition}</p>
                                             </div>
                                         </div>
                                         <Badge className={`font-medium border ${getStatusStyle(apt.status)}`}>
@@ -548,8 +551,8 @@ export default function DashboardPage() {
                                     </div>
                                 )) : (
                                     <div className="px-6 py-8 text-center">
-                                        <Calendar className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                                        <p className="text-slate-500 dark:text-slate-400">Nenhum agendamento próximo.</p>
+                                        <Calendar className="h-10 w-10 mx-auto text-zinc-600 mb-2" />
+                                        <p className="text-zinc-500">Nenhum agendamento próximo.</p>
                                     </div>
                                 )}
                             </div>
