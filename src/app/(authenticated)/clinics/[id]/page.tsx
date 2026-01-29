@@ -14,7 +14,7 @@ import {
     TrendingUp, Clock, Search, AlertCircle, Link2, Copy, Check, ExternalLink, MessageCircle, Settings, Trash2, Loader2
 } from "lucide-react"
 import Link from "next/link"
-import { ElegantStatsCard } from "@/components/dashboard/ElegantStatsCard"
+import { StatsCard as ElegantStatsCard } from "@/components/dashboard/StatsCard"
 import { ElegantBarChart, ElegantDonutChart } from "@/components/dashboard/ElegantCharts"
 import {
     DropdownMenu,

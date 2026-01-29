@@ -15,6 +15,7 @@ import {
     YAxis,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 // --- Custom Tooltip ---
 const CustomTooltip = ({ active, payload, label }: any) => {
