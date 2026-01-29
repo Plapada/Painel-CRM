@@ -523,8 +523,8 @@ export default function DashboardPage() {
                                 {recentAppointments.length > 0 ? recentAppointments.map((apt) => (
                                     <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className="bg-primary/20 text-primary p-3 rounded-lg flex flex-col items-center justify-center w-14 h-14">
-                                                <span className="font-bold">{apt.time}</span>
+                                            <div className="bg-primary/20 text-primary-foreground dark:text-primary p-3 rounded-lg flex flex-col items-center justify-center w-14 h-14">
+                                                <span className="font-bold text-orange-900 dark:text-orange-100">{apt.time}</span>
                                             </div>
                                             <div>
                                                 <p className="font-medium text-foreground">{apt.patient}</p>
@@ -561,7 +561,7 @@ export default function DashboardPage() {
                             <div className="space-y-4">
                                 {recentPatients.length > 0 ? recentPatients.map((patient) => (
                                     <div key={patient.id} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-orange-900 dark:text-orange-100 text-xs font-bold">
                                             {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1">
