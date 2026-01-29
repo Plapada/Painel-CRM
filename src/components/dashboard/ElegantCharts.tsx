@@ -147,7 +147,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
     return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
+                <CardTitle className="text-lg font-medium text-black">{title}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="h-[160px] w-full flex items-center justify-center relative outline-none" tabIndex={-1}>
