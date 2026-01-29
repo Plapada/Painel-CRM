@@ -44,13 +44,14 @@ interface AreaChartProps {
     title: string
     dataKey: string
     color?: string
+    className?: string
 }
 
-export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: AreaChartProps) {
+export function ElegantAreaChart({ data, title, dataKey, color = "#FFD700", className }: AreaChartProps) {
     return (
-        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
+        <Card className={cn("border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow", className)}>
+            <CardHeader className="border-b border-slate-50 dark:border-slate-800 pb-4">
+                <CardTitle className="text-base font-bold text-inherit">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
@@ -62,25 +63,25 @@ export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: Ar
                                     <stop offset="95%" stopColor={color} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.3)" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.1)" />
                             <XAxis
                                 dataKey="name"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }}
+                                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 500, opacity: 0.7 }}
                                 dy={10}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }}
+                                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 500, opacity: 0.7 }}
                             />
-                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(148, 163, 184, 0.3)', strokeWidth: 1 }} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(148, 163, 184, 0.2)', strokeWidth: 1 }} />
                             <Area
                                 type="monotone"
                                 dataKey={dataKey}
                                 stroke={color}
-                                strokeWidth={3}
+                                strokeWidth={2}
                                 fillOpacity={1}
                                 fill={`url(#gradient-${dataKey})`}
                             />
@@ -98,33 +99,34 @@ interface BarChartProps {
     title: string
     dataKey: string
     color?: string
+    className?: string
 }
 
-export function ElegantBarChart({ data, title, dataKey, color = "#f59e0b" }: BarChartProps) {
+export function ElegantBarChart({ data, title, dataKey, color = "#FFD700", className }: BarChartProps) {
     return (
-        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
+        <Card className={cn("border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow", className)}>
+            <CardHeader className="border-b border-slate-50 dark:border-slate-800 pb-4">
+                <CardTitle className="text-base font-bold text-inherit">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} style={{ outline: 'none' }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.3)" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.1)" />
                             <XAxis
                                 dataKey="name"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }}
+                                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 500, opacity: 0.7 }}
                                 dy={10}
                             />
                             <YAxis
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }}
+                                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 500, opacity: 0.7 }}
                             />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }} />
-                            <Bar dataKey={dataKey} fill={color} radius={[6, 6, 0, 0]} barSize={40} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148, 163, 184, 0.05)' }} />
+                            <Bar dataKey={dataKey} fill={color} radius={[4, 4, 0, 0]} barSize={32} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -138,18 +140,19 @@ interface DonutChartProps {
     data: any[]
     title: string
     colors?: string[]
+    className?: string
 }
 
-// High contrast professional colors
-const DEFAULT_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4']
+// High contrast professional colors: Yellow, Black, Grey, Light Grey
+const DEFAULT_COLORS = ['#FFD700', '#1A1A1A', '#94a3b8', '#e2e8f0', '#f59e0b', '#475569']
 
-export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: DonutChartProps) {
+export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS, className }: DonutChartProps) {
     const total = data.reduce((acc, curr) => acc + curr.value, 0)
 
     return (
-        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
+        <Card className={cn("border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow", className)}>
+            <CardHeader className="border-b border-slate-50 dark:border-slate-800 pb-4">
+                <CardTitle className="text-base font-bold text-inherit">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[180px] w-full flex items-center justify-center relative outline-none" tabIndex={-1}>
@@ -175,10 +178,10 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
 
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                        <span className="text-3xl font-bold text-inherit">
                             {total}
                         </span>
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
                             Total
                         </span>
                     </div>
@@ -192,7 +195,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
                                 className="w-3 h-3 rounded-full shadow-sm"
                                 style={{ backgroundColor: colors[index % colors.length] }}
                             />
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{entry.name}</span>
+                            <span className="text-sm font-medium text-inherit opacity-80">{entry.name}</span>
                         </div>
                     ))}
                 </div>

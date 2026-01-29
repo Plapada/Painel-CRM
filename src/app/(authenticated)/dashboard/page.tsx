@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
-import { ElegantStatsCard } from "@/components/dashboard/ElegantStatsCard"
+import { StatsCard as ElegantStatsCard } from "@/components/dashboard/StatsCard"
 import {
     ElegantAreaChart,
     ElegantBarChart,
@@ -477,7 +477,7 @@ export default function DashboardPage() {
         <div className="space-y-8 p-4 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white font-playfair">
+                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
                     Visão Geral
                 </h1>
                 <p className="text-gray-700 dark:text-slate-400 font-medium">
@@ -492,6 +492,7 @@ export default function DashboardPage() {
                     value={stats.totalRevenue !== null ? `R$ ${stats.totalRevenue.toLocaleString()}` : '-'}
                     icon={DollarSign}
                     description="Total acumulado"
+                    variant="highlight"
                 />
                 <ElegantStatsCard
                     title="Agendamentos"
@@ -561,39 +562,41 @@ export default function DashboardPage() {
                     <ElegantDonutChart
                         title="Etapas do Funil"
                         data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 1 }]}
+                        className="bg-zinc-900 border-zinc-800 text-white"
+                        colors={['#FFD700', '#FFFFFF', '#A1A1AA', '#52525B', '#27272A', '#E4E4E7']}
                     />
 
                     {/* Recent Patients List */}
-                    <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
-                        <CardHeader className="border-b border-slate-100 dark:border-slate-700">
-                            <CardTitle className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <Users className="h-5 w-5 text-amber-500" />
+                    <Card className="border border-zinc-800 bg-zinc-900 shadow-lg">
+                        <CardHeader className="border-b border-zinc-800">
+                            <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                                <Users className="h-5 w-5 text-amber-400" />
                                 Pacientes Recentes
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                            <div className="divide-y divide-zinc-800">
                                 {recentPatients.length > 0 ? recentPatients.map((patient) => (
-                                    <div key={patient.id} className="flex items-center gap-3 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                                    <div key={patient.id} className="flex items-center gap-3 px-6 py-4 hover:bg-zinc-800 transition-colors">
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
                                             {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
+                                            <p className="text-sm font-semibold text-white truncate">
                                                 {patient.name}
                                             </p>
-                                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                                            <p className="text-xs text-zinc-400 truncate">
                                                 {patient.condition}
                                             </p>
                                         </div>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <span className="text-xs text-zinc-500 font-medium">
                                             {patient.date}
                                         </span>
                                     </div>
                                 )) : (
                                     <div className="px-6 py-8 text-center">
-                                        <User className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-                                        <p className="text-slate-500 dark:text-slate-400">Nenhum cliente recente.</p>
+                                        <User className="h-10 w-10 mx-auto text-zinc-600 mb-2" />
+                                        <p className="text-zinc-500">Nenhum cliente recente.</p>
                                     </div>
                                 )}
                             </div>
