@@ -407,11 +407,11 @@ export default function DashboardPage() {
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-muted-foreground uppercase bg-muted/30">
                                             <tr>
-                                                <th className="px-4 py-3">Clínica</th>
-                                                <th className="px-4 py-3">Conversas</th>
-                                                <th className="px-4 py-3">Pacientes</th>
-                                                <th className="px-4 py-3">Hoje</th>
-                                                <th className="px-4 py-3">Ação</th>
+                                                <th className="px-4 py-3 text-black dark:text-gray-400">Clínica</th>
+                                                <th className="px-4 py-3 text-black dark:text-gray-400">Conversas</th>
+                                                <th className="px-4 py-3 text-black dark:text-gray-400">Pacientes</th>
+                                                <th className="px-4 py-3 text-black dark:text-gray-400">Hoje</th>
+                                                <th className="px-4 py-3 text-black dark:text-gray-400">Ação</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -425,8 +425,8 @@ export default function DashboardPage() {
                                                             {clinic.name}
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3">{clinic.totalConversations}</td>
-                                                    <td className="px-4 py-3">{clinic.totalPatients}</td>
+                                                    <td className="px-4 py-3 text-black dark:text-gray-300">{clinic.totalConversations}</td>
+                                                    <td className="px-4 py-3 text-black dark:text-gray-300">{clinic.totalPatients}</td>
                                                     <td className="px-4 py-3">
                                                         <Badge variant="outline" className="border-green-500/30 text-green-500">
                                                             {clinic.todayAppointments} agend.
@@ -524,14 +524,17 @@ export default function DashboardPage() {
                                     <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <div className="bg-primary/20 text-primary-foreground dark:text-primary p-3 rounded-lg flex flex-col items-center justify-center w-14 h-14">
-                                                <span className="font-bold text-orange-900 dark:text-orange-100">{apt.time}</span>
+                                                <span className="font-bold text-black dark:text-orange-100">{apt.time}</span>
                                             </div>
                                             <div>
-                                                <p className="font-medium text-foreground">{apt.patient}</p>
-                                                <p className="text-sm text-muted-foreground">{apt.type} • {apt.condition}</p>
+                                                <p className="font-medium text-black dark:text-white">{apt.patient}</p>
+                                                <p className="text-sm text-gray-800 dark:text-muted-foreground">{apt.type} • {apt.condition}</p>
                                             </div>
                                         </div>
-                                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
+                                        <span className={`text-xs px-2 py-1 rounded-full border ${(apt.status === 'confirmada' || apt.status === 'confirmado')
+                                                ? 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+                                                : 'bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-500'
+                                            }`}>
                                             {apt.status}
                                         </span>
                                     </div>
@@ -561,14 +564,14 @@ export default function DashboardPage() {
                             <div className="space-y-4">
                                 {recentPatients.length > 0 ? recentPatients.map((patient) => (
                                     <div key={patient.id} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-orange-900 dark:text-orange-100 text-xs font-bold">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-black dark:text-orange-100 text-xs font-bold">
                                             {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-foreground">{patient.name}</p>
-                                            <p className="text-xs text-muted-foreground">{patient.condition}</p>
+                                            <p className="text-sm font-medium text-black dark:text-white">{patient.name}</p>
+                                            <p className="text-xs text-gray-800 dark:text-muted-foreground">{patient.condition}</p>
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground">{patient.date}</span>
+                                        <span className="text-[10px] text-gray-600 dark:text-muted-foreground">{patient.date}</span>
                                     </div>
                                 )) : (
                                     <p className="text-muted-foreground text-center py-4">Nenhum cliente recente.</p>
