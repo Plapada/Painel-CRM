@@ -103,7 +103,6 @@ interface BarChartProps {
 
 export function ElegantBarChart({ data, title, dataKey, color = "#3b82f6" }: BarChartProps) {
     return (
-    return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
@@ -145,7 +144,6 @@ interface DonutChartProps {
 const DEFAULT_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
 
 export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: DonutChartProps) {
-    return (
     return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
