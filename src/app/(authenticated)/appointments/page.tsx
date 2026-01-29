@@ -92,6 +92,11 @@ export default function AppointmentsPage() {
         convenio: ''
     })
 
+    // History State
+    const [history, setHistory] = useState<Appointment[]>([])
+    const [loadingHistory, setLoadingHistory] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+
     // Fetch Appointments
     useEffect(() => {
         if (user?.clinic_id) {
@@ -144,22 +149,73 @@ export default function AppointmentsPage() {
         setSelectedDate(newDate)
     }
 
-    const handleStatusUpdate = async (newStatus: AppointmentStatus) => {
+    const handleStatusUpdate = (newStatus: AppointmentStatus) => {
         if (!selectedAppointment) return
 
-        // Optimistic update
+        // Local update only (Requires Save)
         const updatedApp = { ...selectedAppointment, status: newStatus }
         setSelectedAppointment(updatedApp)
+        // We do NOT update the main list 'appointments' instantly to reflect "unsaved" state if desired, 
+        // but for UI consistency let's update it so the user sees the change in the list too (optimistic), 
+        // essentially treating the list as the "draft" state until refresh.
+        // Or better: keep main list as "Source of Truth"? 
+        // User wants "Save" button to commit. 
+        // Let's update local selectedAppointment only? No, user expects visual feedback.
+        // We will update local state. The "Save" will flush to DB.
+
+        // Update local list visual confirmation
         setAppointments(prev => prev.map(app => app.id === updatedApp.id ? updatedApp : app))
 
-        // DB update
-        const { error } = await supabase
-            .from('consultas')
-            .update({ status: newStatus })
-            .eq('id', selectedAppointment.id)
+        // Removed DB update from here
+    }
 
-        if (error) {
-            console.error("Failed to update status", error)
+    const handleSaveDetails = async () => {
+        if (!selectedAppointment) return
+        setIsSaving(true)
+
+        try {
+            const { error } = await supabase
+                .from('consultas')
+                .update({
+                    status: selectedAppointment.status,
+                    observacoes: selectedAppointment.observacoes
+                })
+                .eq('id', selectedAppointment.id)
+
+            if (error) throw error
+
+            // Success feedback could be a toast, for now just silent or console
+            console.log("Appointment saved successfully")
+            alert("Alterações salvas com sucesso!")
+
+            // Refresh history if we are in that tab? Not strictly needed for status change.
+        } catch (error) {
+            console.error("Error saving appointment:", error)
+            alert("Erro ao salvar alterações.")
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const fetchPatientHistory = async () => {
+        if (!selectedAppointment?.clinic_id || !selectedAppointment?.nome_cliente) return
+        setLoadingHistory(true)
+
+        try {
+            const { data, error } = await supabase
+                .from('consultas')
+                .select('*')
+                .eq('clinic_id', selectedAppointment.clinic_id)
+                .eq('nome_cliente', selectedAppointment.nome_cliente)
+                .neq('id', selectedAppointment.id) // Exclude current
+                .order('data_inicio', { ascending: false })
+
+            if (error) throw error
+            setHistory(data as Appointment[])
+        } catch (error) {
+            console.error("Error fetching history:", error)
+        } finally {
+            setLoadingHistory(false)
         }
     }
 
@@ -322,7 +378,7 @@ export default function AppointmentsPage() {
                                     <div className="flex gap-2">
                                         <TabsList>
                                             <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
-                                            <TabsTrigger value="clinico">Prontuário</TabsTrigger>
+                                            <TabsTrigger value="clinico" onClick={fetchPatientHistory}>Prontuário</TabsTrigger>
                                         </TabsList>
                                     </div>
                                 </div>
@@ -369,7 +425,7 @@ export default function AppointmentsPage() {
                                             {/* Insurance Info */}
                                             <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Convênio</span>
+                                                    <span className="text-sm font-medium text-foreground">Convênio</span>
                                                     <Badge variant="outline" className="border-orange-200 text-orange-700 bg-white/50">{selectedAppointment.convenio || "Particular"}</Badge>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground">Clique para ver detalhes da carteirinha</p>
@@ -378,9 +434,19 @@ export default function AppointmentsPage() {
                                             {/* Obs */}
                                             <div className="space-y-2">
                                                 <label className="text-sm font-medium text-muted-foreground">Observações</label>
-                                                <div className="p-3 rounded-md bg-muted/30 text-sm min-h-[80px]">
-                                                    {selectedAppointment.observacoes || "Nenhuma observação."}
-                                                </div>
+                                                <Input
+                                                    value={selectedAppointment.observacoes || ''}
+                                                    onChange={(e) => {
+                                                        // Update local state ONLY
+                                                        const updated = { ...selectedAppointment, observacoes: e.target.value }
+                                                        setSelectedAppointment(updated)
+                                                        // Update list too prevent jumpiness
+                                                        setAppointments(prev => prev.map(app => app.id === updated.id ? updated : app))
+                                                    }}
+                                                    placeholder="Adicione observações..."
+                                                    className="bg-muted/30 min-h-[50px]"
+                                                />
+                                                <p className="text-[10px] text-muted-foreground text-right">* Clique em Salvar para registrar.</p>
                                             </div>
                                         </div>
 
@@ -423,29 +489,69 @@ export default function AppointmentsPage() {
                                             </div>
 
                                             <div className="pt-6 border-t">
-                                                <div className="bg-card border rounded-lg p-2 flex justify-center">
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={selectedDate}
-                                                        onSelect={handleDateSelect}
-                                                        locale={ptBR}
-                                                        className="rounded-md"
-                                                    />
-                                                </div>
+                                                <Button
+                                                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+                                                    onClick={handleSaveDetails}
+                                                    disabled={isSaving}
+                                                >
+                                                    {isSaving ? "Salvando..." : "Salvar Alterações"}
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
                                 </TabsContent>
 
-                                <TabsContent value="clinico">
-                                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                                        <div className="text-center">
-                                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                            <p>Acesse o prontuário completo para visualizar históricos.</p>
-                                            <Button variant="link" className="mt-2 text-primary" onClick={() => { }}>
-                                                Ir para Prontuário
-                                            </Button>
+                                <TabsContent value="clinico" className="h-[calc(100vh-14rem)] overflow-y-auto mt-0">
+                                    <div className="p-6 space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-semibold text-lg">Histórico do Paciente</h3>
+                                            <Badge variant="outline">{history.length} consultas encontradas</Badge>
                                         </div>
+
+                                        {loadingHistory ? (
+                                            <div className="py-8 text-center text-muted-foreground">Carregando histórico...</div>
+                                        ) : history.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {history.map((hist) => (
+                                                    <Card key={hist.id} className="border bg-gray-50/50 dark:bg-white/5">
+                                                        <CardContent className="p-4 flex items-center justify-between">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-foreground">
+                                                                        {new Date(hist.data_inicio).toLocaleDateString('pt-BR')}
+                                                                    </span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {new Date(hist.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-sm font-medium">{hist.tipo_consulta || 'Consulta'}</p>
+                                                                {hist.observacoes && (
+                                                                    <p className="text-xs text-muted-foreground max-w-md truncate">
+                                                                        Obs: {hist.observacoes}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-end gap-2">
+                                                                <Badge
+                                                                    className={cn(
+                                                                        STATUS_CONFIG[hist.status].color,
+                                                                        "text-[10px] uppercase pointer-events-none"
+                                                                    )}
+                                                                >
+                                                                    {STATUS_CONFIG[hist.status].label}
+                                                                </Badge>
+                                                                {/* Potential 'Ver' button here if we want deep linking */}
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                                                <FileText className="h-10 w-10 mb-2 opacity-20" />
+                                                <p>Nenhum histórico encontrado para este paciente.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </TabsContent>
                             </Tabs>
