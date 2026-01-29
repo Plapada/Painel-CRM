@@ -527,8 +527,8 @@ export default function DashboardPage() {
                                                 <span className="font-bold">{apt.time}</span>
                                             </div>
                                             <div>
-                                                <p className="font-medium text-black dark:text-foreground">{apt.patient}</p>
-                                                <p className="text-sm text-gray-600 dark:text-muted-foreground">{apt.type} • {apt.condition}</p>
+                                                <p className="font-medium text-foreground">{apt.patient}</p>
+                                                <p className="text-sm text-muted-foreground">{apt.type} • {apt.condition}</p>
                                             </div>
                                         </div>
                                         <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
@@ -565,10 +565,10 @@ export default function DashboardPage() {
                                             {patient.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-black dark:text-foreground">{patient.name}</p>
-                                            <p className="text-xs text-gray-600 dark:text-muted-foreground">{patient.condition}</p>
+                                            <p className="text-sm font-medium text-foreground">{patient.name}</p>
+                                            <p className="text-xs text-muted-foreground">{patient.condition}</p>
                                         </div>
-                                        <span className="text-[10px] text-gray-500 dark:text-muted-foreground">{patient.date}</span>
+                                        <span className="text-[10px] text-muted-foreground">{patient.date}</span>
                                     </div>
                                 )) : (
                                     <p className="text-muted-foreground text-center py-4">Nenhum cliente recente.</p>

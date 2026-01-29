@@ -22,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="rounded-lg border border-border/50 bg-card/90 backdrop-blur-md p-3 shadow-xl">
-                <p className="text-xs font-medium text-black mb-2">{label}</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <div
@@ -51,7 +51,7 @@ export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: Ar
     return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-black">{title}</CardTitle>
+                <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
@@ -105,7 +105,7 @@ export function ElegantBarChart({ data, title, dataKey, color = "#3b82f6" }: Bar
     return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-black">{title}</CardTitle>
+                <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
@@ -147,7 +147,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
     return (
         <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
-                <CardTitle className="text-lg font-medium text-black">{title}</CardTitle>
+                <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="h-[160px] w-full flex items-center justify-center relative outline-none" tabIndex={-1}>
@@ -173,10 +173,10 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
 
                     {/* Center Text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-2xl font-bold text-black">
+                        <span className="text-2xl font-bold text-foreground">
                             {data.reduce((acc, curr) => acc + curr.value, 0)}
                         </span>
-                        <span className="text-xs text-black uppercase tracking-wider">Total</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Total</span>
                     </div>
                 </div>
 
@@ -188,7 +188,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
                                 className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: colors[index % colors.length] }}
                             />
-                            <span className="text-xs text-black">{entry.name}</span>
+                            <span className="text-xs text-muted-foreground">{entry.name}</span>
                         </div>
                     ))}
                 </div>
