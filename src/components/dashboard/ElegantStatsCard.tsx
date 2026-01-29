@@ -25,14 +25,15 @@ export function ElegantStatsCard({
 }: ElegantStatsCardProps) {
     return (
         <Card className={cn(
-            "relative overflow-hidden border-0 shadow-2xl transition-all duration-300",
-            "bg-white dark:bg-black/40 dark:backdrop-blur-xl",
-            "before:absolute before:inset-0 before:p-[1px] before:bg-gradient-to-br before:from-black/5 before:via-black/0 before:to-transparent dark:before:from-white/10 dark:before:via-white/5 dark:before:to-transparent before:rounded-xl before:-z-10",
+            "relative overflow-hidden border-0 shadow-xl transition-all duration-300",
+            "bg-card text-card-foreground",
+            "dark:bg-black/40 dark:backdrop-blur-xl",
+            "dark:before:absolute dark:before:inset-0 dark:before:p-[1px] dark:before:bg-gradient-to-br dark:before:from-white/10 dark:before:via-white/5 dark:before:to-transparent dark:before:rounded-xl dark:before:-z-10",
             "after:hidden dark:after:block after:absolute after:inset-0 after:bg-gradient-to-br after:from-amber-500/5 after:via-transparent after:to-transparent after:rounded-xl after:-z-20",
             className
         )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-black dark:text-muted-foreground tracking-wide uppercase">
+                <CardTitle className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
                     {title}
                 </CardTitle>
                 {Icon && (
@@ -42,9 +43,9 @@ export function ElegantStatsCard({
                 )}
             </CardHeader>
             <CardContent>
-                <div className="text-3xl font-bold text-black dark:text-foreground tracking-tight mt-2">{value}</div>
+                <div className="text-3xl font-bold text-foreground tracking-tight mt-2">{value}</div>
                 {(description || trend) && (
-                    <div className="flex items-center text-xs text-black dark:text-muted-foreground mt-3 font-medium">
+                    <div className="flex items-center text-xs text-muted-foreground mt-3 font-medium">
                         {trend && (
                             <span className={cn(
                                 "flex items-center px-2 py-0.5 rounded-full text-[10px] mr-2 border",

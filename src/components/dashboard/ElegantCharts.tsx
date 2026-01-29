@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils"
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="rounded-lg border border-border/50 bg-white/90 dark:bg-black/80 backdrop-blur-md p-3 shadow-xl">
-                <p className="text-xs font-medium text-black dark:text-gray-400 mb-2">{label}</p>
+            <div className="rounded-lg border border-border/50 bg-card/90 backdrop-blur-md p-3 shadow-xl">
+                <p className="text-xs font-medium text-muted-foreground mb-2">{label}</p>
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <div
@@ -49,7 +49,7 @@ interface AreaChartProps {
 
 export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: AreaChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
+        <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
@@ -103,7 +103,8 @@ interface BarChartProps {
 
 export function ElegantBarChart({ data, title, dataKey, color = "#3b82f6" }: BarChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
+    return (
+        <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
@@ -145,7 +146,8 @@ const DEFAULT_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6']
 
 export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: DonutChartProps) {
     return (
-        <Card className="border-0 bg-white dark:bg-black/40 dark:backdrop-blur-xl shadow-2xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
+    return (
+        <Card className="border-0 bg-card dark:bg-black/40 dark:backdrop-blur-xl shadow-xl transition-all duration-300 focus:outline-none focus-visible:outline-none">
             <CardHeader>
                 <CardTitle className="text-lg font-medium text-foreground">{title}</CardTitle>
             </CardHeader>
@@ -176,7 +178,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
                         <span className="text-2xl font-bold text-foreground">
                             {data.reduce((acc, curr) => acc + curr.value, 0)}
                         </span>
-                        <span className="text-xs text-black dark:text-gray-400 uppercase tracking-wider">Total</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Total</span>
                     </div>
                 </div>
 
@@ -188,7 +190,7 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
                                 className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: colors[index % colors.length] }}
                             />
-                            <span className="text-xs text-black dark:text-gray-400">{entry.name}</span>
+                            <span className="text-xs text-muted-foreground">{entry.name}</span>
                         </div>
                     ))}
                 </div>
