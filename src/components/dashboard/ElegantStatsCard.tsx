@@ -33,7 +33,7 @@ export function ElegantStatsCard({
             className
         )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
+                <CardTitle className="text-sm font-medium text-black tracking-wide uppercase">
                     {title}
                 </CardTitle>
                 {Icon && (
@@ -43,9 +43,9 @@ export function ElegantStatsCard({
                 )}
             </CardHeader>
             <CardContent>
-                <div className="text-3xl font-bold text-foreground tracking-tight mt-2">{value}</div>
+                <div className="text-3xl font-bold text-black tracking-tight mt-2">{value}</div>
                 {(description || trend) && (
-                    <div className="flex items-center text-xs text-muted-foreground mt-3 font-medium">
+                    <div className="flex items-center text-xs text-black mt-3 font-medium">
                         {trend && (
                             <span className={cn(
                                 "flex items-center px-2 py-0.5 rounded-full text-[10px] mr-2 border",
