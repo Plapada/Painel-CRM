@@ -48,9 +48,9 @@ interface AreaChartProps {
 
 export function ElegantAreaChart({ data, title, dataKey, color = "#f59e0b" }: AreaChartProps) {
     return (
-        <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-slate-800 dark:text-white">{title}</CardTitle>
+        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
+                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
@@ -102,9 +102,9 @@ interface BarChartProps {
 
 export function ElegantBarChart({ data, title, dataKey, color = "#f59e0b" }: BarChartProps) {
     return (
-        <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-slate-800 dark:text-white">{title}</CardTitle>
+        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
+                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[160px] w-full outline-none" tabIndex={-1}>
@@ -147,9 +147,9 @@ export function ElegantDonutChart({ data, title, colors = DEFAULT_COLORS }: Donu
     const total = data.reduce((acc, curr) => acc + curr.value, 0)
 
     return (
-        <Card className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
-            <CardHeader className="border-b border-slate-100 dark:border-slate-700">
-                <CardTitle className="text-lg font-bold text-slate-800 dark:text-white">{title}</CardTitle>
+        <Card className="border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
+            <CardHeader className="border-b border-gray-100 dark:border-slate-700">
+                <CardTitle className="text-lg font-bold text-black dark:text-white">{title}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
                 <div className="h-[180px] w-full flex items-center justify-center relative outline-none" tabIndex={-1}>
