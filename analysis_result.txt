@@ -1,0 +1,1731 @@
+Total Rows: 8132
+[
+  {
+    "column": "prontuario",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "7562",
+      "1624",
+      "8137",
+      "5435",
+      "5801"
+    ]
+  },
+  {
+    "column": "nome",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "0Nadya Izabelly Moura Ferreira",
+      "Abia Cristina Mesquita Teixeira",
+      "Abigail dos Anjos Santos Leite",
+      "Abner Jaqueline Paes Do Rosario",
+      "Acacia do Val Santana"
+    ]
+  },
+  {
+    "column": "nomecivil",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "0Nadya Izabelly Moura Ferreira",
+      "Abia Cristina Mesquita Teixeira",
+      "Abigail dos Anjos Santos Leite",
+      "Abner Jaqueline Paes Do Rosario",
+      "Acacia do Val Santana"
+    ]
+  },
+  {
+    "column": "datanascimento",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "19/08/1995",
+      "19/09/1978",
+      "02/08/1928",
+      "30/12/1980",
+      "15/01/1974"
+    ]
+  },
+  {
+    "column": "inativo",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Não",
+      "Não",
+      "Não",
+      "Não",
+      "Não"
+    ]
+  },
+  {
+    "column": "sexo",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Feminino",
+      "Feminino",
+      "Feminino",
+      "Feminino",
+      "Feminino"
+    ]
+  },
+  {
+    "column": "cor",
+    "populatedPercentage": "41.1%",
+    "uniqueCount": 4,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Branca",
+      "Branca",
+      "Branca",
+      "Branca",
+      "Branca"
+    ]
+  },
+  {
+    "column": "estadocivil",
+    "populatedPercentage": "93.3%",
+    "uniqueCount": 5,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Casado",
+      "Casado",
+      "Viúvo",
+      "Solteiro",
+      "União Estável"
+    ]
+  },
+  {
+    "column": "religiao",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Bahai",
+    "samples": [
+      "Bahai"
+    ]
+  },
+  {
+    "column": "escolaridade",
+    "populatedPercentage": "40.0%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Sem Instrução",
+      "Sem Instrução",
+      "Sem Instrução",
+      "Sem Instrução",
+      "Sem Instrução"
+    ]
+  },
+  {
+    "column": "profissao",
+    "populatedPercentage": "64.2%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Aposentada",
+      "Administradora",
+      "Servidora Pública",
+      "Empresária",
+      "Comerciaria"
+    ]
+  },
+  {
+    "column": "identidade",
+    "populatedPercentage": "95.6%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "1362458708",
+      "836170270",
+      "1338136254",
+      "558935621",
+      "434643190"
+    ]
+  },
+  {
+    "column": "cpf",
+    "populatedPercentage": "43.7%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "063.216.175-20",
+      "999.634.185-20",
+      "117.000.685-04",
+      "682.784.545-15",
+      "017.990.045-54"
+    ]
+  },
+  {
+    "column": "cartaonacionalsaude",
+    "populatedPercentage": "0.4%",
+    "uniqueCount": 31,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "314.288.865-91",
+      "821.845.935-91",
+      "541.157.875-20",
+      "146.034.035-34",
+      "810.608.745-04"
+    ]
+  },
+  {
+    "column": "datacadastro",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "05/01/2021",
+      "17/02/2009",
+      "16/10/2025",
+      "25/11/2014",
+      "14/07/2015"
+    ]
+  },
+  {
+    "column": "tipotelefone_1",
+    "populatedPercentage": "7.9%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Celular",
+      "Telefone",
+      "Celular",
+      "Telefone",
+      "Celular"
+    ]
+  },
+  {
+    "column": "telefone_1",
+    "populatedPercentage": "90.1%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "33416048 91747598",
+      "(71) 99401-7150",
+      "99.459.338",
+      "81.491.170",
+      "75 32032461"
+    ]
+  },
+  {
+    "column": "tipotelefone_2",
+    "populatedPercentage": "1.9%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone"
+    ]
+  },
+  {
+    "column": "telefone_2",
+    "populatedPercentage": "17.8%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "75 91428093",
+      "99966-8657 Sonia",
+      "87538912 99395602",
+      "32.760.184",
+      "75 33262523 6072"
+    ]
+  },
+  {
+    "column": "tipotelefone_3",
+    "populatedPercentage": "0.9%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone"
+    ]
+  },
+  {
+    "column": "telefone_3",
+    "populatedPercentage": "4.4%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "71 33669672",
+      "30132659/8698.8987",
+      "99922-5580",
+      "(75) 99985-1108",
+      "9 81281926"
+    ]
+  },
+  {
+    "column": "tipotelefone_4",
+    "populatedPercentage": "0.2%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone",
+      "Telefone"
+    ]
+  },
+  {
+    "column": "telefone_4",
+    "populatedPercentage": "0.6%",
+    "uniqueCount": 52,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "987911413",
+      "992922487 FILHA MILENA",
+      "3022-2308",
+      "30152823",
+      "99955-0607"
+    ]
+  },
+  {
+    "column": "email",
+    "populatedPercentage": "45.5%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "nadyjaizabelly@hotmial.com",
+      "abnerjaqueline@gmail.com",
+      "acaciasantana@hotmail.com",
+      "churascaria.brazeiro@hotmail.com",
+      "Não tem"
+    ]
+  },
+  {
+    "column": "site",
+    "populatedPercentage": "0.4%",
+    "uniqueCount": 29,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "alessandra.rabello@escolasulamericana.com.br",
+      "liunreis@bol.com.br",
+      "AGE4032@BB.COM.BR",
+      "ampqroz@gmail.com",
+      "ANNACARDOSO2@HOTMAIL.COM"
+    ]
+  },
+  {
+    "column": "r_tipologradouro",
+    "populatedPercentage": "96.9%",
+    "uniqueCount": 41,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Alameda",
+      "Rua",
+      "Avenida",
+      "Rua",
+      "Alameda"
+    ]
+  },
+  {
+    "column": "r_logradouro",
+    "populatedPercentage": "97.7%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "do Bosque",
+      "Rua Artur Azevedo Machado 1036 Edf  Luarca Apto 202",
+      "Santana Barbosa",
+      "Vicente Batalha",
+      "das Samambaias"
+    ]
+  },
+  {
+    "column": "r_numero",
+    "populatedPercentage": "44.2%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "101",
+      "619",
+      "40",
+      "445",
+      "513"
+    ]
+  },
+  {
+    "column": "r_complemento",
+    "populatedPercentage": "27.6%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "303 B",
+      "cs 43",
+      "Bloco 194 A, Apto 301",
+      "apt 1304",
+      "apt 202"
+    ]
+  },
+  {
+    "column": "r_bairro",
+    "populatedPercentage": "96.7%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Horto Bela Vista",
+      "Costa Azul",
+      "Garcia",
+      "Costa Azul",
+      "Piatã"
+    ]
+  },
+  {
+    "column": "r_pais",
+    "populatedPercentage": "100.0%",
+    "uniqueCount": 8,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Brasil",
+      "Brasil",
+      "Brasil",
+      "Brasil",
+      "Brasil"
+    ]
+  },
+  {
+    "column": "r_uf",
+    "populatedPercentage": "95.9%",
+    "uniqueCount": 18,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "BA",
+      "BA",
+      "BA",
+      "BA",
+      "BA"
+    ]
+  },
+  {
+    "column": "r_cidade",
+    "populatedPercentage": "95.6%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Salvador",
+      "Salvador",
+      "Salvador",
+      "Salvador",
+      "Salvador"
+    ]
+  },
+  {
+    "column": "r_cep",
+    "populatedPercentage": "79.8%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "41098-010",
+      "41760-000",
+      "40100-710",
+      "41760-030",
+      "41650-230"
+    ]
+  },
+  {
+    "column": "naturalidade",
+    "populatedPercentage": "0.7%",
+    "uniqueCount": 40,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Feira de Santana",
+      "salvador",
+      "Camaçari",
+      "salvador",
+      "Salvador"
+    ]
+  },
+  {
+    "column": "nacionalidade",
+    "populatedPercentage": "0.5%",
+    "uniqueCount": 17,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Itabaianinha- se",
+      "Brasileira",
+      "brasileira",
+      "Brasileira",
+      "Brasileira"
+    ]
+  },
+  {
+    "column": "empresa",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "luana_of@hotmail.com",
+    "samples": [
+      "luana_of@hotmail.com"
+    ]
+  },
+  {
+    "column": "c_tipologradouro",
+    "populatedPercentage": "40.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Rua",
+    "samples": [
+      "Rua",
+      "Rua",
+      "Rua",
+      "Rua",
+      "Rua"
+    ]
+  },
+  {
+    "column": "c_logradouro",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 5,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Rodrigues Dórea",
+      "Rodrigues Dórea",
+      "Florianópolis",
+      "Rua",
+      "Rua Haeckel Jose de Almeida 43 Casa"
+    ]
+  },
+  {
+    "column": "c_numero",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "317",
+    "samples": [
+      "317"
+    ]
+  },
+  {
+    "column": "c_complemento",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Ap-703",
+    "samples": [
+      "Ap-703"
+    ]
+  },
+  {
+    "column": "c_bairro",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 4,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Armação",
+      "Armação",
+      "Barra",
+      "Jaguaribe",
+      "Sete Portas"
+    ]
+  },
+  {
+    "column": "c_pais",
+    "populatedPercentage": "97.6%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Brasil",
+    "samples": [
+      "Brasil",
+      "Brasil",
+      "Brasil",
+      "Brasil",
+      "Brasil"
+    ]
+  },
+  {
+    "column": "c_uf",
+    "populatedPercentage": "40.0%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "DF",
+      "DF",
+      "DF",
+      "DF",
+      "DF"
+    ]
+  },
+  {
+    "column": "c_cidade",
+    "populatedPercentage": "40.0%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Brasília",
+      "Brasília",
+      "Brasília",
+      "Brasília",
+      "Brasília"
+    ]
+  },
+  {
+    "column": "c_cep",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 5,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "41750-030",
+      "41750-030",
+      "40140-320",
+      "Brasília",
+      "41613-100"
+    ]
+  },
+  {
+    "column": "indicadopor",
+    "populatedPercentage": "27.8%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Mariana Portocarrero",
+      "Livro convênio",
+      "Paciente Marilene Lopes Almeida",
+      "Filha paciente Drª Paula Matos",
+      "Drª. Cristiane"
+    ]
+  },
+  {
+    "column": "registro",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 10,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "C",
+      "uue marcou",
+      "palno de saude",
+      "Paciente Vanessa Melo",
+      "trabalhava na sala ao lado da clinica\""
+    ]
+  },
+  {
+    "column": "pai_nome",
+    "populatedPercentage": "0.3%",
+    "uniqueCount": 21,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Iran Vieira de Melo de Jesus",
+      "Antonio São Pedro Bittencourt",
+      "Everaldo de Jesus",
+      "Fabiano Shinoda",
+      "Jose Alves de Araujo"
+    ]
+  },
+  {
+    "column": "pai_profissao",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "pai_datanascimento",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "mae_nome",
+    "populatedPercentage": "1.4%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Zenilda Leite da Silva",
+      "Juçara Araujo Lustosa",
+      "Patricia Vieira Lacerda",
+      "Helia Palma Azevedo Mucuge",
+      "Ana Lucia da Silva"
+    ]
+  },
+  {
+    "column": "mae_profissao",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "mae_datanascimento",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "conjuge_nome",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Rosalbino Angelo Gagliardi",
+    "samples": [
+      "Rosalbino Angelo Gagliardi"
+    ]
+  },
+  {
+    "column": "conjuge_profissao",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "conjuge_datanascimento",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "responsavellegal",
+    "populatedPercentage": "45.5%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Pai",
+      "Pai",
+      "Pai",
+      "Pai",
+      "Pai"
+    ]
+  },
+  {
+    "column": "responsavellegaloutro",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Pai",
+    "samples": [
+      "Pai",
+      "Pai",
+      "Pai",
+      "Pai"
+    ]
+  },
+  {
+    "column": "contato",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "internet",
+      "Lara Martins Fernadnes",
+      "Adriana Guerra"
+    ]
+  },
+  {
+    "column": "conveniopadrao",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": 3,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "1",
+      "1",
+      "1",
+      "1",
+      "1"
+    ]
+  },
+  {
+    "column": "convenio_1",
+    "populatedPercentage": "99.7%",
+    "uniqueCount": 35,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Bradesco Saude Empresa",
+      "Unimed Salvador",
+      "00PARTICULAR (Paciente da Casa)",
+      "Bradesco Saude Empresa",
+      "Sulamerica Empresa"
+    ]
+  },
+  {
+    "column": "plano_1",
+    "populatedPercentage": "60.5%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Empresa",
+      "Saude top",
+      "Especial Nacional 445",
+      "Basico 445",
+      "Familia"
+    ]
+  },
+  {
+    "column": "numeromatricula_1",
+    "populatedPercentage": "74.4%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "846249800108034",
+      "877586033874016",
+      "952140023768008",
+      "81582000002900000",
+      "28975000004690000"
+    ]
+  },
+  {
+    "column": "validade_1",
+    "populatedPercentage": "58.3%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "30/11/2025",
+      "31/12/2009",
+      "01/09/2015",
+      "09/03/2016",
+      "30/07/2012"
+    ]
+  },
+  {
+    "column": "titular_1",
+    "populatedPercentage": "11.7%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Ada Rebeca Santana Soares",
+      "Dionisio Lima de Sena",
+      "Flavio Santana Viegas",
+      "Maria das Garças Gonçalves",
+      "Maria das Graças Gonçalves"
+    ]
+  },
+  {
+    "column": "convenio_2",
+    "populatedPercentage": "31.7%",
+    "uniqueCount": 24,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Bradesco Saude CITO",
+      "Bradesco Saude CITO",
+      "PARTICULAR (Paciente de 1ª Vez)",
+      "Tabela AMB/ SINAM",
+      "Bradesco Saude CITO"
+    ]
+  },
+  {
+    "column": "plano_2",
+    "populatedPercentage": "17.1%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "SAude top",
+      "Saude top",
+      "Associados",
+      "SPG Saude Top",
+      "Empresa"
+    ]
+  },
+  {
+    "column": "numeromatricula_2",
+    "populatedPercentage": "24.8%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "8,4625E+14",
+      "9,5214E+14",
+      "7,71096E+14",
+      "3,00038E+14",
+      "8,40838E+14"
+    ]
+  },
+  {
+    "column": "validade_2",
+    "populatedPercentage": "24.2%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "30/11/2025",
+      "01/09/2015",
+      "30/06/2015",
+      "31/01/2029",
+      "20/02/2017"
+    ]
+  },
+  {
+    "column": "titular_2",
+    "populatedPercentage": "0.3%",
+    "uniqueCount": 25,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Jailton Santos Silveira",
+      "Carlos Henrique O Passos",
+      "Marcio Saraiva Melo",
+      "Ubiratan Jose S Ferreira",
+      "Tarcio Diomar C Brito"
+    ]
+  },
+  {
+    "column": "convenio_3",
+    "populatedPercentage": "5.4%",
+    "uniqueCount": 19,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Sulamerica Empresa",
+      "00PARTICULAR (Paciente da Casa)",
+      "00PARTICULAR (Paciente da Casa)",
+      "00PARTICULAR (Paciente da Casa)",
+      "00PARTICULAR (Paciente da Casa)"
+    ]
+  },
+  {
+    "column": "plano_3",
+    "populatedPercentage": "1.4%",
+    "uniqueCount": 55,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "Especial",
+      "Familia",
+      "Especial 545",
+      "Top Nacional",
+      "Empresa"
+    ]
+  },
+  {
+    "column": "numeromatricula_3",
+    "populatedPercentage": "2.6%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "8,18E+16",
+      "1,1012E+15",
+      "2,8399E+16",
+      "9,5214E+14",
+      "7,71944E+14"
+    ]
+  },
+  {
+    "column": "validade_3",
+    "populatedPercentage": "2.5%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "11/04/2013",
+      "31/10/2013",
+      "01/07/2012",
+      "30/09/2017",
+      "01/08/2015"
+    ]
+  },
+  {
+    "column": "titular_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 2,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "30/10/2026",
+      "Liceu Sales Salvador"
+    ]
+  },
+  {
+    "column": "pendencias",
+    "populatedPercentage": "3.7%",
+    "uniqueCount": "100+",
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "fez muitas viagem e mora em Villas do Atlantico procuro algo mas proximo",
+      "O PLANO DELA NÃO ATENDE AQUI.",
+      "paciente veio buscar result prevt hj di a08/01/2015",
+      "todas as vezes que marcar consulta colocar 01 hora so pra ela",
+      "Gerar preventivo, pois o dia 17/11 deu erro"
+    ]
+  },
+  {
+    "column": "observacoes",
+    "populatedPercentage": "1.0%",
+    "uniqueCount": 48,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": [
+      "NF CENGISA",
+      "NF FEMINI",
+      "NF FEMINI  NF PARTO Enviada dia 15/08/2017 R$7.500",
+      "NF CENGISA",
+      "NF CENGISA"
+    ]
+  },
+  {
+    "column": "alerta_1",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "Não foi atendida, plano nacional perfil nacional",
+    "samples": [
+      "Não foi atendida, plano nacional perfil nacional"
+    ]
+  },
+  {
+    "column": "alerta_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "alerta_criterio",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "palavrachave_1",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "palavrachave_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "palavrachave_criterio",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "cidcodigo_1",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "ciddescricao_1",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcodigo_10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "ciddescricao_10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "cidcriterio",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "arquetipo_1",
+    "populatedPercentage": "0.1%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  },
+  {
+    "column": "arquetipovalor_1",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_2",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_3",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_4",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_5",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_6",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_7",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_8",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_9",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipo10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipovalor_10",
+    "populatedPercentage": "0.0%",
+    "uniqueCount": 0,
+    "isAlwaysEmpty": true,
+    "hasSingleValue": false,
+    "singleValue": null,
+    "samples": []
+  },
+  {
+    "column": "arquetipocriterio",
+    "populatedPercentage": "99.9%",
+    "uniqueCount": 1,
+    "isAlwaysEmpty": false,
+    "hasSingleValue": true,
+    "singleValue": "E",
+    "samples": [
+      "E",
+      "E",
+      "E",
+      "E",
+      "E"
+    ]
+  }
+]

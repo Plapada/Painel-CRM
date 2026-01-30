@@ -50,6 +50,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { PatientSearch } from "@/components/patient-search"
+import { Patient } from "@/app/actions/get-patients"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Check } from "lucide-react"
 
@@ -407,43 +409,17 @@ export default function AppointmentsPage() {
 
 
     // --- Autocomplete Logic ---
-    const handleSearchPatient = async (query: string) => {
-        // Debounce? For now direct call or reliance on Command input state
-        if (!query || query.length < 2) {
-            setPatientSuggestions([])
-            return
-        }
-
-        const { data, error } = await supabase
-            .from('consultas')
-            .select('nome_cliente, telefone_cliente, celular_cliente, email_cliente, prontuario, convenio')
-            .ilike('nome_cliente', `%${query}%`)
-            .order('data_inicio', { ascending: false })
-            .limit(10) // Limit results
-
-        if (!error && data) {
-            // Deduplicate by name
-            const seen = new Set()
-            const unique = data.filter(item => {
-                const duplicate = seen.has(item.nome_cliente)
-                seen.add(item.nome_cliente)
-                return !duplicate
-            })
-            setPatientSuggestions(unique)
-        }
-    }
-
-    const handleSelectPatient = (patient: any) => {
+    const handleSelectPatient = (patient: Patient) => {
         setNewAppointment(prev => ({
             ...prev,
-            nome_cliente: patient.nome_cliente,
-            telefone_cliente: patient.telefone_cliente || '',
-            celular_cliente: patient.celular_cliente || '',
-            email_cliente: patient.email_cliente || '',
+            nome_cliente: patient.nome,
+            telefone_cliente: patient.telefone || '',
+            celular_cliente: patient.telefone || '', // Assuming telefone is mobile or similar
+            email_cliente: patient.email || '',
             prontuario: patient.prontuario || '',
             convenio: patient.convenio || '',
         }))
-        setOpenCombobox(false)
+        // setOpenCombobox(false) // Handled by component
     }
 
 
@@ -918,53 +894,7 @@ export default function AppointmentsPage() {
                                     <div className="space-y-4">
                                         <div className="space-y-2 flex flex-col">
                                             <label className="text-sm font-medium">Nome do Paciente</label>
-                                            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        role="combobox"
-                                                        aria-expanded={openCombobox}
-                                                        className="w-full justify-between font-normal"
-                                                    >
-                                                        {newAppointment.nome_cliente || "Pesquisar paciente..."}
-                                                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-[400px] p-0" align="start">
-                                                    <Command shouldFilter={false}>
-                                                        <CommandInput
-                                                            placeholder="Digite o nome..."
-                                                            value={newAppointment.nome_cliente}
-                                                            onValueChange={(val) => {
-                                                                setNewAppointment(prev => ({ ...prev, nome_cliente: val }))
-                                                                handleSearchPatient(val)
-                                                            }}
-                                                        />
-                                                        <CommandList>
-                                                            {patientSuggestions.map((patient, idx) => (
-                                                                <CommandItem
-                                                                    key={`${patient.nome_cliente}-${idx}`}
-                                                                    onSelect={() => handleSelectPatient(patient)}
-                                                                >
-                                                                    <div className="flex flex-col">
-                                                                        <span className="font-medium">{patient.nome_cliente}</span>
-                                                                        <span className="text-xs text-muted-foreground">{patient.telefone_cliente || patient.celular_cliente}</span>
-                                                                    </div>
-                                                                    <Check
-                                                                        className={cn(
-                                                                            "ml-auto h-4 w-4",
-                                                                            newAppointment.nome_cliente === patient.nome_cliente ? "opacity-100" : "opacity-0"
-                                                                        )}
-                                                                    />
-                                                                </CommandItem>
-                                                            ))}
-                                                            {patientSuggestions.length === 0 && newAppointment.nome_cliente.length > 2 && (
-                                                                <div className="p-2 text-sm text-muted-foreground text-center">Nenhum paciente encontrado. Crie um novo.</div>
-                                                            )}
-                                                        </CommandList>
-                                                    </Command>
-                                                </PopoverContent>
-                                            </Popover>
+                                            <PatientSearch onSelect={handleSelectPatient} />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
@@ -1038,7 +968,7 @@ export default function AppointmentsPage() {
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecione..." />
                                                     </SelectTrigger>
-                                                    <SelectContent className="max-h-[200px]">
+                                                    <SelectContent className="max-h-[200px] z-[99999]">
                                                         {timeSlots.map(time => (
                                                             <SelectItem key={time} value={time}>{time}</SelectItem>
                                                         ))}
@@ -1194,7 +1124,7 @@ export default function AppointmentsPage() {
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecione..." />
                                     </SelectTrigger>
-                                    <SelectContent className="max-h-[200px]">
+                                    <SelectContent className="max-h-[200px] z-[99999]">
                                         {timeSlots.map(time => (
                                             <SelectItem key={time} value={time}>{time}</SelectItem>
                                         ))}

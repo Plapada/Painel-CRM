@@ -25,7 +25,7 @@ const navItems = [
     { name: "Funil", href: "/funnel", icon: Filter },
     { name: "Conversas", href: "/chat", icon: MessageSquare },
     { name: "Agendamentos", href: "/appointments", icon: Calendar },
-    { name: "Pacientes", href: "/clients", icon: ClipboardList },
+    { name: "Pacientes", href: "/patients", icon: ClipboardList },
     { name: "Clínicas", href: "/clinics", icon: Users },
     { name: "Suporte", href: "/support", icon: MessageSquare },
     { name: "Assistente IA", href: "/assistant", icon: Sparkles },
