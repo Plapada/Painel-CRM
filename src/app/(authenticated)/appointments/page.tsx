@@ -523,84 +523,83 @@ export default function AppointmentsPage() {
 
     // -- Render --
     return (
-        <div className="flex h-[calc(100vh-1rem)] gap-2 p-2 overflow-hidden relative text-sm">
-            {/* LEFT PANEL - MINI CALENDAR & SIDEBAR */}
-            <div className="flex flex-col gap-2 min-w-[260px] w-[260px]">
-                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm p-2 flex justify-center">
+        <div className="flex h-[calc(100vh-1rem)] gap-2 p-2 overflow-hidden relative text-xs">
+            {/* LEFT COLUMN: LIST + CALENDAR */}
+            <div className="flex flex-col gap-2 w-[380px] min-w-[350px] shrink-0">
+                {/* LIST */}
+                <Card className="flex-1 flex flex-col border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <CardHeader className="pb-2 border-b space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base font-bold">
+                                    {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </h2>
+                            </div>
+                            <Button onClick={() => setShowCreateModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 h-7 text-[10px]">
+                                <Plus className="w-3 h-3 mr-1" /> Novo
+                            </Button>
+                        </div>
+                    </CardHeader>
+
+                    <CardContent className="flex-1 p-0 overflow-hidden">
+                        <ScrollArea className="h-full">
+                            <div className="flex flex-col">
+                                {loading ? (
+                                    <div className="p-8 text-center text-muted-foreground">Carregando...</div>
+                                ) : appointments.length === 0 ? (
+                                    <div className="p-8 text-center text-muted-foreground">Nenhum agendamento para este dia.</div>
+                                ) : (
+                                    appointments.map((apt) => {
+                                        const statusStyle = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
+                                        const isSelected = selectedAppointment?.id === apt.id
+                                        const status = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
+                                        return (
+                                            <div
+                                                key={apt.id}
+                                                onClick={() => setSelectedAppointment(apt)}
+                                                className={cn(
+                                                    "group flex flex-col gap-1 p-2 rounded-lg border transition-all cursor-pointer hover:shadow-md",
+                                                    selectedAppointment?.id === apt.id
+                                                        ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+                                                        : "bg-card border-border hover:border-primary/50"
+                                                )}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex items-center gap-2 font-bold text-foreground">
+                                                        <span>{apt.data_inicio.split('T')[1].substring(0, 5)}</span>
+                                                        <span className="text-muted-foreground font-normal text-xs">{apt.tipo_consulta}</span>
+                                                    </div>
+                                                    <Badge variant="outline" className={cn("text-[10px] px-1 py-0 h-5", status.color)}>
+                                                        {status.label}
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="font-semibold text-xs truncate">{apt.nome_cliente}</div>
+
+                                                {apt.observacoes && (
+                                                    <div className="text-xs text-muted-foreground truncate max-w-full">
+                                                        {apt.observacoes}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm p-1 flex justify-center shrink-0">
                     <MiniCalendar
                         aria-label="Calendário de Agendamentos"
                         value={getCalendarValue(selectedDate)}
                         onChange={handleDateSelect}
                         bookedDays={bookedDays}
-                        className="rounded-md border p-1 bg-background shadow-none scale-90 origin-top"
+                        className="rounded-md border p-0 bg-background shadow-none scale-90 origin-center"
                     />
                 </Card>
-                {/* Could add filters here later */}
             </div>
-
-            {/* MIDDLE PANEL - LIST */}
-            <Card className="flex-1 min-w-[350px] flex flex-col border-0 shadow-lg bg-card/50 backdrop-blur-sm">
-                <CardHeader className="pb-2 border-b space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-xl font-bold">
-                                {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                            </h2>
-                        </div>
-                        <Button onClick={() => setShowCreateModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 h-8 text-xs">
-                            <Plus className="w-3 h-3 mr-2" /> Novo
-                        </Button>
-                    </div>
-                </CardHeader>
-
-                <CardContent className="flex-1 p-0 overflow-hidden">
-                    <ScrollArea className="h-full">
-                        <div className="flex flex-col">
-                            {loading ? (
-                                <div className="p-8 text-center text-muted-foreground">Carregando...</div>
-                            ) : appointments.length === 0 ? (
-                                <div className="p-8 text-center text-muted-foreground">Nenhum agendamento para este dia.</div>
-                            ) : (
-                                appointments.map((apt) => {
-                                    const statusStyle = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
-                                    const isSelected = selectedAppointment?.id === apt.id
-                                    const status = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
-                                    return (
-                                        <div
-                                            key={apt.id}
-                                            onClick={() => setSelectedAppointment(apt)}
-                                            className={cn(
-                                                "group flex flex-col gap-1 p-2 rounded-lg border transition-all cursor-pointer hover:shadow-md",
-                                                selectedAppointment?.id === apt.id
-                                                    ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
-                                                    : "bg-card border-border hover:border-primary/50"
-                                            )}
-                                        >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-center gap-2 font-bold text-foreground">
-                                                    <span>{apt.data_inicio.split('T')[1].substring(0, 5)}</span>
-                                                    <span className="text-muted-foreground font-normal text-xs">{apt.tipo_consulta}</span>
-                                                </div>
-                                                <Badge variant="outline" className={cn("text-[10px] px-1 py-0 h-5", status.color)}>
-                                                    {status.label}
-                                                </Badge>
-                                            </div>
-
-                                            <div className="font-semibold text-sm truncate">{apt.nome_cliente}</div>
-
-                                            {apt.observacoes && (
-                                                <div className="text-xs text-muted-foreground truncate max-w-full">
-                                                    {apt.observacoes}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })
-                            )}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
 
             {/* RIGHT PANEL - DETAIL */}
             <Card className="flex-1 flex flex-col border-0 shadow-lg overflow-hidden bg-card min-w-[400px]">
