@@ -523,16 +523,16 @@ export default function AppointmentsPage() {
 
     // -- Render --
     return (
-        <div className="flex h-[calc(100vh-2rem)] gap-4 p-4 overflow-hidden relative">
+        <div className="flex h-[calc(100vh-1rem)] gap-2 p-2 overflow-hidden relative text-sm">
             {/* LEFT PANEL - MINI CALENDAR & SIDEBAR */}
-            <div className="flex flex-col gap-4 min-w-[300px] w-[300px]">
-                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm p-4 flex justify-center">
+            <div className="flex flex-col gap-2 min-w-[260px] w-[260px]">
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm p-2 flex justify-center">
                     <MiniCalendar
                         aria-label="Calendário de Agendamentos"
                         value={getCalendarValue(selectedDate)}
                         onChange={handleDateSelect}
                         bookedDays={bookedDays}
-                        className="rounded-md border p-2 bg-background shadow-none"
+                        className="rounded-md border p-1 bg-background shadow-none scale-90 origin-top"
                     />
                 </Card>
                 {/* Could add filters here later */}
@@ -564,38 +564,35 @@ export default function AppointmentsPage() {
                                 appointments.map((apt) => {
                                     const statusStyle = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
                                     const isSelected = selectedAppointment?.id === apt.id
-                                    const time = new Date(apt.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
+                                    const status = STATUS_CONFIG[apt.status] || STATUS_CONFIG['pendente']
                                     return (
                                         <div
                                             key={apt.id}
                                             onClick={() => setSelectedAppointment(apt)}
                                             className={cn(
-                                                "flex items-center gap-3 p-4 border-b cursor-pointer transition-all hover:bg-accent/50",
-                                                isSelected && "bg-accent border-l-4 border-l-primary"
+                                                "group flex flex-col gap-1 p-2 rounded-lg border transition-all cursor-pointer hover:shadow-md",
+                                                selectedAppointment?.id === apt.id
+                                                    ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+                                                    : "bg-card border-border hover:border-primary/50"
                                             )}
                                         >
-                                            <div className="font-mono text-lg font-bold text-foreground w-14">
-                                                {time}
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-2 font-bold text-foreground">
+                                                    <span>{apt.data_inicio.split('T')[1].substring(0, 5)}</span>
+                                                    <span className="text-muted-foreground font-normal text-xs">{apt.tipo_consulta}</span>
+                                                </div>
+                                                <Badge variant="outline" className={cn("text-[10px] px-1 py-0 h-5", status.color)}>
+                                                    {status.label}
+                                                </Badge>
                                             </div>
 
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between">
-                                                    <p className="font-semibold text-foreground truncate">{apt.nome_cliente}</p>
-                                                    {apt.status && (
-                                                        <div className={cn("w-2 h-2 rounded-full", statusStyle.color.split(' ')[0].replace('bg-', 'bg-'))} />
-                                                    )}
+                                            <div className="font-semibold text-sm truncate">{apt.nome_cliente}</div>
+
+                                            {apt.observacoes && (
+                                                <div className="text-xs text-muted-foreground truncate max-w-full">
+                                                    {apt.observacoes}
                                                 </div>
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                                    <span className="truncate">{apt.tipo_consulta || "Consulta"}</span>
-                                                    {apt.convenio && (
-                                                        <>
-                                                            <span>•</span>
-                                                            <span className="font-medium text-primary">{apt.convenio}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     )
                                 })
@@ -630,51 +627,48 @@ export default function AppointmentsPage() {
                                 </div>
 
                                 <TabsContent value="detalhes" className="mt-0 h-[calc(100vh-14rem)] overflow-y-auto">
-                                    <div className="flex gap-6 py-6">
+                                    <div className="flex gap-2 py-2">
                                         {/* Main Info Column */}
-                                        <div className="flex-1 space-y-6">
+                                        <div className="flex-1 space-y-2">
                                             {/* Patient Search / Name */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium text-muted-foreground">Paciente</label>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-medium text-muted-foreground">Paciente</label>
                                                 <div className="relative">
-                                                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                    <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground" />
                                                     <Input
                                                         value={selectedAppointment.nome_cliente}
                                                         readOnly
-                                                        className="pl-9 font-semibold text-lg h-12 bg-accent/20 border-accent"
+                                                        className="pl-8 font-semibold text-sm h-8 bg-accent/20 border-accent"
                                                     />
                                                 </div>
                                             </div>
 
                                             {/* Contact Grid */}
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-muted-foreground">Celular</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-medium text-muted-foreground">Celular</label>
                                                     <div className="flex gap-2">
-                                                        <Input value={selectedAppointment.telefone_cliente || ''} readOnly />
+                                                        <Input value={selectedAppointment.telefone_cliente || ''} readOnly className="h-8 text-sm" />
                                                         <Button
                                                             size="icon"
-                                                            className="bg-green-600 hover:bg-green-700 text-white shrink-0"
+                                                            className="h-8 w-8 bg-green-600 hover:bg-green-700 text-white shrink-0"
                                                             onClick={() => openWhatsApp(selectedAppointment.telefone_cliente)}
                                                             title="Abrir WhatsApp"
                                                         >
-                                                            <MessageCircle className="h-5 w-5" />
+                                                            <MessageCircle className="h-4 w-4" />
                                                         </Button>
                                                     </div>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                                                    <Input value={selectedAppointment.email_cliente || ''} readOnly placeholder="Não informado" />
+                                                <div className="space-y-1">
+                                                    <label className="text-xs font-medium text-muted-foreground">Email</label>
+                                                    <Input value={selectedAppointment.email_cliente || ''} readOnly placeholder="Não informado" className="h-8 text-sm" />
                                                 </div>
                                             </div>
 
                                             {/* Insurance Info */}
-                                            <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm font-medium text-foreground">Convênio</span>
-                                                    <Badge variant="outline" className="border-orange-200 text-orange-700 bg-white/50">{selectedAppointment.convenio || "Particular"}</Badge>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground">Clique para ver detalhes da carteirinha</p>
+                                            <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 flex justify-between items-center">
+                                                <span className="text-xs font-medium text-foreground">Convênio</span>
+                                                <Badge variant="outline" className="border-orange-200 text-orange-700 bg-white/50 text-xs px-2 py-0 h-5">{selectedAppointment.convenio || "Particular"}</Badge>
                                             </div>
 
                                             {/* Obs */}
@@ -1030,7 +1024,7 @@ export default function AppointmentsPage() {
                         <CardHeader>
                             <CardTitle className="text-xl">Editar Dados do Paciente</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-2 p-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Nome</label>
                                 <Input
