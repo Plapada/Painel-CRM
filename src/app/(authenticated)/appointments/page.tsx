@@ -689,85 +689,88 @@ export default function AppointmentsPage() {
                                             </div>
                                         </div>
 
-                                        {/* Actions / Status Column */}
-                                        <div className="w-72 space-y-6 border-l pl-6">
-                                            <div className="space-y-4">
-                                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Status do Atendimento</h3>
+                                        {/* Action Buttons (Moved) */}
+                                        <div className="pt-4 border-t space-y-2 mt-4">
+                                            <Button
+                                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+                                                onClick={handleSaveDetails}
+                                                disabled={isSaving}
+                                            >
+                                                {isSaving ? "Salvando..." : "Salvar Alterações"}
+                                            </Button>
 
-                                                <div className="space-y-2">
-                                                    {(Object.keys(STATUS_CONFIG) as AppointmentStatus[]).map((statusKey) => {
-                                                        const config = STATUS_CONFIG[statusKey]
-                                                        const Icon = config.icon
-                                                        const isActive = selectedAppointment.status === statusKey
+                                            <Button
+                                                className="w-full" variant="secondary"
+                                                onClick={handleReschedule}
+                                            >
+                                                <Clock className="w-4 h-4 mr-2" /> Reagendar
+                                            </Button>
 
-                                                        return (
-                                                            <button
-                                                                key={statusKey}
-                                                                onClick={() => handleStatusUpdate(statusKey)}
-                                                                className={cn(
-                                                                    "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
-                                                                    isActive
-                                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
-                                                                        : "border-transparent hover:bg-muted text-muted-foreground"
-                                                                )}
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={cn(
-                                                                        "p-1.5 rounded-full bg-muted",
-                                                                        isActive && "bg-primary text-white"
-                                                                    )}>
-                                                                        <Icon className="h-4 w-4" />
-                                                                    </div>
-                                                                    <span>{config.label}</span>
-                                                                </div>
-                                                                {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                                                            </button>
-                                                        )
-                                                    })}
-                                                </div>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                    onClick={handleCancelAppointment}
+                                                >
+                                                    <XCircle className="h-4 w-4 mr-2" />
+                                                    Cancelar
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex-1 border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                    onClick={handleDeleteAppointment}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Excluir
+                                                </Button>
                                             </div>
 
-                                            <div className="pt-6 border-t space-y-3">
-                                                <Button
-                                                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
-                                                    onClick={handleSaveDetails}
-                                                    disabled={isSaving}
-                                                >
-                                                    {isSaving ? "Salvando..." : "Salvar Alterações"}
-                                                </Button>
+                                            <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => { setEditingPatient(selectedAppointment); setShowEditPatientModal(true) }}>
+                                                Editar e visualizar dados do paciente
+                                            </Button>
+                                        </div>
+                                    </div>
 
-                                                <Button
-                                                    className="w-full" variant="secondary"
-                                                    onClick={handleReschedule}
-                                                >
-                                                    <Clock className="w-4 h-4 mr-2" /> Reagendar
-                                                </Button>
+                                    {/* Actions / Status Column */}
+                                    <div className="w-72 space-y-6 border-l pl-6">
+                                        <div className="space-y-4">
+                                            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Status do Atendimento</h3>
 
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                                                        onClick={handleCancelAppointment}
-                                                    >
-                                                        <XCircle className="h-4 w-4 mr-2" />
-                                                        Cancelar
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="flex-1 border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-                                                        onClick={handleDeleteAppointment}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 mr-2" />
-                                                        Excluir
-                                                    </Button>
-                                                </div>
+                                            <div className="space-y-2">
+                                                {Object.keys(STATUS_CONFIG).map((statusKey) => {
+                                                    const key = statusKey as AppointmentStatus
+                                                    const config = STATUS_CONFIG[key]
+                                                    const Icon = config.icon
+                                                    const isActive = selectedAppointment.status === key
 
-                                                <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => { setEditingPatient(selectedAppointment); setShowEditPatientModal(true) }}>
-                                                    Editar e visualizar dados do paciente
-                                                </Button>
+                                                    return (
+                                                        <button
+                                                            key={key}
+                                                            onClick={() => handleStatusUpdate(key)}
+                                                            className={cn(
+                                                                "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
+                                                                isActive
+                                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                                    : "border-transparent hover:bg-muted text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={cn(
+                                                                    "p-1.5 rounded-full bg-muted",
+                                                                    isActive && "bg-primary text-white"
+                                                                )}>
+                                                                    <Icon className="h-4 w-4" />
+                                                                </div>
+                                                                <span>{config.label}</span>
+                                                            </div>
+                                                            {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                                                        </button>
+                                                    )
+                                                })}
                                             </div>
                                         </div>
                                     </div>
+
                                 </TabsContent>
 
                                 <TabsContent value="clinico" className="h-[calc(100vh-14rem)] overflow-y-auto mt-0">
@@ -825,7 +828,7 @@ export default function AppointmentsPage() {
                                 </TabsContent>
                             </Tabs>
                         </div>
-                    </div>
+                    </div >
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/5">
                         <CalendarIcon className="h-16 w-16 mb-4 opacity-20" />
@@ -834,96 +837,162 @@ export default function AppointmentsPage() {
                             Clique em um horário na lista à esquerda para ver detalhes e gerenciar o atendimento.
                         </p>
                     </div>
-                )}
-            </Card>
+                )
+                }
+            </Card >
 
             {/* CREATE APPOINTMENT MODAL OVERLAY */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
-                        <CardHeader>
-                            <CardTitle className="text-xl">Novo Agendamento</CardTitle>
-                            <CardDescription>Preencha os dados para criar um novo agendamento.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2 flex flex-col">
-                                <label className="text-sm font-medium">Nome do Paciente</label>
-                                <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={openCombobox}
-                                            className="w-full justify-between font-normal"
-                                        >
-                                            {newAppointment.nome_cliente || "Pesquisar paciente..."}
-                                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[400px] p-0" align="start">
-                                        <Command shouldFilter={false}>
-                                            <CommandInput
-                                                placeholder="Digite o nome..."
-                                                value={newAppointment.nome_cliente}
-                                                onValueChange={(val) => {
-                                                    setNewAppointment(prev => ({ ...prev, nome_cliente: val }))
-                                                    handleSearchPatient(val)
-                                                }}
+            {
+                showCreateModal && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Novo Agendamento</CardTitle>
+                                <CardDescription>Preencha os dados para criar um novo agendamento.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2 flex flex-col">
+                                    <label className="text-sm font-medium">Nome do Paciente</label>
+                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={openCombobox}
+                                                className="w-full justify-between font-normal"
+                                            >
+                                                {newAppointment.nome_cliente || "Pesquisar paciente..."}
+                                                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[400px] p-0" align="start">
+                                            <Command shouldFilter={false}>
+                                                <CommandInput
+                                                    placeholder="Digite o nome..."
+                                                    value={newAppointment.nome_cliente}
+                                                    onValueChange={(val) => {
+                                                        setNewAppointment(prev => ({ ...prev, nome_cliente: val }))
+                                                        handleSearchPatient(val)
+                                                    }}
+                                                />
+                                                <CommandList>
+                                                    {patientSuggestions.map((patient, idx) => (
+                                                        <CommandItem
+                                                            key={`${patient.nome_cliente}-${idx}`}
+                                                            onSelect={() => handleSelectPatient(patient)}
+                                                        >
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{patient.nome_cliente}</span>
+                                                                <span className="text-xs text-muted-foreground">{patient.telefone_cliente || patient.celular_cliente}</span>
+                                                            </div>
+                                                            <Check
+                                                                className={cn(
+                                                                    "ml-auto h-4 w-4",
+                                                                    newAppointment.nome_cliente === patient.nome_cliente ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                        </CommandItem>
+                                                    ))}
+                                                    {patientSuggestions.length === 0 && newAppointment.nome_cliente.length > 2 && (
+                                                        <div className="p-2 text-sm text-muted-foreground text-center">Nenhum paciente encontrado. Crie um novo.</div>
+                                                    )}
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Telefone (Fixo)</label>
+                                        <Input
+                                            value={newAppointment.telefone_cliente}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
+                                            placeholder="(11) 3333-3333"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Celular (WhatsApp)</label>
+                                        <Input
+                                            value={newAppointment.celular_cliente}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, celular_cliente: e.target.value })}
+                                            placeholder="(11) 99999-9999"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Prontuário</label>
+                                        <Input
+                                            value={newAppointment.prontuario}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, prontuario: e.target.value })}
+                                            placeholder="Nº Prontuário"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Convênio</label>
+                                        <Input
+                                            value={newAppointment.convenio}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
+                                            placeholder="Particular, Unimed..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Tipo de Consulta</label>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={newAppointment.tipo_consulta}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, tipo_consulta: e.target.value })}
+                                    >
+                                        <option value="Particular">Particular</option>
+                                        <option value="Retorno">Retorno</option>
+                                        <option value="Cortesia">Cortesia</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-4 border p-4 rounded-md">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="proc"
+                                            checked={newAppointment.realizou_procedimento}
+                                            onCheckedChange={(c) => setNewAppointment({ ...newAppointment, realizou_procedimento: !!c })}
+                                        />
+                                        <label htmlFor="proc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                            Realizou Procedimento?
+                                        </label>
+                                    </div>
+                                    {newAppointment.realizou_procedimento && (
+                                        <div className="animate-in fade-in slide-in-from-top-2">
+                                            <label className="text-sm font-medium">Código do Procedimento</label>
+                                            <Input
+                                                value={newAppointment.codigo_procedimento}
+                                                onChange={(e) => setNewAppointment({ ...newAppointment, codigo_procedimento: e.target.value })}
+                                                placeholder="Ex: 10101010"
                                             />
-                                            <CommandList>
-                                                {patientSuggestions.map((patient, idx) => (
-                                                    <CommandItem
-                                                        key={`${patient.nome_cliente}-${idx}`}
-                                                        onSelect={() => handleSelectPatient(patient)}
-                                                    >
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{patient.nome_cliente}</span>
-                                                            <span className="text-xs text-muted-foreground">{patient.telefone_cliente || patient.celular_cliente}</span>
-                                                        </div>
-                                                        <Check
-                                                            className={cn(
-                                                                "ml-auto h-4 w-4",
-                                                                newAppointment.nome_cliente === patient.nome_cliente ? "opacity-100" : "opacity-0"
-                                                            )}
-                                                        />
-                                                    </CommandItem>
-                                                ))}
-                                                {patientSuggestions.length === 0 && newAppointment.nome_cliente.length > 2 && (
-                                                    <div className="p-2 text-sm text-muted-foreground text-center">Nenhum paciente encontrado. Crie um novo.</div>
-                                                )}
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Telefone (Fixo)</label>
-                                    <Input
-                                        value={newAppointment.telefone_cliente}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
-                                        placeholder="(11) 3333-3333"
-                                    />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Celular (WhatsApp)</label>
-                                    <Input
-                                        value={newAppointment.celular_cliente}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, celular_cliente: e.target.value })}
-                                        placeholder="(11) 99999-9999"
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Prontuário</label>
-                                    <Input
-                                        value={newAppointment.prontuario}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, prontuario: e.target.value })}
-                                        placeholder="Nº Prontuário"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Data</label>
+                                        <Input
+                                            type="date"
+                                            value={newAppointment.data_inicio}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, data_inicio: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Hora</label>
+                                        <Input
+                                            type="time"
+                                            value={newAppointment.hora_inicio}
+                                            onChange={(e) => setNewAppointment({ ...newAppointment, hora_inicio: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Convênio</label>
@@ -933,142 +1002,81 @@ export default function AppointmentsPage() {
                                         placeholder="Particular, Unimed..."
                                     />
                                 </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Tipo de Consulta</label>
-                                <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={newAppointment.tipo_consulta}
-                                    onChange={(e) => setNewAppointment({ ...newAppointment, tipo_consulta: e.target.value })}
-                                >
-                                    <option value="Particular">Particular</option>
-                                    <option value="Retorno">Retorno</option>
-                                    <option value="Cortesia">Cortesia</option>
-                                </select>
-                            </div>
-
-                            <div className="space-y-4 border p-4 rounded-md">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="proc"
-                                        checked={newAppointment.realizou_procedimento}
-                                        onCheckedChange={(c) => setNewAppointment({ ...newAppointment, realizou_procedimento: !!c })}
-                                    />
-                                    <label htmlFor="proc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                        Realizou Procedimento?
-                                    </label>
-                                </div>
-                                {newAppointment.realizou_procedimento && (
-                                    <div className="animate-in fade-in slide-in-from-top-2">
-                                        <label className="text-sm font-medium">Código do Procedimento</label>
-                                        <Input
-                                            value={newAppointment.codigo_procedimento}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, codigo_procedimento: e.target.value })}
-                                            placeholder="Ex: 10101010"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Data</label>
+                                    <label className="text-sm font-medium">Observações</label>
                                     <Input
-                                        type="date"
-                                        value={newAppointment.data_inicio}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, data_inicio: e.target.value })}
+                                        value={newAppointment.observacoes}
+                                        onChange={(e) => setNewAppointment({ ...newAppointment, observacoes: e.target.value })}
+                                        placeholder="Opcional"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Hora</label>
-                                    <Input
-                                        type="time"
-                                        value={newAppointment.hora_inicio}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, hora_inicio: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Convênio</label>
-                                <Input
-                                    value={newAppointment.convenio}
-                                    onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
-                                    placeholder="Particular, Unimed..."
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Observações</label>
-                                <Input
-                                    value={newAppointment.observacoes}
-                                    onChange={(e) => setNewAppointment({ ...newAppointment, observacoes: e.target.value })}
-                                    placeholder="Opcional"
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
-                            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
-                            <Button onClick={handleCreateAppointment} disabled={isCreating}>
-                                {isCreating ? 'Criando...' : 'Agendar'}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            )}
+                            </CardContent>
+                            <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                                <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
+                                <Button onClick={handleCreateAppointment} disabled={isCreating}>
+                                    {isCreating ? 'Criando...' : 'Agendar'}
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )
+            }
 
             {/* EDIT PATIENT MODAL */}
-            {showEditPatientModal && editingPatient && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
-                        <CardHeader>
-                            <CardTitle className="text-xl">Editar Dados do Paciente</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2 p-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Nome</label>
-                                <Input
-                                    value={editingPatient.nome_cliente}
-                                    onChange={(e) => setEditingPatient({ ...editingPatient, nome_cliente: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+            {
+                showEditPatientModal && editingPatient && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Editar Dados do Paciente</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 p-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Telefone (Fixo)</label>
+                                    <label className="text-sm font-medium">Nome</label>
                                     <Input
-                                        value={editingPatient.telefone_cliente || ''}
-                                        onChange={(e) => setEditingPatient({ ...editingPatient, telefone_cliente: e.target.value })}
+                                        value={editingPatient.nome_cliente}
+                                        onChange={(e) => setEditingPatient({ ...editingPatient, nome_cliente: e.target.value })}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Telefone (Fixo)</label>
+                                        <Input
+                                            value={editingPatient.telefone_cliente || ''}
+                                            onChange={(e) => setEditingPatient({ ...editingPatient, telefone_cliente: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Celular</label>
+                                        <Input
+                                            value={editingPatient.celular_cliente || ''}
+                                            onChange={(e) => setEditingPatient({ ...editingPatient, celular_cliente: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Email</label>
+                                    <Input
+                                        value={editingPatient.email_cliente || ''}
+                                        onChange={(e) => setEditingPatient({ ...editingPatient, email_cliente: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Celular</label>
+                                    <label className="text-sm font-medium">Prontuário</label>
                                     <Input
-                                        value={editingPatient.celular_cliente || ''}
-                                        onChange={(e) => setEditingPatient({ ...editingPatient, celular_cliente: e.target.value })}
+                                        value={editingPatient.prontuario || ''}
+                                        onChange={(e) => setEditingPatient({ ...editingPatient, prontuario: e.target.value })}
                                     />
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Email</label>
-                                <Input
-                                    value={editingPatient.email_cliente || ''}
-                                    onChange={(e) => setEditingPatient({ ...editingPatient, email_cliente: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Prontuário</label>
-                                <Input
-                                    value={editingPatient.prontuario || ''}
-                                    onChange={(e) => setEditingPatient({ ...editingPatient, prontuario: e.target.value })}
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
-                            <Button variant="outline" onClick={() => setShowEditPatientModal(false)}>Cancelar</Button>
-                            <Button onClick={handleUpdatePatientInfo}>Salvar Dados</Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            )}
-        </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                                <Button variant="outline" onClick={() => setShowEditPatientModal(false)}>Cancelar</Button>
+                                <Button onClick={handleUpdatePatientInfo}>Salvar Dados</Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )
+            }
+        </div >
     )
 }
