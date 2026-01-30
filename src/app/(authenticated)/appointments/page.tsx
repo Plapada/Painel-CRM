@@ -53,6 +53,24 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Check } from "lucide-react"
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
 // --- Types ---
 type AppointmentStatus =
     | 'pendente'
@@ -148,6 +166,28 @@ export default function AppointmentsPage() {
     const [history, setHistory] = useState<Appointment[]>([])
     const [loadingHistory, setLoadingHistory] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
+
+    // Alert Dialog State
+    const [alertConfig, setAlertConfig] = useState<{
+        isOpen: boolean
+        title: string
+        description: string
+        actionLabel: string
+        onConfirm: () => void
+        variant?: 'default' | 'destructive'
+    }>({ isOpen: false, title: '', description: '', actionLabel: '', onConfirm: () => { } })
+
+    // Reschedule Dialog State
+    const [showRescheduleDialog, setShowRescheduleDialog] = useState(false)
+    const [rescheduleData, setRescheduleData] = useState({ date: '', time: '' })
+
+    // Generated Time Slots (08:00 to 20:00, 30min steps)
+    const timeSlots = Array.from({ length: 25 }, (_, i) => {
+        const totalMinutes = 8 * 60 + i * 30 // Start 08:00
+        const h = Math.floor(totalMinutes / 60)
+        const m = totalMinutes % 60
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    })
 
     // Fetch Appointments
     useEffect(() => {
@@ -302,54 +342,66 @@ export default function AppointmentsPage() {
     const handleCancelAppointment = async () => {
         if (!selectedAppointment) return
 
-        const confirmed = window.confirm(
-            `Deseja realmente CANCELAR o agendamento de ${selectedAppointment.nome_cliente}?\n\nEsta ação irá alterar o status para "Cancelada".`
-        )
-        if (!confirmed) return
+        setAlertConfig({
+            isOpen: true,
+            title: "Cancelar Agendamento",
+            description: `Deseja realmente CANCELAR o agendamento de ${selectedAppointment.nome_cliente}? Esta ação alterará o status para 'Cancelada'.`,
+            actionLabel: "Sim, Cancelar",
+            variant: 'destructive',
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('consultas')
+                        .update({ status: 'cancelada' })
+                        .eq('id', selectedAppointment.id)
 
-        try {
-            const { error } = await supabase
-                .from('consultas')
-                .update({ status: 'cancelada' })
-                .eq('id', selectedAppointment.id)
+                    if (error) throw error
 
-            if (error) throw error
-
-            // Update local state
-            const updated = { ...selectedAppointment, status: 'cancelada' as AppointmentStatus }
-            setSelectedAppointment(updated)
-            setAppointments(prev => prev.map(app => app.id === updated.id ? updated : app))
-            notify.success("Agendamento cancelado com sucesso.")
-        } catch (error) {
-            console.error("Error canceling appointment:", error)
-            notify.error("Erro ao cancelar agendamento.")
-        }
+                    // Update local state
+                    const updated = { ...selectedAppointment, status: 'cancelada' as AppointmentStatus }
+                    setSelectedAppointment(updated)
+                    setAppointments(prev => prev.map(app => app.id === updated.id ? updated : app))
+                    notify.success("Agendamento cancelado com sucesso.")
+                } catch (error) {
+                    console.error("Error canceling appointment:", error)
+                    notify.error("Erro ao cancelar agendamento.")
+                } finally {
+                    setAlertConfig(prev => ({ ...prev, isOpen: false }))
+                }
+            }
+        })
     }
 
     const handleDeleteAppointment = async () => {
         if (!selectedAppointment) return
 
-        const confirmed = window.confirm(
-            `Deseja realmente EXCLUIR o agendamento de ${selectedAppointment.nome_cliente}?\n\n⚠️ Esta ação é IRREVERSÍVEL e removerá o registro permanentemente.`
-        )
-        if (!confirmed) return
+        setAlertConfig({
+            isOpen: true,
+            title: "Excluir Agendamento",
+            description: `Deseja realmente EXCLUIR o agendamento de ${selectedAppointment.nome_cliente}? Esta ação é IRREVERSÍVEL.`,
+            actionLabel: "Sim, Excluir",
+            variant: 'destructive',
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('consultas')
+                        .delete()
+                        .eq('id', selectedAppointment.id)
 
-        try {
-            const { error } = await supabase
-                .from('consultas')
-                .delete()
-                .eq('id', selectedAppointment.id)
+                    if (error) throw error
 
-            if (error) throw error
-
-            // Remove from local state
-            setAppointments(prev => prev.filter(app => app.id !== selectedAppointment.id))
-            setSelectedAppointment(null)
-            notify.success("Agendamento excluído com sucesso.")
-        } catch (error) {
-            console.error("Error deleting appointment:", error)
-            notify.error("Erro ao excluir agendamento.")
-        }
+                    // Remove from local state
+                    setAppointments(prev => prev.filter(app => app.id !== selectedAppointment.id))
+                    setSelectedAppointment(null)
+                    notify.success("Agendamento excluído com sucesso.")
+                } catch (error) {
+                    console.error("Error deleting appointment:", error)
+                    notify.error("Erro ao excluir agendamento.")
+                } finally {
+                    setAlertConfig(prev => ({ ...prev, isOpen: false }))
+                }
+            }
+        })
     }
 
 
@@ -457,19 +509,19 @@ export default function AppointmentsPage() {
     }
 
     const handleReschedule = async () => {
-        // Quick Reschedule Logic - Could be a modal, for now prompt date?
-        // Or just open Edit Modal and allow Date change?
-        // User asked for "Opção de reagendar"
-        // Let's assume a prompt for now or open a simple date picker modal
-        // Simplest: Edit 'selectedAppointment' state locally and trigger Save? 
-        // No, dedicated action is better.
-        // Let's implement a quick date prompt for now to prove logic
-        const newDateStr = prompt("Informe a nova data (YYYY-MM-DD):", selectedAppointment?.data_inicio.split('T')[0])
-        const newTimeStr = prompt("Informe o novo horário (HH:MM):", new Date(selectedAppointment!.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+        if (!selectedAppointment) return
+        setRescheduleData({
+            date: selectedAppointment.data_inicio.split('T')[0],
+            time: new Date(selectedAppointment.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        })
+        setShowRescheduleDialog(true)
+    }
 
-        if (newDateStr && newTimeStr && selectedAppointment) {
-            const newDateTime = new Date(`${newDateStr}T${newTimeStr}:00`).toISOString()
+    const confirmReschedule = async () => {
+        if (!selectedAppointment || !rescheduleData.date || !rescheduleData.time) return
 
+        try {
+            const newDateTime = new Date(`${rescheduleData.date}T${rescheduleData.time}:00`).toISOString()
             const { error } = await supabase
                 .from('consultas')
                 .update({ data_inicio: newDateTime })
@@ -477,11 +529,15 @@ export default function AppointmentsPage() {
 
             if (!error) {
                 notify.success("Reagendado com sucesso!")
-                fetchAppointments()
+                fetchAppointments() // Refetch to sort/move
                 setSelectedAppointment(null)
+                setShowRescheduleDialog(false)
             } else {
-                notify.error("Erro ao reagendar.")
+                throw error
             }
+        } catch (err) {
+            console.error(err)
+            notify.error("Erro ao reagendar.")
         }
     }
 
@@ -724,8 +780,8 @@ export default function AppointmentsPage() {
                                                     </Button>
                                                 </div>
 
-                                                <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => { setEditingPatient(selectedAppointment); setShowEditPatientModal(true) }}>
-                                                    Editar e visualizar dados do paciente
+                                                <Button variant="secondary" size="sm" className="w-full text-xs" onClick={() => { setEditingPatient(selectedAppointment); setShowEditPatientModal(true) }}>
+                                                    ✏️ Editar dados do paciente
                                                 </Button>
                                             </div>
                                         </div>
@@ -844,174 +900,189 @@ export default function AppointmentsPage() {
             {/* CREATE APPOINTMENT MODAL OVERLAY */}
             {
                 showCreateModal && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                        <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
-                            <CardHeader>
+                    <div
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+                        onMouseDown={() => setShowCreateModal(false)}
+                    >
+                        <Card
+                            className="w-full max-w-4xl shadow-2xl border-0 ring-1 ring-white/10 max-h-[90vh] flex flex-col"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <CardHeader className="pb-4 border-b">
                                 <CardTitle className="text-xl">Novo Agendamento</CardTitle>
                                 <CardDescription>Preencha os dados para criar um novo agendamento.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 flex flex-col">
-                                    <label className="text-sm font-medium">Nome do Paciente</label>
-                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                aria-expanded={openCombobox}
-                                                className="w-full justify-between font-normal"
-                                            >
-                                                {newAppointment.nome_cliente || "Pesquisar paciente..."}
-                                                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[400px] p-0" align="start">
-                                            <Command shouldFilter={false}>
-                                                <CommandInput
-                                                    placeholder="Digite o nome..."
-                                                    value={newAppointment.nome_cliente}
-                                                    onValueChange={(val) => {
-                                                        setNewAppointment(prev => ({ ...prev, nome_cliente: val }))
-                                                        handleSearchPatient(val)
-                                                    }}
+                            <CardContent className="space-y-4 p-6 overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-6">
+                                    {/* Left Column */}
+                                    <div className="space-y-4">
+                                        <div className="space-y-2 flex flex-col">
+                                            <label className="text-sm font-medium">Nome do Paciente</label>
+                                            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        aria-expanded={openCombobox}
+                                                        className="w-full justify-between font-normal"
+                                                    >
+                                                        {newAppointment.nome_cliente || "Pesquisar paciente..."}
+                                                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[400px] p-0" align="start">
+                                                    <Command shouldFilter={false}>
+                                                        <CommandInput
+                                                            placeholder="Digite o nome..."
+                                                            value={newAppointment.nome_cliente}
+                                                            onValueChange={(val) => {
+                                                                setNewAppointment(prev => ({ ...prev, nome_cliente: val }))
+                                                                handleSearchPatient(val)
+                                                            }}
+                                                        />
+                                                        <CommandList>
+                                                            {patientSuggestions.map((patient, idx) => (
+                                                                <CommandItem
+                                                                    key={`${patient.nome_cliente}-${idx}`}
+                                                                    onSelect={() => handleSelectPatient(patient)}
+                                                                >
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-medium">{patient.nome_cliente}</span>
+                                                                        <span className="text-xs text-muted-foreground">{patient.telefone_cliente || patient.celular_cliente}</span>
+                                                                    </div>
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "ml-auto h-4 w-4",
+                                                                            newAppointment.nome_cliente === patient.nome_cliente ? "opacity-100" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                </CommandItem>
+                                                            ))}
+                                                            {patientSuggestions.length === 0 && newAppointment.nome_cliente.length > 2 && (
+                                                                <div className="p-2 text-sm text-muted-foreground text-center">Nenhum paciente encontrado. Crie um novo.</div>
+                                                            )}
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Telefone (Fixo)</label>
+                                                <Input
+                                                    value={newAppointment.telefone_cliente}
+                                                    onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
+                                                    placeholder="(11) 3333-3333"
                                                 />
-                                                <CommandList>
-                                                    {patientSuggestions.map((patient, idx) => (
-                                                        <CommandItem
-                                                            key={`${patient.nome_cliente}-${idx}`}
-                                                            onSelect={() => handleSelectPatient(patient)}
-                                                        >
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium">{patient.nome_cliente}</span>
-                                                                <span className="text-xs text-muted-foreground">{patient.telefone_cliente || patient.celular_cliente}</span>
-                                                            </div>
-                                                            <Check
-                                                                className={cn(
-                                                                    "ml-auto h-4 w-4",
-                                                                    newAppointment.nome_cliente === patient.nome_cliente ? "opacity-100" : "opacity-0"
-                                                                )}
-                                                            />
-                                                        </CommandItem>
-                                                    ))}
-                                                    {patientSuggestions.length === 0 && newAppointment.nome_cliente.length > 2 && (
-                                                        <div className="p-2 text-sm text-muted-foreground text-center">Nenhum paciente encontrado. Crie um novo.</div>
-                                                    )}
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Celular (WhatsApp)</label>
+                                                <Input
+                                                    value={newAppointment.celular_cliente}
+                                                    onChange={(e) => setNewAppointment({ ...newAppointment, celular_cliente: e.target.value })}
+                                                    placeholder="(11) 99999-9999"
+                                                />
+                                            </div>
+                                        </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Telefone (Fixo)</label>
-                                        <Input
-                                            value={newAppointment.telefone_cliente}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
-                                            placeholder="(11) 3333-3333"
-                                        />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Prontuário</label>
+                                                <Input
+                                                    value={newAppointment.prontuario}
+                                                    onChange={(e) => setNewAppointment({ ...newAppointment, prontuario: e.target.value })}
+                                                    placeholder="Nº Prontuário"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Convênio</label>
+                                                <Input
+                                                    value={newAppointment.convenio}
+                                                    onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
+                                                    placeholder="Particular, Unimed..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Tipo de Consulta</label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newAppointment.tipo_consulta}
+                                                onChange={(e) => setNewAppointment({ ...newAppointment, tipo_consulta: e.target.value })}
+                                            >
+                                                <option value="Particular">Particular</option>
+                                                <option value="Retorno">Retorno</option>
+                                                <option value="Cortesia">Cortesia</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Celular (WhatsApp)</label>
-                                        <Input
-                                            value={newAppointment.celular_cliente}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, celular_cliente: e.target.value })}
-                                            placeholder="(11) 99999-9999"
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Prontuário</label>
-                                        <Input
-                                            value={newAppointment.prontuario}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, prontuario: e.target.value })}
-                                            placeholder="Nº Prontuário"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Convênio</label>
-                                        <Input
-                                            value={newAppointment.convenio}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
-                                            placeholder="Particular, Unimed..."
-                                        />
-                                    </div>
-                                </div>
+                                    {/* Right Column */}
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Data</label>
+                                                <Input
+                                                    type="date"
+                                                    value={newAppointment.data_inicio}
+                                                    onChange={(e) => setNewAppointment({ ...newAppointment, data_inicio: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Hora</label>
+                                                <Select
+                                                    value={newAppointment.hora_inicio}
+                                                    onValueChange={(val) => setNewAppointment({ ...newAppointment, hora_inicio: val })}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecione..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="max-h-[200px]">
+                                                        {timeSlots.map(time => (
+                                                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Tipo de Consulta</label>
-                                    <select
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={newAppointment.tipo_consulta}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, tipo_consulta: e.target.value })}
-                                    >
-                                        <option value="Particular">Particular</option>
-                                        <option value="Retorno">Retorno</option>
-                                        <option value="Cortesia">Cortesia</option>
-                                    </select>
-                                </div>
+                                        <div className="space-y-4 border p-4 rounded-md">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="proc"
+                                                    checked={newAppointment.realizou_procedimento}
+                                                    onCheckedChange={(c) => setNewAppointment({ ...newAppointment, realizou_procedimento: !!c })}
+                                                />
+                                                <label htmlFor="proc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    Realizou Procedimento?
+                                                </label>
+                                            </div>
+                                            {newAppointment.realizou_procedimento && (
+                                                <div className="animate-in fade-in slide-in-from-top-2">
+                                                    <label className="text-sm font-medium">Código do Procedimento</label>
+                                                    <Input
+                                                        value={newAppointment.codigo_procedimento}
+                                                        onChange={(e) => setNewAppointment({ ...newAppointment, codigo_procedimento: e.target.value })}
+                                                        placeholder="Ex: 10101010"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
 
-                                <div className="space-y-4 border p-4 rounded-md">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="proc"
-                                            checked={newAppointment.realizou_procedimento}
-                                            onCheckedChange={(c) => setNewAppointment({ ...newAppointment, realizou_procedimento: !!c })}
-                                        />
-                                        <label htmlFor="proc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                            Realizou Procedimento?
-                                        </label>
-                                    </div>
-                                    {newAppointment.realizou_procedimento && (
-                                        <div className="animate-in fade-in slide-in-from-top-2">
-                                            <label className="text-sm font-medium">Código do Procedimento</label>
-                                            <Input
-                                                value={newAppointment.codigo_procedimento}
-                                                onChange={(e) => setNewAppointment({ ...newAppointment, codigo_procedimento: e.target.value })}
-                                                placeholder="Ex: 10101010"
+                                        <div className="space-y-2 h-full">
+                                            <label className="text-sm font-medium">Observações</label>
+                                            <textarea
+                                                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                value={newAppointment.observacoes}
+                                                onChange={(e) => setNewAppointment({ ...newAppointment, observacoes: e.target.value })}
+                                                placeholder="Opcional"
                                             />
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Data</label>
-                                        <Input
-                                            type="date"
-                                            value={newAppointment.data_inicio}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, data_inicio: e.target.value })}
-                                        />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Hora</label>
-                                        <Input
-                                            type="time"
-                                            value={newAppointment.hora_inicio}
-                                            onChange={(e) => setNewAppointment({ ...newAppointment, hora_inicio: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Convênio</label>
-                                    <Input
-                                        value={newAppointment.convenio}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, convenio: e.target.value })}
-                                        placeholder="Particular, Unimed..."
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Observações</label>
-                                    <Input
-                                        value={newAppointment.observacoes}
-                                        onChange={(e) => setNewAppointment({ ...newAppointment, observacoes: e.target.value })}
-                                        placeholder="Opcional"
-                                    />
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                            <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4 border-t">
                                 <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancelar</Button>
                                 <Button onClick={handleCreateAppointment} disabled={isCreating}>
                                     {isCreating ? 'Criando...' : 'Agendar'}
@@ -1077,6 +1148,71 @@ export default function AppointmentsPage() {
                     </div>
                 )
             }
+            {/* ALERT DIALOG SYSTEM */}
+            <AlertDialog open={alertConfig.isOpen} onOpenChange={(open) => setAlertConfig(prev => ({ ...prev, isOpen: open }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{alertConfig.title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {alertConfig.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={alertConfig.onConfirm}
+                            className={cn(alertConfig.variant === 'destructive' && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+                        >
+                            {alertConfig.actionLabel}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* RESCHEDULE MODAL */}
+            {showRescheduleDialog && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <Card className="w-full max-w-sm shadow-2xl border-0 ring-1 ring-white/10">
+                        <CardHeader>
+                            <CardTitle className="text-lg">Reagendar Atendimento</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Nova Data</label>
+                                <Input
+                                    type="date"
+                                    value={rescheduleData.date}
+                                    onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Novo Horário</label>
+                                <Select
+                                    value={rescheduleData.time}
+                                    onValueChange={(val) => setRescheduleData({ ...rescheduleData, time: val })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-[200px]">
+                                        {timeSlots.map(time => (
+                                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                            <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={confirmReschedule}>
+                                Confirmar Reagendamento
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            )}
         </div >
     )
 }
