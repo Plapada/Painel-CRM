@@ -691,6 +691,46 @@ export default function AppointmentsPage() {
 
                                         {/* Action Buttons (Moved) */}
                                         <div className="pt-4 border-t space-y-2 mt-4">
+                                            <div className="space-y-4">
+                                                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Status do Atendimento</h3>
+                                                <div className="space-y-2">
+                                                    {Object.keys(STATUS_CONFIG).map((statusKey) => {
+                                                        const key = statusKey as AppointmentStatus
+                                                        const config = STATUS_CONFIG[key]
+                                                        const Icon = config.icon
+                                                        const isActive = selectedAppointment.status === key
+                                                        return (
+                                                            <button
+                                                                key={key}
+                                                                onClick={() => handleStatusUpdate(key)}
+                                                                className={cn(
+                                                                    "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
+                                                                    isActive
+                                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                                        : "border-transparent hover:bg-muted text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={cn(
+                                                                        "p-1.5 rounded-full bg-muted",
+                                                                        isActive && "bg-primary text-white"
+                                                                    )}>
+                                                                        <Icon className="h-4 w-4" />
+                                                                    </div>
+                                                                    <span>{config.label}</span>
+                                                                </div>
+                                                                {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions / Status Column */}
+                                    <div className="w-72 space-y-6 border-l pl-6">
+                                        <div className="space-y-2">
                                             <Button
                                                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
                                                 onClick={handleSaveDetails}
@@ -728,46 +768,6 @@ export default function AppointmentsPage() {
                                             <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={() => { setEditingPatient(selectedAppointment); setShowEditPatientModal(true) }}>
                                                 Editar e visualizar dados do paciente
                                             </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* Actions / Status Column */}
-                                    <div className="w-72 space-y-6 border-l pl-6">
-                                        <div className="space-y-4">
-                                            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Status do Atendimento</h3>
-
-                                            <div className="space-y-2">
-                                                {Object.keys(STATUS_CONFIG).map((statusKey) => {
-                                                    const key = statusKey as AppointmentStatus
-                                                    const config = STATUS_CONFIG[key]
-                                                    const Icon = config.icon
-                                                    const isActive = selectedAppointment.status === key
-
-                                                    return (
-                                                        <button
-                                                            key={key}
-                                                            onClick={() => handleStatusUpdate(key)}
-                                                            className={cn(
-                                                                "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
-                                                                isActive
-                                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
-                                                                    : "border-transparent hover:bg-muted text-muted-foreground"
-                                                            )}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className={cn(
-                                                                    "p-1.5 rounded-full bg-muted",
-                                                                    isActive && "bg-primary text-white"
-                                                                )}>
-                                                                    <Icon className="h-4 w-4" />
-                                                                </div>
-                                                                <span>{config.label}</span>
-                                                            </div>
-                                                            {isActive && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                                                        </button>
-                                                    )
-                                                })}
-                                            </div>
                                         </div>
                                     </div>
 
