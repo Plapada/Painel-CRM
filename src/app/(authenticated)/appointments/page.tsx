@@ -559,6 +559,17 @@ export default function AppointmentsPage() {
     }
 
 
+    const handleSelectPatient = (patient: Patient) => {
+        setNewAppointment(prev => ({
+            ...prev,
+            nome_cliente: patient.nome,
+            telefone_cliente: patient.telefone || prev.telefone_cliente,
+            email_cliente: patient.email || prev.email_cliente,
+            convenio: patient.convenio || prev.convenio,
+            prontuario: patient.prontuario || prev.prontuario
+        }))
+    }
+
     const openWhatsApp = (phone: string | undefined) => {
         if (!phone) return
         const cleanPhone = phone.replace(/\D/g, '')
@@ -898,7 +909,7 @@ export default function AppointmentsPage() {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="patient" className="text-sm font-medium">Paciente</Label>
-                            <PatientSearch onSelect={handleSelectPatient} />
+                            <PatientSearch onSelect={handleSelectPatient} clinicId={user?.clinic_id} />
                             {newAppointment.nome_cliente && (
                                 <div className="text-xs text-muted-foreground mt-1">
                                     Selecionado: {newAppointment.nome_cliente}

@@ -19,11 +19,14 @@ import {
 } from "@/components/ui/popover"
 import { searchPatients, Patient } from "@/app/actions/get-patients"
 
+// ... (imports)
+
 interface PatientSearchProps {
     onSelect: (patient: Patient) => void
+    clinicId?: string
 }
 
-export function PatientSearch({ onSelect }: PatientSearchProps) {
+export function PatientSearch({ onSelect, clinicId }: PatientSearchProps) {
     const [open, setOpen] = React.useState(false)
     const [value, setValue] = React.useState("")
     const [query, setQuery] = React.useState("")
@@ -38,13 +41,13 @@ export function PatientSearch({ onSelect }: PatientSearchProps) {
 
         const timer = setTimeout(async () => {
             setLoading(true)
-            const results = await searchPatients(query)
+            const results = await searchPatients(query, clinicId)
             setPatients(results)
             setLoading(false)
         }, 300)
 
         return () => clearTimeout(timer)
-    }, [query])
+    }, [query, clinicId])
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -76,7 +79,7 @@ export function PatientSearch({ onSelect }: PatientSearchProps) {
                         <CommandGroup>
                             {patients.map((patient) => (
                                 <CommandItem
-                                    key={patient.id}
+                                    key={`${patient.source}-${patient.id}`}
                                     value={patient.nome}
                                     onSelect={(currentValue) => {
                                         setValue(currentValue)
@@ -91,7 +94,15 @@ export function PatientSearch({ onSelect }: PatientSearchProps) {
                                         )}
                                     />
                                     <div className="flex flex-col">
-                                        <span>{patient.nome}</span>
+                                        <span className="flex items-center gap-2">
+                                            {patient.nome}
+                                            <span className={cn(
+                                                "text-[10px] px-1.5 py-0.5 rounded-full",
+                                                patient.source === 'whatsapp' ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                                            )}>
+                                                {patient.source === 'whatsapp' ? 'WhatsApp' : 'Banco'}
+                                            </span>
+                                        </span>
                                         <span className="text-xs text-muted-foreground">
                                             {patient.cpf ? `CPF: ${patient.cpf} • ` : ''} {patient.telefone}
                                         </span>
