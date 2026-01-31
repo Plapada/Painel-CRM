@@ -559,16 +559,7 @@ export default function AppointmentsPage() {
     }
 
 
-    const handleSelectPatient = (patient: Patient) => {
-        setNewAppointment(prev => ({
-            ...prev,
-            nome_cliente: patient.nome,
-            telefone_cliente: patient.telefone || prev.telefone_cliente,
-            email_cliente: patient.email || prev.email_cliente,
-            convenio: patient.convenio || prev.convenio,
-            prontuario: patient.prontuario || prev.prontuario
-        }))
-    }
+
 
     const openWhatsApp = (phone: string | undefined) => {
         if (!phone) return
