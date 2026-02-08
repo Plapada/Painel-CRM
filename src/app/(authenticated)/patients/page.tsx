@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useTransition } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -34,9 +33,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function PatientsPage() {
-    const router = useRouter()
-    const searchParams = useSearchParams()
     const { user } = useAuth()
+
 
     const [activeTab, setActiveTab] = useState<"database" | "whatsapp">("database")
 
