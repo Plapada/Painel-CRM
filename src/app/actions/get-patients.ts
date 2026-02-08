@@ -114,3 +114,76 @@ export async function getPatients(page = 1, limit = 10, search = '') {
 
     return { data: data as Patient[], count: count || 0 }
 }
+
+export interface WhatsAppPatient {
+    id: number
+    nomewpp: string | null
+    telefone: string
+    etapa_funil: string | null
+    atendimento_ia: string | null
+    resumo_conversa: string | null
+    clinic_id: string
+    created_at: string
+}
+
+export async function getWhatsAppPatients(page = 1, limit = 10, search = '', clinicId?: string) {
+    const supabase = getClient()
+
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    let queryBuilder = supabase
+        .from('dados_cliente')
+        .select('id, nomewpp, telefone, etapa_funil, atendimento_ia, resumo_conversa, clinic_id, created_at', { count: 'exact' })
+        .range(from, to)
+        .order('created_at', { ascending: false })
+
+    if (clinicId) {
+        queryBuilder = queryBuilder.eq('clinic_id', clinicId)
+    }
+
+    if (search) {
+        queryBuilder = queryBuilder.or(`nomewpp.ilike.%${search}%,telefone.ilike.%${search}%`)
+    }
+
+    const { data, error, count } = await queryBuilder
+
+    if (error) {
+        console.error('Error fetching WhatsApp patients:', error)
+        return { data: [], count: 0 }
+    }
+
+    return { data: data as WhatsAppPatient[], count: count || 0 }
+}
+
+export async function pauseWhatsAppPatient(patientId: number) {
+    const supabase = getClient()
+
+    const { error } = await supabase
+        .from('dados_cliente')
+        .update({ atendimento_ia: 'pausado' })
+        .eq('id', patientId)
+
+    if (error) {
+        console.error('Error pausing patient:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+export async function resumeWhatsAppPatient(patientId: number) {
+    const supabase = getClient()
+
+    const { error } = await supabase
+        .from('dados_cliente')
+        .update({ atendimento_ia: 'ativo' })
+        .eq('id', patientId)
+
+    if (error) {
+        console.error('Error resuming patient:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
