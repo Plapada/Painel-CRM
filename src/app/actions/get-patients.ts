@@ -89,20 +89,24 @@ export async function searchPatients(query: string, clinicId?: string) {
     return [...formattedDbPatients, ...formattedWpClients]
 }
 
-export async function getPatients(page = 1, limit = 10, search = '') {
+export async function getPatients(page = 1, limit = 10, search = '', clinicId?: string) {
     const supabase = getClient()
 
     const from = (page - 1) * limit
     const to = from + limit - 1
 
     let queryBuilder = supabase
-        .from('banco_de_dados_pacientes')
-        .select('id, nome, telefone, cpf, convenio, email', { count: 'exact' })
+        .from('dados_cliente')
+        .select('id, nomewpp, telefone, clinic_id, created_at', { count: 'exact' })
         .range(from, to)
         .order('created_at', { ascending: false })
 
+    if (clinicId) {
+        queryBuilder = queryBuilder.eq('clinic_id', clinicId)
+    }
+
     if (search) {
-        queryBuilder = queryBuilder.ilike('nome', `%${search}%`)
+        queryBuilder = queryBuilder.or(`nomewpp.ilike.%${search}%,telefone.ilike.%${search}%`)
     }
 
     const { data, error, count } = await queryBuilder
@@ -112,7 +116,23 @@ export async function getPatients(page = 1, limit = 10, search = '') {
         return { data: [], count: 0 }
     }
 
-    return { data: data as Patient[], count: count || 0 }
+    // Map dados_cliente to Patient interface
+    const patients: Patient[] = (data || []).map((p: any) => ({
+        id: p.id,
+        nome: p.nomewpp || 'Sem Nome',
+        telefone: p.telefone,
+        clinica_id: p.clinic_id,
+        source: 'whatsapp',
+        cpf: null,
+        convenio: null,
+        email: null,
+        prontuario: null,
+        profissao: null,
+        endereco_logradouro: null,
+        endereco_numero: null
+    }))
+
+    return { data: patients, count: count || 0 }
 }
 
 export interface WhatsAppPatient {

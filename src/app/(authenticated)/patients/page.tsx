@@ -68,13 +68,15 @@ export default function PatientsPage() {
     useEffect(() => {
         async function fetchDb() {
             setDbLoading(true)
-            const result = await getPatients(dbPage, limit, dbSearch)
+            const result = await getPatients(dbPage, limit, dbSearch, user?.clinic_id)
             setDbPatients(result.data)
             setDbCount(result.count)
             setDbLoading(false)
         }
-        fetchDb()
-    }, [dbPage, dbSearch])
+        if (user?.clinic_id) {
+            fetchDb()
+        }
+    }, [dbPage, dbSearch, user?.clinic_id])
 
     // Fetch WhatsApp patients
     useEffect(() => {
@@ -214,21 +216,19 @@ export default function PatientsPage() {
                                         <TableRow>
                                             <TableHead>Nome</TableHead>
                                             <TableHead>Telefone</TableHead>
-                                            <TableHead>CPF</TableHead>
-                                            <TableHead>Convênio</TableHead>
                                             <TableHead className="text-right">Ações</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {dbLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center h-24">
+                                                <TableCell colSpan={3} className="text-center h-24">
                                                     <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : dbPatients.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                                <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
                                                     Nenhum paciente encontrado.
                                                 </TableCell>
                                             </TableRow>
@@ -237,11 +237,9 @@ export default function PatientsPage() {
                                                 <TableRow key={patient.id}>
                                                     <TableCell className="font-medium">{patient.nome}</TableCell>
                                                     <TableCell>{patient.telefone || "-"}</TableCell>
-                                                    <TableCell>{patient.cpf || "-"}</TableCell>
-                                                    <TableCell>{patient.convenio || "-"}</TableCell>
                                                     <TableCell className="text-right">
                                                         <Button variant="ghost" size="sm">
-                                                            Ver
+                                                            Nova Consulta
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>

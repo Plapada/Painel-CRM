@@ -18,9 +18,6 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Painel de Clientes - CRM Elegance",
   description: "CRM para Marketing Médico em Inovação",
-  other: {
-    "facebook-domain-verification": "fmm0ixbgkvnvl8i04qxle9x976mlmf",
-  },
 };
 
 export default function RootLayout({
