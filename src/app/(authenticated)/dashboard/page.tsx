@@ -362,10 +362,10 @@ export default function DashboardPage() {
         <div className="space-y-8 p-4 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
                     Visão Geral
                 </h1>
-                <p className="text-zinc-200 font-medium">
+                <p className="text-muted-foreground font-medium">
                     Bem-vindo ao CRM Elegance. Dados atualizados em tempo real.
                 </p>
             </div>
