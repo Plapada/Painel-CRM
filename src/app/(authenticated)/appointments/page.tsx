@@ -189,6 +189,7 @@ function AppointmentsContent() {
         procedimento_id: string | null
         valor: number
         observacoes: string
+        convenio: string
     } | null>(null)
 
     // Procedure State
@@ -505,7 +506,8 @@ function AppointmentsContent() {
             tipo_consulta: selectedAppointment.tipo_consulta || 'Consulta',
             procedimento_id: null, // Would need to be fetched from appointment if stored
             valor: 0, // Would need to be fetched from appointment if stored
-            observacoes: selectedAppointment.observacoes || ''
+            observacoes: selectedAppointment.observacoes || '',
+            convenio: selectedAppointment.convenio || ''
         })
         setShowEditAppointmentModal(true)
     }
@@ -524,7 +526,8 @@ function AppointmentsContent() {
                     tipo_consulta: editingAppointmentData.tipo_consulta,
                     observacoes: editingAppointmentData.observacoes,
                     procedimento_id: editingAppointmentData.procedimento_id,
-                    valor: editingAppointmentData.valor
+                    valor: editingAppointmentData.valor,
+                    convenio: editingAppointmentData.convenio
                 })
                 .eq('id', selectedAppointment.id)
 
@@ -1079,8 +1082,8 @@ function AppointmentsContent() {
                                             setNewAppointment({
                                                 ...newAppointment,
                                                 procedimento_id: val,
-                                                valor: proc ? Number(proc.valor) : newAppointment.valor,
-                                                tipo_consulta: 'Procedimento'
+                                                valor: proc ? Number(proc.valor) : newAppointment.valor
+                                                // Note: tipo_consulta is now independent - user can select both
                                             })
                                         }
                                     }}
@@ -1372,8 +1375,8 @@ function AppointmentsContent() {
                                                 setEditingAppointmentData({
                                                     ...editingAppointmentData,
                                                     procedimento_id: val,
-                                                    valor: proc ? Number(proc.valor) : editingAppointmentData.valor,
-                                                    tipo_consulta: 'Procedimento'
+                                                    valor: proc ? Number(proc.valor) : editingAppointmentData.valor
+                                                    // Note: tipo_consulta is now independent - user can select both
                                                 })
                                             }
                                         }}
@@ -1403,6 +1406,18 @@ function AppointmentsContent() {
                                         valor: parseFloat(e.target.value) || 0
                                     })}
                                     placeholder="0.00"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Convênio</Label>
+                                <Input
+                                    value={editingAppointmentData.convenio}
+                                    onChange={(e) => setEditingAppointmentData({
+                                        ...editingAppointmentData,
+                                        convenio: e.target.value
+                                    })}
+                                    placeholder="Nome do convênio (opcional)"
                                 />
                             </div>
 
