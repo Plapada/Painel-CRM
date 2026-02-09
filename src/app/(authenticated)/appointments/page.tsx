@@ -1363,7 +1363,7 @@ function AppointmentsContent() {
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="z-[99999]">
                                             <SelectItem value="Consulta">Consulta</SelectItem>
                                             <SelectItem value="Retorno">Retorno</SelectItem>
                                             <SelectItem value="Procedimento">Procedimento</SelectItem>
@@ -1396,7 +1396,7 @@ function AppointmentsContent() {
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione..." />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="z-[99999]">
                                             <SelectItem value="none">Nenhum</SelectItem>
                                             {procedures.map(p => (
                                                 <SelectItem key={p.id} value={p.id}>
