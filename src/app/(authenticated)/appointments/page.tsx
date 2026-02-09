@@ -164,11 +164,11 @@ function AppointmentsContent() {
         telefone_cliente: '',
         celular_cliente: '',
         email_cliente: '',
-        tipo_consulta: 'Particular', // Default to Particular
+        tipo_consulta: 'Consulta', // Default to Consulta
         data_inicio: new Date().toISOString().split('T')[0],
         hora_inicio: '09:00',
         observacoes: '',
-        convenio: '',
+        convenio: 'Particular', // Default to Particular
         prontuario: '',
         realizou_procedimento: false,
         codigo_procedimento: '',
@@ -554,6 +554,10 @@ function AppointmentsContent() {
             notify.warning("Nome do cliente é obrigatório.")
             return
         }
+        if (!newAppointment.tipo_consulta) {
+            notify.warning("Tipo de consulta é obrigatório.")
+            return
+        }
         setIsCreating(true)
 
         try {
@@ -595,11 +599,11 @@ function AppointmentsContent() {
                 telefone_cliente: '',
                 celular_cliente: '',
                 email_cliente: '',
-                tipo_consulta: 'Particular',
+                tipo_consulta: 'Consulta',
                 data_inicio: new Date().toISOString().split('T')[0],
                 hora_inicio: '09:00',
                 observacoes: '',
-                convenio: '',
+                convenio: 'Particular',
                 prontuario: '',
                 realizou_procedimento: false,
                 codigo_procedimento: '',
