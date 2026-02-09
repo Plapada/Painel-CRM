@@ -113,6 +113,8 @@ interface Appointment {
     prontuario?: string // Added
     realizou_procedimento?: boolean // Added
     codigo_procedimento?: string // Added
+    procedimento_id?: string | null // Added
+    valor?: number // Added
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, color: string, icon: any }> = {
@@ -196,15 +198,50 @@ function AppointmentsContent() {
     const [procedures, setProcedures] = useState<Procedure[]>([])
     const [isLoadingProcedures, setIsLoadingProcedures] = useState(false)
 
+    // Finalization Modal State
+    const [showFinalizationModal, setShowFinalizationModal] = useState(false)
+    const [finalizationProcedureId, setFinalizationProcedureId] = useState<string | null>(null)
+    const [finalizationRealizou, setFinalizationRealizou] = useState(false)
+    const [notifiedAppointments, setNotifiedAppointments] = useState<Set<number>>(new Set())
+
     useEffect(() => {
-        if (showCreateModal && user?.clinic_id) {
+        if ((showCreateModal || showFinalizationModal) && user?.clinic_id) {
             setIsLoadingProcedures(true)
             getProcedures(user.clinic_id).then(data => {
                 setProcedures(data)
                 setIsLoadingProcedures(false)
             })
         }
-    }, [showCreateModal, user?.clinic_id])
+    }, [showCreateModal, showFinalizationModal, user?.clinic_id])
+
+    // 40-min notification timer
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = new Date()
+            appointments.forEach(app => {
+                if (
+                    (app.status === 'em_atendimento' || app.status === 'confirmado' || app.status === 'compareceu') &&
+                    !notifiedAppointments.has(app.id)
+                ) {
+                    const appTime = new Date(app.data_inicio)
+                    const diffMs = now.getTime() - appTime.getTime()
+                    const diffMin = diffMs / (1000 * 60)
+                    if (diffMin >= 40) {
+                        notify.warning(
+                            `⏰ A consulta de ${app.nome_cliente} (${appTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}) já passou de 40 minutos. Atualize o status!`
+                        )
+                        setNotifiedAppointments(prev => {
+                            const next = new Set(prev)
+                            next.add(app.id)
+                            return next
+                        })
+                    }
+                }
+            })
+        }, 60000) // Check every minute
+
+        return () => clearInterval(interval)
+    }, [appointments, notifiedAppointments])
 
     // Patient Search State
     const [openCombobox, setOpenCombobox] = useState(false)
@@ -338,21 +375,61 @@ function AppointmentsContent() {
     const handleStatusUpdate = (newStatus: AppointmentStatus) => {
         if (!selectedAppointment) return
 
+        // If finalizing, show procedure marking modal first
+        if (newStatus === 'finalizado') {
+            setFinalizationProcedureId(selectedAppointment.procedimento_id || null)
+            setFinalizationRealizou(selectedAppointment.realizou_procedimento || false)
+            // Load procedures if not loaded
+            if (procedures.length === 0 && user?.clinic_id) {
+                setIsLoadingProcedures(true)
+                getProcedures(user.clinic_id).then(data => {
+                    setProcedures(data)
+                    setIsLoadingProcedures(false)
+                })
+            }
+            setShowFinalizationModal(true)
+            return
+        }
+
         // Local update only (Requires Save)
         const updatedApp = { ...selectedAppointment, status: newStatus }
         setSelectedAppointment(updatedApp)
-        // We do NOT update the main list 'appointments' instantly to reflect "unsaved" state if desired, 
-        // but for UI consistency let's update it so the user sees the change in the list too (optimistic), 
-        // essentially treating the list as the "draft" state until refresh.
-        // Or better: keep main list as "Source of Truth"? 
-        // User wants "Save" button to commit. 
-        // Let's update local selectedAppointment only? No, user expects visual feedback.
-        // We will update local state. The "Save" will flush to DB.
+        setAppointments(prev => prev.map(app => app.id === updatedApp.id ? updatedApp : app))
+    }
 
-        // Update local list visual confirmation
+    const handleConfirmFinalization = async () => {
+        if (!selectedAppointment) return
+
+        const updatedApp = {
+            ...selectedAppointment,
+            status: 'finalizado' as AppointmentStatus,
+            realizou_procedimento: finalizationRealizou,
+            procedimento_id: finalizationRealizou ? finalizationProcedureId : null,
+        }
+        setSelectedAppointment(updatedApp)
         setAppointments(prev => prev.map(app => app.id === updatedApp.id ? updatedApp : app))
 
-        // Removed DB update from here
+        // Save directly to DB
+        try {
+            const { error } = await supabase
+                .from('consultas')
+                .update({
+                    status: 'finalizado',
+                    realizou_procedimento: finalizationRealizou,
+                    procedimento_id: finalizationRealizou ? finalizationProcedureId : null,
+                })
+                .eq('id', selectedAppointment.id)
+
+            if (error) throw error
+            notify.success('Consulta finalizada com sucesso!')
+        } catch (error) {
+            console.error('Error finalizing appointment:', error)
+            notify.error('Erro ao finalizar consulta.')
+        }
+
+        setShowFinalizationModal(false)
+        setFinalizationProcedureId(null)
+        setFinalizationRealizou(false)
     }
 
     const handleSaveDetails = async () => {
@@ -814,7 +891,7 @@ function AppointmentsContent() {
                                             variant="outline"
                                             size="sm"
                                             onClick={handleOpenEditAppointment}
-                                            className="border-amber-400 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                                            className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                         >
                                             <Pencil className="h-4 w-4 mr-2" />
                                             Editar Agendamento
@@ -909,7 +986,7 @@ function AppointmentsContent() {
                                                 <div className="flex gap-2">
                                                     <Button
                                                         variant="outline"
-                                                        className="flex-1 border-amber-400 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                                                        className="flex-1 border-amber-400 text-amber-800 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
                                                         onClick={handleCancelAppointment}
                                                     >
                                                         <XCircle className="h-4 w-4 mr-2" />
@@ -950,7 +1027,7 @@ function AppointmentsContent() {
                                                                 className={cn(
                                                                     "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
                                                                     isActive
-                                                                        ? "border-primary bg-primary/10 text-foreground shadow-sm ring-1 ring-primary/30"
+                                                                        ? "border-primary bg-primary/10 text-amber-900 dark:text-primary shadow-sm"
                                                                         : "border-transparent hover:bg-muted text-muted-foreground"
                                                                 )}
                                                             >
@@ -1473,6 +1550,70 @@ function AppointmentsContent() {
                     </Card>
                 </div>
             )}
+
+            {/* FINALIZATION MODAL */}
+            <Dialog open={showFinalizationModal} onOpenChange={setShowFinalizationModal}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Finalizar Consulta</DialogTitle>
+                        <DialogDescription>
+                            Deseja marcar um procedimento realizado nesta consulta?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="realizou-procedimento"
+                                checked={finalizationRealizou}
+                                onCheckedChange={(checked) => {
+                                    setFinalizationRealizou(checked === true)
+                                    if (!checked) setFinalizationProcedureId(null)
+                                }}
+                            />
+                            <Label htmlFor="realizou-procedimento" className="text-sm font-medium">
+                                Realizou procedimento
+                            </Label>
+                        </div>
+
+                        {finalizationRealizou && (
+                            <div className="grid gap-2">
+                                <Label className="text-sm font-medium">Procedimento Realizado</Label>
+                                <Select
+                                    value={finalizationProcedureId || "none"}
+                                    onValueChange={(val) => {
+                                        setFinalizationProcedureId(val === "none" ? null : val)
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o procedimento" />
+                                    </SelectTrigger>
+                                    <SelectContent className="z-[99999]">
+                                        <SelectItem value="none">Nenhum</SelectItem>
+                                        {procedures.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>
+                                                {p.nome} - R$ {p.valor?.toFixed(2) || "0.00"}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => {
+                            setShowFinalizationModal(false)
+                            setFinalizationProcedureId(null)
+                            setFinalizationRealizou(false)
+                        }}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleConfirmFinalization}>
+                            <CheckSquare className="h-4 w-4 mr-2" />
+                            Finalizar Consulta
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div >
     )
 }
