@@ -203,7 +203,7 @@ export async function resumeWhatsAppPatient(patientId: number) {
 
     const { error } = await supabase
         .from('dados_cliente')
-        .update({ atendimento_ia: 'ativo' }) // Keeping 'ativo' for now, assuming it differentiates from 'pause'
+        .update({ atendimento_ia: 'reativada' })
         .eq('id', patientId)
 
     if (error) {
