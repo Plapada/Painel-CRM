@@ -566,6 +566,23 @@ function AppointmentsContent() {
             startDateTime.setHours(startDateTime.getHours() - 3)
             const endDateTime = new Date(startDateTime.getTime() + 30 * 60000) // Default 30 min duration
 
+            // Check for existing appointments at the same time
+            const { data: existingAppointments, error: checkError } = await supabase
+                .from('consultas')
+                .select('id')
+                .eq('clinic_id', user.clinic_id)
+                .eq('data_inicio', startDateTime.toISOString())
+                .neq('status', 'cancelado')
+                .limit(1)
+
+            if (checkError) throw checkError
+
+            if (existingAppointments && existingAppointments.length > 0) {
+                notify.warning("Já existe um agendamento neste horário. Escolha outro horário.")
+                setIsCreating(false)
+                return
+            }
+
             const payload = {
                 clinic_id: user.clinic_id,
                 nome_cliente: newAppointment.nome_cliente,
