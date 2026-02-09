@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Loader2, Pause, Play, Sparkles, User, Phone } from "lucide-react"
 import { getPatients, pauseWhatsAppPatient, resumeWhatsAppPatient, type Patient } from "@/app/actions/get-patients"
 import { useAuth } from "@/lib/auth-context"
-import { ClientDetailsSheet } from "@/components/clients/client-details-sheet"
+import { ClientDetailsDialog } from "@/components/clients/client-details-dialog"
 import {
     Tooltip,
     TooltipContent,
@@ -320,10 +320,11 @@ export default function PatientsPage() {
                 </CardContent>
             </Card>
 
-            <ClientDetailsSheet
+            <ClientDetailsDialog
                 patient={selectedPatient}
                 isOpen={isSheetOpen}
                 onClose={() => setIsSheetOpen(false)}
+                onUpdate={fetchPatients}
             />
 
             <Dialog open={summaryModal} onOpenChange={setSummaryModal}>

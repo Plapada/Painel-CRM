@@ -213,3 +213,36 @@ export async function resumeWhatsAppPatient(patientId: number) {
 
     return { success: true }
 }
+
+export async function updatePatient(patientId: number, data: Partial<Patient>) {
+    const supabase = getClient()
+
+    // Map fields back to database columns if necessary
+    // Assuming Patient interface matches dados_cliente where relevant or using direct mapping
+    const updateData: any = {
+        nomewpp: data.nome,
+        telefone: data.telefone,
+        cpf: data.cpf,
+        convenio: data.convenio,
+        email: data.email,
+        prontuario: data.prontuario,
+        profissao: data.profissao,
+        endereco_logradouro: data.endereco_logradouro,
+        endereco_numero: data.endereco_numero
+    }
+
+    // Remove undefined keys
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
+
+    const { error } = await supabase
+        .from('dados_cliente')
+        .update(updateData)
+        .eq('id', patientId)
+
+    if (error) {
+        console.error('Error updating patient:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
