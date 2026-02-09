@@ -229,8 +229,11 @@ export default function PatientsPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {patient.atendimento_ia && (
-                                                    <Badge variant={patient.atendimento_ia === 'pause' ? 'secondary' : 'default'} className="text-xs">
-                                                        {patient.atendimento_ia === 'pause' ? 'Pausado' : patient.atendimento_ia}
+                                                    <Badge
+                                                        variant={patient.atendimento_ia === 'pause' ? 'secondary' : 'default'}
+                                                        className={`text-xs ${patient.atendimento_ia === 'reativada' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}`}
+                                                    >
+                                                        {patient.atendimento_ia === 'pause' ? 'Pausado' : 'Ativo'}
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -258,7 +261,7 @@ export default function PatientsPage() {
                                                                         </Button>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
-                                                                        {patient.atendimento_ia === 'pause' ? 'Retomar IA' : 'Pausar IA'}
+                                                                        <p>{patient.atendimento_ia === 'pause' ? 'Retomar IA' : 'Pausar IA'}</p>
                                                                     </TooltipContent>
                                                                 </Tooltip>
                                                                 <Tooltip>

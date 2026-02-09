@@ -136,7 +136,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                                             variant={patient.atendimento_ia === 'pause' ? 'secondary' : 'default'}
                                             className={`text-xs ml-2 ${patient.atendimento_ia === 'reativada' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}`}
                                         >
-                                            {patient.atendimento_ia === 'pause' ? 'IA Pausada' : patient.atendimento_ia === 'reativada' ? 'IA Reativada' : 'IA Ativa'}
+                                            {patient.atendimento_ia === 'pause' ? 'IA Pausada' : 'IA Ativa'}
                                         </Badge>
                                     )}
                                 </DialogTitle>
