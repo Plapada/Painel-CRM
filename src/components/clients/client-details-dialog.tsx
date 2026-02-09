@@ -115,7 +115,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                     <div className="p-6 border-b bg-muted/30 flex items-start justify-between">
                         <div className="flex items-center gap-4">
                             <Avatar className="h-16 w-16 border-2 border-primary/20">
-                                <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                                <AvatarFallback className="text-lg bg-primary/10 text-yellow-600 dark:text-primary">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
@@ -220,7 +220,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                                 <div className="grid grid-cols-2 gap-8">
                                     {/* Personal Info */}
                                     <div className="space-y-4">
-                                        <h3 className="font-semibold flex items-center gap-2 text-primary">
+                                        <h3 className="font-semibold flex items-center gap-2 text-yellow-600 dark:text-primary">
                                             <User className="h-4 w-4" />
                                             Dados Pessoais
                                         </h3>
@@ -255,7 +255,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                                     {/* Clinical Info & Address */}
                                     <div className="space-y-8">
                                         <div className="space-y-4">
-                                            <h3 className="font-semibold flex items-center gap-2 text-primary">
+                                            <h3 className="font-semibold flex items-center gap-2 text-yellow-600 dark:text-primary">
                                                 <FileText className="h-4 w-4" />
                                                 Dados Clínicos
                                             </h3>
@@ -282,7 +282,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                                         </div>
 
                                         <div className="space-y-4">
-                                            <h3 className="font-semibold flex items-center gap-2 text-primary">
+                                            <h3 className="font-semibold flex items-center gap-2 text-yellow-600 dark:text-primary">
                                                 <MapPin className="h-4 w-4" />
                                                 Endereço
                                             </h3>
@@ -314,7 +314,7 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
 
                                 {/* History Tab (Simplified for now, can be expanded) */}
                                 <div>
-                                    <h3 className="font-semibold mb-4 flex items-center gap-2 text-primary">
+                                    <h3 className="font-semibold mb-4 flex items-center gap-2 text-yellow-600 dark:text-primary">
                                         <Calendar className="h-4 w-4" />
                                         Histórico Recente
                                     </h3>
