@@ -814,7 +814,7 @@ function AppointmentsContent() {
                                             variant="outline"
                                             size="sm"
                                             onClick={handleOpenEditAppointment}
-                                            className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                            className="border-amber-400 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20"
                                         >
                                             <Pencil className="h-4 w-4 mr-2" />
                                             Editar Agendamento
@@ -909,7 +909,7 @@ function AppointmentsContent() {
                                                 <div className="flex gap-2">
                                                     <Button
                                                         variant="outline"
-                                                        className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                        className="flex-1 border-amber-400 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900/20"
                                                         onClick={handleCancelAppointment}
                                                     >
                                                         <XCircle className="h-4 w-4 mr-2" />
@@ -950,7 +950,7 @@ function AppointmentsContent() {
                                                                 className={cn(
                                                                     "w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all border",
                                                                     isActive
-                                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                                        ? "border-primary bg-primary/10 text-foreground shadow-sm ring-1 ring-primary/30"
                                                                         : "border-transparent hover:bg-muted text-muted-foreground"
                                                                 )}
                                                             >
