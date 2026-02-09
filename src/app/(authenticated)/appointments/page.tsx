@@ -31,7 +31,7 @@ import {
     Plus,
     Trash2
 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ptBR } from "date-fns/locale"
 import { Calendar as MiniCalendar } from "@/components/ui/calendar-rac"
@@ -127,6 +127,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, c
 export default function AppointmentsPage() {
     const { user } = useAuth()
     const router = useRouter()
+    const searchParams = useSearchParams()
 
     // State
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -208,6 +209,20 @@ export default function AppointmentsPage() {
             fetchMonthBookings()
         }
     }, [user?.clinic_id, selectedDate])
+
+    // Check for query params to pre-fill and open modal
+    useEffect(() => {
+        const patientName = searchParams.get('patientName')
+        if (patientName) {
+            setNewAppointment(prev => ({
+                ...prev,
+                nome_cliente: patientName,
+                telefone_cliente: searchParams.get('patientPhone') || '',
+                // Add other fields if needed, e.g. email, etc. if passed
+            }))
+            setShowCreateModal(true)
+        }
+    }, [searchParams])
 
     async function fetchMonthBookings() {
         if (!user?.clinic_id) return

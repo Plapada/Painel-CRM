@@ -22,6 +22,8 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
+import { useRouter } from "next/navigation"
+
 interface ClientDetailsDialogProps {
     patient: Patient | null
     isOpen: boolean
@@ -30,6 +32,7 @@ interface ClientDetailsDialogProps {
 }
 
 export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: ClientDetailsDialogProps) {
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -185,7 +188,17 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
                                         Resumir
                                     </Button>
 
-                                    <Button variant="outline" size="sm" onClick={handleNewAppointment}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const params = new URLSearchParams()
+                                            params.set('patientName', patient.nome)
+                                            if (patient.telefone) params.set('patientPhone', patient.telefone)
+                                            onClose()
+                                            router.push(`/appointments?${params.toString()}`)
+                                        }}
+                                    >
                                         <CalendarDays className="h-4 w-4 mr-2 text-blue-500" />
                                         Agendar
                                     </Button>
