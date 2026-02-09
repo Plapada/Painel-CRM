@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/popover"
 import { PatientSearch } from "@/components/patient-search"
 import { Patient } from "@/app/actions/get-patients"
+import { getProcedures, Procedure } from "@/app/actions/procedures"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Check } from "lucide-react"
 
@@ -166,8 +167,24 @@ function AppointmentsContent() {
         convenio: '',
         prontuario: '',
         realizou_procedimento: false,
-        codigo_procedimento: ''
+        codigo_procedimento: '',
+        procedimento_id: null as string | null,
+        valor: 0
     })
+
+    // Procedure State
+    const [procedures, setProcedures] = useState<Procedure[]>([])
+    const [isLoadingProcedures, setIsLoadingProcedures] = useState(false)
+
+    useEffect(() => {
+        if (showCreateModal && user?.clinic_id) {
+            setIsLoadingProcedures(true)
+            getProcedures(user.clinic_id).then(data => {
+                setProcedures(data)
+                setIsLoadingProcedures(false)
+            })
+        }
+    }, [showCreateModal, user?.clinic_id])
 
     // Patient Search State
     const [openCombobox, setOpenCombobox] = useState(false)
@@ -475,7 +492,9 @@ function AppointmentsContent() {
                 convenio: newAppointment.convenio,
                 prontuario: newAppointment.prontuario,
                 realizou_procedimento: newAppointment.realizou_procedimento,
-                codigo_procedimento: newAppointment.realizou_procedimento ? newAppointment.codigo_procedimento : null
+                codigo_procedimento: newAppointment.realizou_procedimento ? newAppointment.codigo_procedimento : null,
+                procedimento_id: newAppointment.procedimento_id,
+                valor: newAppointment.valor
             }
 
             const { error } = await supabase
@@ -499,7 +518,9 @@ function AppointmentsContent() {
                 convenio: '',
                 prontuario: '',
                 realizou_procedimento: false,
-                codigo_procedimento: ''
+                codigo_procedimento: '',
+                procedimento_id: null,
+                valor: 0
             })
             notify.success("Agendamento criado!")
 
@@ -935,6 +956,7 @@ function AppointmentsContent() {
                                     onChange={(e) => setNewAppointment({ ...newAppointment, telefone_cliente: e.target.value })}
                                 />
                             </div>
+
                             <div className="grid gap-2">
                                 <Label htmlFor="type" className="text-sm font-medium">Tipo</Label>
                                 <Select
@@ -951,6 +973,52 @@ function AppointmentsContent() {
                                         <SelectItem value="Exame">Exame</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                        </div>
+
+                        {/* PROCEDURES SELECTOR */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="procedure" className="text-sm font-medium">Procedimento (Opcional)</Label>
+                                <Select
+                                    value={newAppointment.procedimento_id || "none"}
+                                    onValueChange={(val) => {
+                                        if (val === "none") {
+                                            setNewAppointment({ ...newAppointment, procedimento_id: null, valor: 0 })
+                                        } else {
+                                            const proc = procedures.find(p => p.id === val)
+                                            setNewAppointment({
+                                                ...newAppointment,
+                                                procedimento_id: val,
+                                                valor: proc ? Number(proc.valor) : newAppointment.valor,
+                                                tipo_consulta: 'Procedimento'
+                                            })
+                                        }
+                                    }}
+                                    disabled={isLoadingProcedures}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={isLoadingProcedures ? "Carregando..." : "Selecione..."} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Nenhum</SelectItem>
+                                        {procedures.map(p => (
+                                            <SelectItem key={p.id} value={p.id}>
+                                                {p.nome} - R$ {Number(p.valor).toFixed(2)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="valor" className="text-sm font-medium">Valor (R$)</Label>
+                                <Input
+                                    id="valor"
+                                    type="number"
+                                    value={newAppointment.valor || ''}
+                                    onChange={(e) => setNewAppointment({ ...newAppointment, valor: parseFloat(e.target.value) })}
+                                    placeholder="0.00"
+                                />
                             </div>
                         </div>
 
@@ -1085,49 +1153,51 @@ function AppointmentsContent() {
             </AlertDialog>
 
             {/* RESCHEDULE MODAL */}
-            {showRescheduleDialog && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <Card className="w-full max-w-sm shadow-2xl border-0 ring-1 ring-white/10">
-                        <CardHeader>
-                            <CardTitle className="text-lg">Reagendar Atendimento</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Nova Data</label>
-                                <Input
-                                    type="date"
-                                    value={rescheduleData.date}
-                                    onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Novo Horário</label>
-                                <Select
-                                    value={rescheduleData.time}
-                                    onValueChange={(val) => setRescheduleData({ ...rescheduleData, time: val })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-[200px] z-[99999]">
-                                        {timeSlots.map(time => (
-                                            <SelectItem key={time} value={time}>{time}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
-                            <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>
-                                Cancelar
-                            </Button>
-                            <Button onClick={confirmReschedule}>
-                                Confirmar Reagendamento
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
-            )}
+            {
+                showRescheduleDialog && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <Card className="w-full max-w-sm shadow-2xl border-0 ring-1 ring-white/10">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Reagendar Atendimento</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Nova Data</label>
+                                    <Input
+                                        type="date"
+                                        value={rescheduleData.date}
+                                        onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Novo Horário</label>
+                                    <Select
+                                        value={rescheduleData.time}
+                                        onValueChange={(val) => setRescheduleData({ ...rescheduleData, time: val })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[200px] z-[99999]">
+                                            {timeSlots.map(time => (
+                                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                                <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>
+                                    Cancelar
+                                </Button>
+                                <Button onClick={confirmReschedule}>
+                                    Confirmar Reagendamento
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )
+            }
         </div >
     )
 }

@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/lib/auth-context"
+import { getDashboardMetrics, DashboardMetrics } from "@/app/actions/dashboard"
 import { StatsCard as ElegantStatsCard } from "@/components/dashboard/StatsCard"
 import {
-    ElegantAreaChart,
     ElegantBarChart,
-    ElegantDonutChart
 } from "@/components/dashboard/ElegantCharts"
 import {
     DollarSign,
@@ -54,18 +53,12 @@ export default function DashboardPage() {
     // Charts data (admin)
     const [conversationsByClinic, setConversationsByClinic] = useState<any[]>([])
     const [appointmentsByDay, setAppointmentsByDay] = useState<any[]>([])
-    const [conversionData, setConversionData] = useState<any[]>([])
 
-    // Client stats - now using null to indicate "no data"
-    const [stats, setStats] = useState({
-        totalRevenue: null as number | null,
-        todayAppointments: null as number | null,
-        newPatients: null as number | null,
-        monthlyConversations: null as number | null,
-    })
+
+    // Client stats
+    const [stats, setStats] = useState<DashboardMetrics | null>(null)
     const [recentAppointments, setRecentAppointments] = useState<any[]>([])
     const [recentPatients, setRecentPatients] = useState<any[]>([])
-    const [funnelData, setFunnelData] = useState<any[]>([])
 
     useEffect(() => {
         if (isAdmin) {
@@ -144,11 +137,7 @@ export default function DashboardPage() {
             )
 
             // Conversion funnel (mock based on real patient data)
-            setConversionData([
-                { name: 'Leads', value: Math.round(totalPat * 1.5) },
-                { name: 'Agendados', value: totalApt },
-                { name: 'Convertidos', value: totalPat },
-            ])
+
 
             // Appointments by day (last 7 days)
             const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -187,150 +176,49 @@ export default function DashboardPage() {
         try {
             setLoading(true)
 
-            // 1. Fetch Clients
-            const { data: clients, error: clientError } = await supabase
-                .from('dados_cliente')
-                .select('*')
-                .eq('clinic_id', user.clinic_id)
+            // 1. Fetch Metrics (Server Action)
+            const metrics = await getDashboardMetrics(user.clinic_id)
+            setStats(metrics)
 
-            if (clientError) throw clientError
-
-            // 2. Fetch Appointments
+            // 2. Fetch Recent Appointments (Client Side for now, or move to server action later)
             const { data: appointments, error: aptError } = await supabase
                 .from('consultas')
                 .select('*')
                 .eq('clinic_id', user.clinic_id)
                 .order('data_inicio', { ascending: true })
+                .gte('data_inicio', new Date().toISOString())
+                .limit(5)
 
             if (aptError) throw aptError
 
-            // -- Process Data --
-            const newPatientsCount = clients ? clients.length : 0
-            const today = new Date().toISOString().split('T')[0]
-            const todayAppointmentsCount = appointments ? appointments.filter(a => a.data_inicio?.startsWith(today)).length : 0
-
-            // Procedure Price Mapping
-            const PROCEDURE_PRICES: Record<string, number> = {
-                'COLPOSCOPIA': 150,
-                'EXAME A FRESCO': 150,
-                'VULVOSCOPIA': 150,
-                'VAGINOSCOPIA': 180,
-                'CITOLOGIA': 150,
-                'CITOLOGIA E MICROFLORA VAGINAL': 150,
-                'CITOLOGIA HORMONAL ISOLADA': 150,
-                'COLETA DE MATERIAL': 120,
-                'ELETROCAUTERIZAÇÃO': 500,
-                'CAUTERIZAÇÃO QUIMICA': 250,
-                'BIOPSIA DE COLO': 500,
-                'BIOPSIA DE COLO UTERINO COM PINÇA': 500,
-                'BIOPSIA DE COLO UTERINO COM LEEP': 800,
-                'BIOPSIA DE VULVA': 600,
-                'BIOPSIA DE VULVA COM PINÇA': 600,
-                'BIOPSIA DE VULVA COM LEEP': 800,
-                'BIOPSIA DA VAGINA': 600,
-                'BIOPSIA DA VAGINA COM PINÇA': 600,
-                'BIOPSIA DA VAGINA COM LEEP': 800,
-                'EXERESE DE LESÃO': 900,
-                'DRENAGEM BARTHOLIN': 1200,
-                'RETIRADA DE CORPO ESTRANHO': 900,
-                'RETIRADA DE POLIPO': 600,
-                'CONIZAÇÃO': 1500,
-                'TRAQUELECTOMIA': 1500,
-                'TRAQUELECTOMIA COM LEEP (CONIZAÇÃO) EM CONSULTORIO': 1500,
-                'TRAQUELECTOMIA COM LEEP (CONIZAÇÃO) DAYHOSPITAL': 3000,
-                'DIU DE COBRE': 1000,
-                'INSERÇÃO DIU T/COBRE': 1000,
-                'DIU DE PRATA': 1000,
-                'INSERÇÃO DIU PRATA': 1000,
-                'DIU MIRENA': 1300,
-                'INSERÇÃO DIU MIRENA': 1300,
-                'IMPLANON': 1300,
-                'INSERÇÃO DIU IMPLANON': 1300,
-                'RETIRADA DIU': 400,
-                'RETIRADA IMPLANON': 600,
-                'BIOIMPEDANCIA': 150,
-                'ORTOMOLECULAR': 800,
-                'CONSULTA GINECOLOGICA': 530,
-                'CONSULTA': 530,
-                'CONSULTA E PREVENTIVO': 830,
-                'PREVENTIVO': 300,
-            }
-
-            const getPrice = (type: string | null) => {
-                if (!type) return 0
-                const normalizedType = type.toUpperCase().trim()
-
-                // Direct match
-                if (PROCEDURE_PRICES[normalizedType]) return PROCEDURE_PRICES[normalizedType]
-
-                // Partial match (check if any key is part of the type string)
-                for (const key of Object.keys(PROCEDURE_PRICES)) {
-                    if (normalizedType.includes(key)) {
-                        return PROCEDURE_PRICES[key]
-                    }
-                }
-
-                return 0 // Default if unknown
-            }
-
-            let estimatedRevenue = 0
-            if (appointments) {
-                appointments.forEach(apt => {
-                    if (apt.status === 'confirmada') {
-                        estimatedRevenue += getPrice(apt.tipo_consulta)
-                    }
-                })
-            }
-
-            // Fetch monthly conversations
-            const monthStart = new Date(new Date().setDate(1)).toISOString()
-            const { count: convCount } = await supabase
-                .from('n8n_chat_histories')
-                .select('*', { count: 'exact', head: true })
-                .eq('clinic_id', user.clinic_id)
-                .gte('created_at', monthStart)
-
-            setStats({
-                totalRevenue: estimatedRevenue,
-                todayAppointments: todayAppointmentsCount,
-                newPatients: newPatientsCount,
-                monthlyConversations: convCount ?? null,
-            })
-
-            // Recent Appointments
-            const recentAppts = appointments ? appointments
-                .filter(a => new Date(a.data_inicio) >= new Date())
-                .slice(0, 5)
-                .map(a => ({
-                    id: a.id,
-                    patient: a.nome_cliente || 'Cliente',
-                    time: new Date(a.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    type: a.tipo_consulta || 'Consulta',
-                    status: a.status || 'Pendente',
-                    condition: 'Geral'
-                })) : []
+            const recentAppts = appointments ? appointments.map(a => ({
+                id: a.id,
+                patient: a.nome_cliente || 'Cliente',
+                time: new Date(a.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: a.tipo_consulta || 'Consulta',
+                status: a.status || 'Pendente',
+                condition: a.convenio || 'Particular'
+            })) : []
             setRecentAppointments(recentAppts)
 
-            // Recent Clients
-            const recentClis = clients ? clients
-                .slice(0, 5)
-                .map((c: any) => ({
-                    id: c.id,
-                    name: c.nomewpp || 'Novo Cliente',
-                    date: 'Recente',
-                    condition: c.etapa_funil || 'Novo Lead',
-                    status: 'Novo'
-                })) : []
-            setRecentPatients(recentClis)
+            // 3. Fetch Recent Patients
+            const { data: clients, error: clientError } = await supabase
+                .from('dados_cliente') // Or 'consultas' distinct? 'dados_cliente' is better for list.
+                .select('*')
+                .eq('clinic_id', user.clinic_id)
+                .order('created_at', { ascending: false })
+                .limit(5)
 
-            // Funnel
-            const funnelCounts: Record<string, number> = {}
-            clients?.forEach((c: any) => {
-                const stage = c.etapa_funil || 'Sem Etapa'
-                funnelCounts[stage] = (funnelCounts[stage] || 0) + 1
-            })
-            const funnelChartData = Object.entries(funnelCounts).map(([name, value]) => ({ name, value }))
-            setFunnelData(funnelChartData)
+            if (clientError) throw clientError
+
+            const recentClis = clients ? clients.map((c: any) => ({
+                id: c.id,
+                name: c.nome || c.nomewpp || 'Novo Cliente',
+                date: new Date(c.created_at).toLocaleDateString(),
+                condition: c.etapa_funil || 'Novo',
+                status: 'Novo'
+            })) : []
+            setRecentPatients(recentClis)
 
         } catch (error) {
             console.error("Error fetching client data:", error)
@@ -463,10 +351,7 @@ export default function DashboardPage() {
                         </Card>
                     </div>
 
-                    <ElegantDonutChart
-                        title="Funil de Conversão"
-                        data={conversionData.length > 0 ? conversionData : [{ name: 'Sem dados', value: 1 }]}
-                    />
+
                 </div>
             </div>
         )
@@ -488,25 +373,32 @@ export default function DashboardPage() {
             {/* Primary Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <ElegantStatsCard
-                    title="Receita Estimada"
-                    value={stats.totalRevenue !== null ? `R$ ${stats.totalRevenue.toLocaleString()}` : '-'}
+                    title="Faturamento Real"
+                    value={stats?.revenue.current ? `R$ ${stats.revenue.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00'}
                     icon={DollarSign}
-                    description="Total acumulado"
+                    description="Recebido (Mês Atual)"
                     variant="highlight"
                 />
                 <ElegantStatsCard
-                    title="Agendamentos"
-                    value={stats.todayAppointments !== null ? stats.todayAppointments.toString() : '-'}
-                    icon={Calendar}
-                    description="Para hoje"
+                    title="Faturamento Estimado"
+                    value={stats?.revenue.estimated ? `R$ ${stats.revenue.estimated.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00'}
+                    icon={TrendingUp}
+                    description="Agendado (Mês Atual)"
                     variant="dark"
                 />
                 <ElegantStatsCard
-                    title="Total de Pacientes"
-                    value={stats.newPatients !== null ? stats.newPatients.toString() : '-'}
+                    title="Pacientes Atendidos"
+                    value={stats?.patients.attended ? stats.patients.attended.toString() : '0'}
                     icon={Users}
-                    description="Base de cadastros"
-                    variant="dark"
+                    description="Neste Mês"
+                    variant="default"
+                />
+                <ElegantStatsCard
+                    title="Procedimentos"
+                    value={stats?.procedures.total ? stats.procedures.total.toString() : '0'}
+                    icon={Activity}
+                    description="Realizados (Mês)"
+                    variant="default"
                 />
             </div>
 
@@ -514,15 +406,6 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column (2/3) */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Funnel/Clients Chart */}
-                    <ElegantBarChart
-                        title="Distribuição do Funil"
-                        data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 0 }]}
-                        dataKey="value"
-                        color="#FFD700"
-                        className="bg-zinc-900 border-zinc-900 text-white shadow-lg"
-                    />
-
                     {/* Recent Appointments Table */}
                     <Card className="border border-zinc-800 bg-zinc-900 shadow-lg text-white">
                         <CardHeader className="border-b border-zinc-800">
@@ -562,12 +445,7 @@ export default function DashboardPage() {
 
                 {/* Right Column (1/3) */}
                 <div className="lg:col-span-1 space-y-8">
-                    <ElegantDonutChart
-                        title="Etapas do Funil"
-                        data={funnelData.length > 0 ? funnelData : [{ name: 'Sem dados', value: 1 }]}
-                        className="bg-zinc-900 border-zinc-900 text-white shadow-lg"
-                        colors={['#FFD700', '#FFFFFF', '#A1A1AA', '#52525B', '#27272A', '#E4E4E7']}
-                    />
+
 
                     {/* Recent Patients List */}
                     <Card className="border border-zinc-800 bg-zinc-900 shadow-lg">
