@@ -12,11 +12,11 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Search, Database, MessageCircle, Pause, Play, Sparkles, Loader2, Phone, User } from "lucide-react"
-import { getPatients, getWhatsAppPatients, pauseWhatsAppPatient, resumeWhatsAppPatient, type Patient, type WhatsAppPatient } from "@/app/actions/get-patients"
+import { Search, Loader2, Pause, Play, Sparkles, User, Phone } from "lucide-react"
+import { getPatients, pauseWhatsAppPatient, resumeWhatsAppPatient, type Patient } from "@/app/actions/get-patients"
 import { useAuth } from "@/lib/auth-context"
+import { ClientDetailsSheet } from "@/components/clients/client-details-sheet"
 import {
     Tooltip,
     TooltipContent,
@@ -35,26 +35,19 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 export default function PatientsPage() {
     const { user } = useAuth()
 
-
-    const [activeTab, setActiveTab] = useState<"database" | "whatsapp">("database")
-
-    // Database patients state
-    const [dbPatients, setDbPatients] = useState<Patient[]>([])
-    const [dbCount, setDbCount] = useState(0)
-    const [dbPage, setDbPage] = useState(1)
-    const [dbSearch, setDbSearch] = useState("")
-    const [dbLoading, setDbLoading] = useState(true)
-
-    // WhatsApp patients state
-    const [wpPatients, setWpPatients] = useState<WhatsAppPatient[]>([])
-    const [wpCount, setWpCount] = useState(0)
-    const [wpPage, setWpPage] = useState(1)
-    const [wpSearch, setWpSearch] = useState("")
-    const [wpLoading, setWpLoading] = useState(true)
+    // Patients state
+    const [patients, setPatients] = useState<Patient[]>([])
+    const [count, setCount] = useState(0)
+    const [page, setPage] = useState(1)
+    const [search, setSearch] = useState("")
+    const [loading, setLoading] = useState(true)
 
     // Action states
-    const [isPending, startTransition] = useTransition()
-    const [actionLoading, setActionLoading] = useState<number | null>(null)
+    const [actionLoading, setActionLoading] = useState<string | number | null>(null)
+
+    // Sheet state
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
 
     // Summary modal
     const [summaryModal, setSummaryModal] = useState(false)
@@ -63,79 +56,69 @@ export default function PatientsPage() {
     const [isSummarizing, setIsSummarizing] = useState(false)
 
     const limit = 10
+    const totalPages = Math.ceil(count / limit)
 
-    // Fetch database patients
-    useEffect(() => {
-        async function fetchDb() {
-            setDbLoading(true)
-            const result = await getPatients(dbPage, limit, dbSearch, user?.clinic_id)
-            setDbPatients(result.data)
-            setDbCount(result.count)
-            setDbLoading(false)
+    // Fetch patients
+    async function fetchPatients() {
+        if (!user?.clinic_id) return
+        setLoading(true)
+        try {
+            const result = await getPatients(page, limit, search, user.clinic_id)
+            setPatients(result.data)
+            setCount(result.count)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
         }
-        if (user?.clinic_id) {
-            fetchDb()
-        }
-    }, [dbPage, dbSearch, user?.clinic_id])
-
-    // Fetch WhatsApp patients
-    useEffect(() => {
-        async function fetchWp() {
-            setWpLoading(true)
-            const result = await getWhatsAppPatients(wpPage, limit, wpSearch, user?.clinic_id)
-            setWpPatients(result.data)
-            setWpCount(result.count)
-            setWpLoading(false)
-        }
-        if (user?.clinic_id) {
-            fetchWp()
-        }
-    }, [wpPage, wpSearch, user?.clinic_id])
-
-    const dbTotalPages = Math.ceil(dbCount / limit)
-    const wpTotalPages = Math.ceil(wpCount / limit)
-
-    // Handle database search
-    const handleDbSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        const formData = new FormData(e.currentTarget)
-        const query = formData.get("dbQuery") as string
-        setDbSearch(query)
-        setDbPage(1)
     }
 
-    // Handle WhatsApp search
-    const handleWpSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        fetchPatients()
+    }, [page, search, user?.clinic_id])
+
+    // Handle search
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
-        const query = formData.get("wpQuery") as string
-        setWpSearch(query)
-        setWpPage(1)
+        const query = formData.get("query") as string
+        setSearch(query)
+        setPage(1)
     }
 
-    // Handle pause/resume patient
-    const handleTogglePause = async (patient: WhatsAppPatient) => {
+    // Opens details sheet
+    const handleRowClick = (patient: Patient) => {
+        setSelectedPatient(patient)
+        setIsSheetOpen(true)
+    }
+
+    // Handle pause/resume patient (for WhatsApp functionality)
+    const handleTogglePause = async (e: React.MouseEvent, patient: Patient) => {
+        e.stopPropagation() // Prevent opening row details
+        // Cast ID to number if needed, since our helper functions expect number
+        const patientId = Number(patient.id)
+        if (isNaN(patientId)) return
+
         setActionLoading(patient.id)
         try {
             if (patient.atendimento_ia === 'pausado') {
-                await resumeWhatsAppPatient(patient.id)
+                await resumeWhatsAppPatient(patientId)
             } else {
-                await pauseWhatsAppPatient(patient.id)
+                await pauseWhatsAppPatient(patientId)
             }
             // Refresh list
-            const result = await getWhatsAppPatients(wpPage, limit, wpSearch, user?.clinic_id)
-            setWpPatients(result.data)
-            setWpCount(result.count)
+            await fetchPatients()
         } finally {
             setActionLoading(null)
         }
     }
 
     // Handle summarize conversation
-    const handleSummarize = async (patient: WhatsAppPatient) => {
+    const handleSummarize = async (e: React.MouseEvent, patient: Patient) => {
+        e.stopPropagation() // Prevent opening row details
         if (!user?.clinic_id) return
 
-        setSummaryPatientName(patient.nomewpp || patient.telefone)
+        setSummaryPatientName(patient.nome || patient.telefone || "")
         setSummaryModal(true)
         setIsSummarizing(true)
         setSummaryContent("")
@@ -157,9 +140,8 @@ export default function PatientsPage() {
             const summary = await response.text()
             setSummaryContent(summary)
 
-            // Refresh list to show updated summary
-            const result = await getWhatsAppPatients(wpPage, limit, wpSearch, user?.clinic_id)
-            setWpPatients(result.data)
+            // Refresh list (optional, but maybe status changed)
+            await fetchPatients()
 
         } catch (error: any) {
             setSummaryContent(`Erro: ${error.message}`)
@@ -177,184 +159,93 @@ export default function PatientsPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "database" | "whatsapp")} className="flex-1 flex flex-col">
-                        <div className="px-4 pt-4">
-                            <TabsList className="grid w-full max-w-md grid-cols-2">
-                                <TabsTrigger value="database" className="flex items-center gap-2">
-                                    <Database className="h-4 w-4" />
-                                    Banco de Dados
-                                </TabsTrigger>
-                                <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-                                    <MessageCircle className="h-4 w-4" />
-                                    WhatsApp Ativos
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
+                    <div className="p-4 pb-2 border-b">
+                        <form onSubmit={handleSearch} className="flex gap-2 max-w-sm">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    name="query"
+                                    type="search"
+                                    placeholder="Buscar por nome, telefone, CPF..."
+                                    defaultValue={search}
+                                    className="pl-8 bg-background"
+                                />
+                            </div>
+                            <Button type="submit" disabled={loading}>
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
+                            </Button>
+                        </form>
+                    </div>
 
-                        {/* Database Tab */}
-                        <TabsContent value="database" className="flex-1 flex flex-col m-0 overflow-hidden">
-                            <div className="p-4 pb-2">
-                                <form onSubmit={handleDbSearch} className="flex gap-2 max-w-sm">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            name="dbQuery"
-                                            type="search"
-                                            placeholder="Buscar por nome..."
-                                            defaultValue={dbSearch}
-                                            className="pl-8 bg-background"
-                                        />
-                                    </div>
-                                    <Button type="submit" disabled={dbLoading}>
-                                        {dbLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
-                                    </Button>
-                                </form>
-                            </div>
-                            <div className="flex-1 overflow-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Nome</TableHead>
-                                            <TableHead>Telefone</TableHead>
-                                            <TableHead className="text-right">Ações</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {dbLoading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={3} className="text-center h-24">
-                                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : dbPatients.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                                    Nenhum paciente encontrado.
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            dbPatients.map((patient) => (
-                                                <TableRow key={patient.id}>
-                                                    <TableCell className="font-medium">{patient.nome}</TableCell>
-                                                    <TableCell>{patient.telefone || "-"}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button variant="ghost" size="sm">
-                                                            Nova Consulta
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                            {/* Database Pagination */}
-                            <div className="border-t p-4 flex items-center justify-between">
-                                <span className="text-muted-foreground">
-                                    Total: {dbCount} pacientes
-                                </span>
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={dbPage <= 1}
-                                        onClick={() => setDbPage(p => p - 1)}
-                                    >
-                                        Anterior
-                                    </Button>
-                                    <div className="flex items-center px-4 font-medium">
-                                        Página {dbPage} de {dbTotalPages || 1}
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={dbPage >= dbTotalPages}
-                                        onClick={() => setDbPage(p => p + 1)}
-                                    >
-                                        Próxima
-                                    </Button>
-                                </div>
-                            </div>
-                        </TabsContent>
-
-                        {/* WhatsApp Tab */}
-                        <TabsContent value="whatsapp" className="flex-1 flex flex-col m-0 overflow-hidden">
-                            <div className="p-4 pb-2">
-                                <form onSubmit={handleWpSearch} className="flex gap-2 max-w-sm">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            name="wpQuery"
-                                            type="search"
-                                            placeholder="Buscar por nome ou telefone..."
-                                            defaultValue={wpSearch}
-                                            className="pl-8 bg-background"
-                                        />
-                                    </div>
-                                    <Button type="submit" disabled={wpLoading}>
-                                        {wpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Buscar"}
-                                    </Button>
-                                </form>
-                            </div>
-                            <div className="flex-1 overflow-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Nome</TableHead>
-                                            <TableHead>Telefone</TableHead>
-                                            <TableHead>Etapa do Funil</TableHead>
-                                            <TableHead>Status IA</TableHead>
-                                            <TableHead className="text-right">Ações</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {wpLoading ? (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="text-center h-24">
-                                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : wpPatients.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                                    Nenhum paciente ativo no WhatsApp.
-                                                </TableCell>
-                                            </TableRow>
-                                        ) : (
-                                            wpPatients.map((patient) => (
-                                                <TableRow key={patient.id}>
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            <User className="h-4 w-4 text-muted-foreground" />
-                                                            {patient.nomewpp || "Sem nome"}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <Phone className="h-3 w-3 text-muted-foreground" />
-                                                            {patient.telefone}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline" className="text-xs">
-                                                            {patient.etapa_funil || "Não definida"}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={patient.atendimento_ia === 'pausado' ? 'secondary' : 'default'} className="text-xs">
-                                                            {patient.atendimento_ia === 'pausado' ? 'Pausado' : patient.atendimento_ia || 'Ativo'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <TooltipProvider>
-                                                            <div className="flex items-center justify-end gap-1">
+                    <div className="flex-1 overflow-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Telefone</TableHead>
+                                    <TableHead>CPF</TableHead>
+                                    <TableHead>Convênio</TableHead>
+                                    <TableHead>Status IA</TableHead>
+                                    <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24">
+                                            <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : patients.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                                            Nenhum paciente encontrado.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    patients.map((patient) => (
+                                        <TableRow
+                                            key={patient.id}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => handleRowClick(patient)}
+                                        >
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    <User className="h-4 w-4 text-muted-foreground" />
+                                                    {patient.nome}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Phone className="h-3 w-3 text-muted-foreground" />
+                                                    {patient.telefone || "-"}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{patient.cpf || "-"}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="font-normal text-xs">
+                                                    {patient.convenio || "Particular"}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                {patient.atendimento_ia && (
+                                                    <Badge variant={patient.atendimento_ia === 'pausado' ? 'secondary' : 'default'} className="text-xs">
+                                                        {patient.atendimento_ia === 'pausado' ? 'Pausado' : patient.atendimento_ia}
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <TooltipProvider>
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        {patient.telefone && (
+                                                            <>
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
                                                                             className="h-8 w-8"
-                                                                            onClick={() => handleTogglePause(patient)}
+                                                                            onClick={(e) => handleTogglePause(e, patient)}
                                                                             disabled={actionLoading === patient.id}
                                                                         >
                                                                             {actionLoading === patient.id ? (
@@ -376,7 +267,7 @@ export default function PatientsPage() {
                                                                             variant="ghost"
                                                                             size="icon"
                                                                             className="h-8 w-8"
-                                                                            onClick={() => handleSummarize(patient)}
+                                                                            onClick={(e) => handleSummarize(e, patient)}
                                                                         >
                                                                             <Sparkles className="h-4 w-4 text-purple-600" />
                                                                         </Button>
@@ -385,48 +276,56 @@ export default function PatientsPage() {
                                                                         Resumir Conversa
                                                                     </TooltipContent>
                                                                 </Tooltip>
-                                                            </div>
-                                                        </TooltipProvider>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                                            </>
+                                                        )}
+                                                        <Button variant="ghost" size="sm">
+                                                            Ver Detalhes
+                                                        </Button>
+                                                    </div>
+                                                </TooltipProvider>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <div className="border-t p-4 flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                            Total: {count} pacientes
+                        </span>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(p => p - 1)}
+                            >
+                                Anterior
+                            </Button>
+                            <div className="flex items-center px-4 font-medium">
+                                Página {page} de {totalPages || 1}
                             </div>
-                            {/* WhatsApp Pagination */}
-                            <div className="border-t p-4 flex items-center justify-between">
-                                <span className="text-muted-foreground">
-                                    Total: {wpCount} pacientes ativos
-                                </span>
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={wpPage <= 1}
-                                        onClick={() => setWpPage(p => p - 1)}
-                                    >
-                                        Anterior
-                                    </Button>
-                                    <div className="flex items-center px-4 font-medium">
-                                        Página {wpPage} de {wpTotalPages || 1}
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={wpPage >= wpTotalPages}
-                                        onClick={() => setWpPage(p => p + 1)}
-                                    >
-                                        Próxima
-                                    </Button>
-                                </div>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= totalPages}
+                                onClick={() => setPage(p => p + 1)}
+                            >
+                                Próxima
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 
-            {/* Summary Modal */}
+            <ClientDetailsSheet
+                patient={selectedPatient}
+                isOpen={isSheetOpen}
+                onClose={() => setIsSheetOpen(false)}
+            />
+
             <Dialog open={summaryModal} onOpenChange={setSummaryModal}>
                 <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
                     <DialogHeader>

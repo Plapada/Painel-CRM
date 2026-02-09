@@ -6,19 +6,37 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function inspect() {
-    const { data, error } = await supabase
+    // Check dados_cliente
+    const { data: wpData, error: wpError } = await supabase
         .from('dados_cliente')
         .select('*')
         .limit(1);
 
-    if (error) {
-        console.error('Error:', error);
+    if (wpError) {
+        console.error('Error dados_cliente:', wpError);
     } else {
-        console.log('Data:', data);
-        if (data && data.length > 0) {
-            console.log('Columns:', Object.keys(data[0]));
+        if (wpData && wpData.length > 0) {
+            console.log('--- dados_cliente Columns ---');
+            Object.keys(wpData[0]).forEach(key => console.log(key));
         } else {
-            console.log('Table is empty or data is null.');
+            console.log('dados_cliente is empty.');
+        }
+    }
+
+    // Check banco_de_dados_pacientes
+    const { data: dbData, error: dbError } = await supabase
+        .from('banco_de_dados_pacientes')
+        .select('*')
+        .limit(1);
+
+    if (dbError) {
+        console.error('Error banco_de_dados_pacientes:', dbError);
+    } else {
+        if (dbData && dbData.length > 0) {
+            console.log('--- banco_de_dados_pacientes Columns ---');
+            Object.keys(dbData[0]).forEach(key => console.log(key));
+        } else {
+            console.log('banco_de_dados_pacientes is empty.');
         }
     }
 }

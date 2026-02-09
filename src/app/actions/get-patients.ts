@@ -22,6 +22,9 @@ export interface Patient {
     endereco_logradouro: string | null
     endereco_numero: string | null
     source?: 'database' | 'whatsapp'
+    atendimento_ia?: string
+    etapa_funil?: string
+    resumo_conversa?: string
 }
 
 export async function searchPatients(query: string, clinicId?: string) {
@@ -97,7 +100,7 @@ export async function getPatients(page = 1, limit = 10, search = '', clinicId?: 
 
     let queryBuilder = supabase
         .from('dados_cliente')
-        .select('id, nomewpp, telefone, clinic_id, created_at', { count: 'exact' })
+        .select('*', { count: 'exact' })
         .range(from, to)
         .order('created_at', { ascending: false })
 
@@ -106,7 +109,7 @@ export async function getPatients(page = 1, limit = 10, search = '', clinicId?: 
     }
 
     if (search) {
-        queryBuilder = queryBuilder.or(`nomewpp.ilike.%${search}%,telefone.ilike.%${search}%`)
+        queryBuilder = queryBuilder.or(`nomewpp.ilike.%${search}%,telefone.ilike.%${search}%,cpf.ilike.%${search}%`)
     }
 
     const { data, error, count } = await queryBuilder
@@ -122,14 +125,17 @@ export async function getPatients(page = 1, limit = 10, search = '', clinicId?: 
         nome: p.nomewpp || 'Sem Nome',
         telefone: p.telefone,
         clinica_id: p.clinic_id,
-        source: 'whatsapp',
-        cpf: null,
-        convenio: null,
-        email: null,
-        prontuario: null,
-        profissao: null,
-        endereco_logradouro: null,
-        endereco_numero: null
+        source: 'whatsapp', // We can treat all as 'whatsapp' source or just 'database' now
+        cpf: p.cpf,
+        convenio: p.convenio,
+        email: p.email,
+        prontuario: p.prontuario,
+        profissao: p.profissao,
+        endereco_logradouro: p.endereco_logradouro,
+        endereco_numero: p.endereco_numero,
+        atendimento_ia: p.atendimento_ia,
+        etapa_funil: p.etapa_funil,
+        resumo_conversa: p.resumo_conversa
     }))
 
     return { data: patients, count: count || 0 }
@@ -137,13 +143,13 @@ export async function getPatients(page = 1, limit = 10, search = '', clinicId?: 
 
 export interface WhatsAppPatient {
     id: number
-    nomewpp: string | null
+    nomewpp: string
     telefone: string
-    etapa_funil: string | null
-    atendimento_ia: string | null
-    resumo_conversa: string | null
+    etapa_funil?: string
+    atendimento_ia?: string
+    resumo_conversa?: string
     clinic_id: string
-    created_at: string
+    created_at?: string
 }
 
 export async function getWhatsAppPatients(page = 1, limit = 10, search = '', clinicId?: string) {
