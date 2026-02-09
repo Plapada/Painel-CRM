@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Mail, MapPin, Phone, User, FileText, Briefcase, CreditCard, Edit2, Save, X, Play, Pause, Sparkles, CalendarDays, Loader2 } from "lucide-react"
 import { type Patient, updatePatient, pauseWhatsAppPatient, resumeWhatsAppPatient } from "@/app/actions/get-patients"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
@@ -30,7 +30,6 @@ interface ClientDetailsDialogProps {
 }
 
 export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: ClientDetailsDialogProps) {
-    const { toast } = useToast()
     const [isEditing, setIsEditing] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -59,21 +58,14 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
             const result = await updatePatient(Number(patient.id), updates)
 
             if (result.success) {
-                toast({
-                    title: "Sucesso",
-                    description: "Dados do paciente atualizados.",
-                })
+                toast.success("Dados do paciente atualizados.")
                 setIsEditing(false)
                 onUpdate?.()
             } else {
                 throw new Error(result.error)
             }
         } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: "Erro",
-                description: "Falha ao atualizar dados: " + error.message,
-            })
+            toast.error("Falha ao atualizar dados: " + error.message)
         } finally {
             setIsLoading(false)
         }
@@ -85,16 +77,14 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
             const patientId = Number(patient.id)
             if (patient.atendimento_ia === 'pause') {
                 await resumeWhatsAppPatient(patientId)
+                toast.success("IA retomada com sucesso.")
             } else {
                 await pauseWhatsAppPatient(patientId)
+                toast.success("IA pausada com sucesso.")
             }
             onUpdate?.()
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Erro",
-                description: "Falha ao alterar status da IA.",
-            })
+            toast.error("Falha ao alterar status da IA.")
         } finally {
             setActionLoading(null)
         }
@@ -102,16 +92,12 @@ export function ClientDetailsDialog({ patient, isOpen, onClose, onUpdate }: Clie
 
     // Placeholder for summarize (reuse logic from page if possible or reimplement)
     const handleSummarize = () => {
-        toast({
-            description: "Funcionalidade de resumo será implementada aqui.",
-        })
+        toast.info("Funcionalidade de resumo será implementada aqui.")
     }
 
     // Placeholder for appointment
     const handleNewAppointment = () => {
-        toast({
-            description: "Funcionalidade de agendamento será implementada aqui.",
-        })
+        toast.info("Funcionalidade de agendamento será implementada aqui.")
     }
 
     const initials = patient.nome
