@@ -101,7 +101,7 @@ export default function PatientsPage() {
 
         setActionLoading(patient.id)
         try {
-            if (patient.atendimento_ia === 'pausado') {
+            if (patient.atendimento_ia === 'pause') {
                 await resumeWhatsAppPatient(patientId)
             } else {
                 await pauseWhatsAppPatient(patientId)
@@ -229,8 +229,8 @@ export default function PatientsPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {patient.atendimento_ia && (
-                                                    <Badge variant={patient.atendimento_ia === 'pausado' ? 'secondary' : 'default'} className="text-xs">
-                                                        {patient.atendimento_ia === 'pausado' ? 'Pausado' : patient.atendimento_ia}
+                                                    <Badge variant={patient.atendimento_ia === 'pause' ? 'secondary' : 'default'} className="text-xs">
+                                                        {patient.atendimento_ia === 'pause' ? 'Pausado' : patient.atendimento_ia}
                                                     </Badge>
                                                 )}
                                             </TableCell>
@@ -250,7 +250,7 @@ export default function PatientsPage() {
                                                                         >
                                                                             {actionLoading === patient.id ? (
                                                                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                                                            ) : patient.atendimento_ia === 'pausado' ? (
+                                                                            ) : patient.atendimento_ia === 'pause' ? (
                                                                                 <Play className="h-4 w-4 text-green-600" />
                                                                             ) : (
                                                                                 <Pause className="h-4 w-4 text-amber-600" />
@@ -258,7 +258,7 @@ export default function PatientsPage() {
                                                                         </Button>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
-                                                                        {patient.atendimento_ia === 'pausado' ? 'Retomar IA' : 'Pausar IA'}
+                                                                        {patient.atendimento_ia === 'pause' ? 'Retomar IA' : 'Pausar IA'}
                                                                     </TooltipContent>
                                                                 </Tooltip>
                                                                 <Tooltip>
