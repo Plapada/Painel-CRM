@@ -518,7 +518,10 @@ function AppointmentsContent() {
         setIsSaving(true)
 
         try {
-            const newDateTime = new Date(`${editingAppointmentData.data_inicio}T${editingAppointmentData.hora_inicio}:00`).toISOString()
+            // Subtract 3 hours to compensate for Brazil timezone (UTC-3)
+            const localDateTime = new Date(`${editingAppointmentData.data_inicio}T${editingAppointmentData.hora_inicio}:00`)
+            localDateTime.setHours(localDateTime.getHours() - 3)
+            const newDateTime = localDateTime.toISOString()
             const { error } = await supabase
                 .from('consultas')
                 .update({
@@ -555,6 +558,8 @@ function AppointmentsContent() {
 
         try {
             const startDateTime = new Date(`${newAppointment.data_inicio}T${newAppointment.hora_inicio}:00`)
+            // Subtract 3 hours to compensate for Brazil timezone (UTC-3)
+            startDateTime.setHours(startDateTime.getHours() - 3)
             const endDateTime = new Date(startDateTime.getTime() + 30 * 60000) // Default 30 min duration
 
             const payload = {
@@ -626,7 +631,10 @@ function AppointmentsContent() {
         if (!selectedAppointment || !rescheduleData.date || !rescheduleData.time) return
 
         try {
-            const newDateTime = new Date(`${rescheduleData.date}T${rescheduleData.time}:00`).toISOString()
+            // Subtract 3 hours to compensate for Brazil timezone (UTC-3)
+            const localDateTime = new Date(`${rescheduleData.date}T${rescheduleData.time}:00`)
+            localDateTime.setHours(localDateTime.getHours() - 3)
+            const newDateTime = localDateTime.toISOString()
             const { error } = await supabase
                 .from('consultas')
                 .update({ data_inicio: newDateTime })
