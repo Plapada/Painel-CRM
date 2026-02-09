@@ -29,7 +29,9 @@ import {
     CheckSquare,
     MessageCircle,
     Plus,
-    Trash2
+    Trash2,
+    Pencil,
+    UserPlus
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -173,6 +175,21 @@ function AppointmentsContent() {
         procedimento_id: null as string | null,
         valor: 0
     })
+
+    // New Patient Creation Mode
+    const [isCreatingNewPatient, setIsCreatingNewPatient] = useState(false)
+    const [newPatientData, setNewPatientData] = useState({ nome: '', telefone: '', celular: '' })
+
+    // Edit Appointment Modal State
+    const [showEditAppointmentModal, setShowEditAppointmentModal] = useState(false)
+    const [editingAppointmentData, setEditingAppointmentData] = useState<{
+        data_inicio: string
+        hora_inicio: string
+        tipo_consulta: string
+        procedimento_id: string | null
+        valor: number
+        observacoes: string
+    } | null>(null)
 
     // Procedure State
     const [procedures, setProcedures] = useState<Procedure[]>([])
@@ -465,7 +482,64 @@ function AppointmentsContent() {
             prontuario: patient.prontuario || '',
             convenio: patient.convenio || '',
         }))
-        // setOpenCombobox(false) // Handled by component
+    }
+
+    // --- Create New Patient from Search ---
+    const handleCreateNewPatient = (name: string) => {
+        setNewAppointment(prev => ({
+            ...prev,
+            nome_cliente: name,
+            telefone_cliente: '',
+            celular_cliente: '',
+            email_cliente: '',
+        }))
+        notify.info(`Novo paciente: ${name}. Preencha os dados abaixo.`)
+    }
+
+    // --- Open Edit Appointment Modal ---
+    const handleOpenEditAppointment = () => {
+        if (!selectedAppointment) return
+        setEditingAppointmentData({
+            data_inicio: selectedAppointment.data_inicio.split('T')[0],
+            hora_inicio: new Date(selectedAppointment.data_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            tipo_consulta: selectedAppointment.tipo_consulta || 'Consulta',
+            procedimento_id: null, // Would need to be fetched from appointment if stored
+            valor: 0, // Would need to be fetched from appointment if stored
+            observacoes: selectedAppointment.observacoes || ''
+        })
+        setShowEditAppointmentModal(true)
+    }
+
+    // --- Save Edit Appointment ---
+    const handleSaveEditAppointment = async () => {
+        if (!selectedAppointment || !editingAppointmentData) return
+        setIsSaving(true)
+
+        try {
+            const newDateTime = new Date(`${editingAppointmentData.data_inicio}T${editingAppointmentData.hora_inicio}:00`).toISOString()
+            const { error } = await supabase
+                .from('consultas')
+                .update({
+                    data_inicio: newDateTime,
+                    tipo_consulta: editingAppointmentData.tipo_consulta,
+                    observacoes: editingAppointmentData.observacoes,
+                    procedimento_id: editingAppointmentData.procedimento_id,
+                    valor: editingAppointmentData.valor
+                })
+                .eq('id', selectedAppointment.id)
+
+            if (error) throw error
+
+            notify.success("Agendamento atualizado!")
+            fetchAppointments()
+            setShowEditAppointmentModal(false)
+            setSelectedAppointment(null)
+        } catch (error) {
+            console.error("Error updating appointment:", error)
+            notify.error("Erro ao atualizar agendamento.")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
 
@@ -703,7 +777,16 @@ function AppointmentsContent() {
                                             {selectedAppointment.tipo_consulta || "Consulta Geral"}
                                         </p>
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleOpenEditAppointment}
+                                            className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                        >
+                                            <Pencil className="h-4 w-4 mr-2" />
+                                            Editar Agendamento
+                                        </Button>
                                         <TabsList>
                                             <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
                                             <TabsTrigger value="clinico" onClick={fetchPatientHistory}>Prontuário</TabsTrigger>
@@ -940,7 +1023,11 @@ function AppointmentsContent() {
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="patient" className="text-sm font-medium">Paciente</Label>
-                            <PatientSearch onSelect={handleSelectPatient} clinicId={user?.clinic_id} />
+                            <PatientSearch
+                                onSelect={handleSelectPatient}
+                                clinicId={user?.clinic_id}
+                                onCreateNew={handleCreateNewPatient}
+                            />
                             {newAppointment.nome_cliente && (
                                 <div className="text-xs text-muted-foreground mt-1">
                                     Selecionado: {newAppointment.nome_cliente}
@@ -1200,6 +1287,148 @@ function AppointmentsContent() {
                     </div>
                 )
             }
+
+            {/* EDIT APPOINTMENT MODAL */}
+            {showEditAppointmentModal && editingAppointmentData && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <Card className="w-full max-w-lg shadow-2xl border-0 ring-1 ring-white/10">
+                        <CardHeader>
+                            <CardTitle className="text-xl flex items-center gap-2">
+                                <Pencil className="h-5 w-5 text-amber-500" />
+                                Editar Agendamento
+                            </CardTitle>
+                            <CardDescription>
+                                Altere os detalhes do agendamento.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Data</Label>
+                                    <Input
+                                        type="date"
+                                        value={editingAppointmentData.data_inicio}
+                                        onChange={(e) => setEditingAppointmentData({
+                                            ...editingAppointmentData,
+                                            data_inicio: e.target.value
+                                        })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Horário</Label>
+                                    <Select
+                                        value={editingAppointmentData.hora_inicio}
+                                        onValueChange={(val) => setEditingAppointmentData({
+                                            ...editingAppointmentData,
+                                            hora_inicio: val
+                                        })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[200px] z-[99999]">
+                                            {timeSlots.map(time => (
+                                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Tipo de Consulta</Label>
+                                    <Select
+                                        value={editingAppointmentData.tipo_consulta}
+                                        onValueChange={(val) => setEditingAppointmentData({
+                                            ...editingAppointmentData,
+                                            tipo_consulta: val
+                                        })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Consulta">Consulta</SelectItem>
+                                            <SelectItem value="Retorno">Retorno</SelectItem>
+                                            <SelectItem value="Procedimento">Procedimento</SelectItem>
+                                            <SelectItem value="Exame">Exame</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Procedimento</Label>
+                                    <Select
+                                        value={editingAppointmentData.procedimento_id || "none"}
+                                        onValueChange={(val) => {
+                                            if (val === "none") {
+                                                setEditingAppointmentData({
+                                                    ...editingAppointmentData,
+                                                    procedimento_id: null,
+                                                    valor: 0
+                                                })
+                                            } else {
+                                                const proc = procedures.find(p => p.id === val)
+                                                setEditingAppointmentData({
+                                                    ...editingAppointmentData,
+                                                    procedimento_id: val,
+                                                    valor: proc ? Number(proc.valor) : editingAppointmentData.valor,
+                                                    tipo_consulta: 'Procedimento'
+                                                })
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Nenhum</SelectItem>
+                                            {procedures.map(p => (
+                                                <SelectItem key={p.id} value={p.id}>
+                                                    {p.nome} - R$ {Number(p.valor).toFixed(2)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Valor (R$)</Label>
+                                <Input
+                                    type="number"
+                                    value={editingAppointmentData.valor || ''}
+                                    onChange={(e) => setEditingAppointmentData({
+                                        ...editingAppointmentData,
+                                        valor: parseFloat(e.target.value) || 0
+                                    })}
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Observações</Label>
+                                <Input
+                                    value={editingAppointmentData.observacoes}
+                                    onChange={(e) => setEditingAppointmentData({
+                                        ...editingAppointmentData,
+                                        observacoes: e.target.value
+                                    })}
+                                    placeholder="Adicione observações..."
+                                />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2 bg-muted/20 py-4">
+                            <Button variant="outline" onClick={() => setShowEditAppointmentModal(false)}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={handleSaveEditAppointment} disabled={isSaving}>
+                                {isSaving ? "Salvando..." : "Salvar Alterações"}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            )}
         </div >
     )
 }
