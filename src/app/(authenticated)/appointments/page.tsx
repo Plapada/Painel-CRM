@@ -124,7 +124,9 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, c
     'cancelada': { label: 'Cancelada', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
 }
 
-export default function AppointmentsPage() {
+import { Suspense } from "react"
+
+function AppointmentsContent() {
     const { user } = useAuth()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -1127,5 +1129,13 @@ export default function AppointmentsPage() {
                 </div>
             )}
         </div >
+    )
+}
+
+export default function AppointmentsPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center">Carregando...</div>}>
+            <AppointmentsContent />
+        </Suspense>
     )
 }
