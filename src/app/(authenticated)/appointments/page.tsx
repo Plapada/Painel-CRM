@@ -155,6 +155,8 @@ function AppointmentsContent() {
         prontuario: string
         realizou_procedimento: boolean
         codigo_procedimento: string
+        procedimento_id: string | null
+        valor: number
     }>({
         nome_cliente: '',
         telefone_cliente: '',
