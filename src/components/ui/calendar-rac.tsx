@@ -76,7 +76,7 @@ const CalendarGridComponent = ({ isRange = false, bookedDays = new Set() }: { is
                             // Booked Styles
                             bookedDays.has(date.toString()) &&
                             cn(
-                                "before:pointer-events-none before:absolute before:top-1 before:right-1 before:z-10 before:size-[6px] before:rounded-full before:bg-red-500 before:ring-1 before:ring-red-300",
+                                "before:pointer-events-none before:absolute before:bottom-1 before:left-1/2 before:-translate-x-1/2 before:z-10 before:size-[5px] before:rounded-full before:bg-amber-500",
                                 isRange && "data-[selected]:before:bg-background"
                             )
                         )}

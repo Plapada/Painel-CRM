@@ -68,11 +68,11 @@ export function Sidebar() {
                             asChild
                             className={cn(
                                 "w-full justify-center lg:justify-start gap-3 px-2 lg:px-3",
-                                isActive && "bg-primary/10 text-amber-800 dark:text-primary hover:bg-primary/20 hover:text-amber-900 dark:hover:text-primary"
+                                isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
                             )}
                         >
                             <Link href={item.href}>
-                                <item.icon className={cn("h-5 w-5", isActive && "text-amber-800 dark:text-primary")} />
+                                <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
                                 <span className="hidden lg:inline-block">{item.name}</span>
                             </Link>
                         </Button>
