@@ -253,7 +253,7 @@ function AppointmentsContent() {
             appointments.forEach(apt => {
                 if (['finalizado', 'cancelada', 'faltou'].includes(apt.status)) return
 
-                const aptTime = new Date(`${apt.data_inicio}T${apt.hora_inicio || '00:00'}:00`) // Assuming hora_inicio exists or part of data_inicio
+                const aptTime = new Date(apt.data_inicio)
                 const diffMs = now.getTime() - aptTime.getTime()
                 const diffMins = Math.floor(diffMs / 60000)
 
