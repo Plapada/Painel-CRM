@@ -68,7 +68,7 @@ export function Sidebar() {
                             asChild
                             className={cn(
                                 "w-full justify-center lg:justify-start gap-3 px-2 lg:px-3",
-                                isActive && "bg-amber-500 text-white hover:bg-amber-600 hover:text-white"
+                                isActive && "bg-amber-600 text-white hover:bg-amber-700 hover:text-white"
                             )}
                         >
                             <Link href={item.href}>
