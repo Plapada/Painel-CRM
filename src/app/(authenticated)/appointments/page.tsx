@@ -785,7 +785,9 @@ function AppointmentsContent() {
                             </div>
                             <Button onClick={() => {
                                 const localDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
-                                setNewAppointment(prev => ({ ...prev, data_inicio: localDate }))
+                                const consultaProc = procedures.find(p => p.nome.toUpperCase().includes('CONSULTA GINECOLOGICA') && p.nome.toUpperCase().includes('PUBLICO'))
+                                const defaultValor = consultaProc ? Number(consultaProc.valor) : 0
+                                setNewAppointment(prev => ({ ...prev, data_inicio: localDate, valor: defaultValor }))
                                 setShowCreateModal(true)
                             }} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 h-7 text-[10px]">
                                 <Plus className="w-3 h-3 mr-1" /> Novo
