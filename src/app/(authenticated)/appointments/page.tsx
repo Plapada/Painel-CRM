@@ -118,15 +118,15 @@ interface Appointment {
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, color: string, icon: any }> = {
-    'pendente': { label: 'Pendente', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
-    'confirmado': { label: 'Confirmado', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 },
-    'confirmada': { label: 'Confirmado', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 }, // Legacy support
-    'compareceu': { label: 'Compareceu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: MapPin },
-    'em_atendimento': { label: 'Em Atendimento', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: PlayCircle },
-    'finalizado': { label: 'Finalizado', color: 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-100', icon: CheckSquare },
-    'atrasado': { label: 'Atrasado', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertCircle },
-    'faltou': { label: 'Faltou', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
-    'cancelada': { label: 'Cancelada', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+    'pendente': { label: 'Pendente', color: 'bg-amber-500 text-white', icon: Clock },
+    'confirmado': { label: 'Confirmado', color: 'bg-teal-600 text-white', icon: CheckCircle2 },
+    'confirmada': { label: 'Confirmado', color: 'bg-teal-600 text-white', icon: CheckCircle2 }, // Legacy support
+    'compareceu': { label: 'Compareceu', color: 'bg-blue-600 text-white', icon: MapPin },
+    'em_atendimento': { label: 'Em Atendimento', color: 'bg-purple-700 text-white', icon: PlayCircle },
+    'finalizado': { label: 'Finalizado', color: 'bg-slate-600 text-white', icon: CheckSquare },
+    'atrasado': { label: 'Atrasado', color: 'bg-orange-500 text-white', icon: AlertCircle },
+    'faltou': { label: 'Faltou', color: 'bg-red-600 text-white', icon: XCircle },
+    'cancelada': { label: 'Cancelada', color: 'bg-red-600 text-white', icon: XCircle },
 }
 
 import { Suspense } from "react"
