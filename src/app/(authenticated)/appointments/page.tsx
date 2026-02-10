@@ -113,6 +113,8 @@ interface Appointment {
     prontuario?: string // Added
     realizou_procedimento?: boolean // Added
     codigo_procedimento?: string // Added
+    procedimento_id?: string | null // Added
+    valor?: number // Added
 }
 
 const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, color: string, icon: any }> = {
