@@ -784,7 +784,8 @@ function AppointmentsContent() {
                                 </h2>
                             </div>
                             <Button onClick={() => {
-                                setNewAppointment(prev => ({ ...prev, data_inicio: selectedDate.toISOString().split('T')[0] }))
+                                const localDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+                                setNewAppointment(prev => ({ ...prev, data_inicio: localDate }))
                                 setShowCreateModal(true)
                             }} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 h-7 text-[10px]">
                                 <Plus className="w-3 h-3 mr-1" /> Novo
@@ -1141,7 +1142,19 @@ function AppointmentsContent() {
                                 <Label htmlFor="type" className="text-sm font-medium">Tipo</Label>
                                 <Select
                                     value={newAppointment.tipo_consulta}
-                                    onValueChange={(val) => setNewAppointment({ ...newAppointment, tipo_consulta: val })}
+                                    onValueChange={(val) => {
+                                        // Find base consultation value from procedures
+                                        let baseValor = 0
+                                        if (val === 'Consulta') {
+                                            const consultaProc = procedures.find(p => p.nome.toUpperCase().includes('CONSULTA GINECOLOGICA') && p.nome.toUpperCase().includes('PUBLICO'))
+                                            baseValor = consultaProc ? Number(consultaProc.valor) : 0
+                                        }
+                                        // If a procedure is also selected, sum the values
+                                        const procValor = newAppointment.procedimento_id
+                                            ? Number(procedures.find(p => p.id === newAppointment.procedimento_id)?.valor || 0)
+                                            : 0
+                                        setNewAppointment({ ...newAppointment, tipo_consulta: val, valor: baseValor + procValor })
+                                    }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecione" />
@@ -1163,15 +1176,21 @@ function AppointmentsContent() {
                                 <Select
                                     value={newAppointment.procedimento_id || "none"}
                                     onValueChange={(val) => {
+                                        // Calculate base consultation value
+                                        let baseValor = 0
+                                        if (newAppointment.tipo_consulta === 'Consulta') {
+                                            const consultaProc = procedures.find(p => p.nome.toUpperCase().includes('CONSULTA GINECOLOGICA') && p.nome.toUpperCase().includes('PUBLICO'))
+                                            baseValor = consultaProc ? Number(consultaProc.valor) : 0
+                                        }
                                         if (val === "none") {
-                                            setNewAppointment({ ...newAppointment, procedimento_id: null, valor: 0 })
+                                            setNewAppointment({ ...newAppointment, procedimento_id: null, valor: baseValor })
                                         } else {
                                             const proc = procedures.find(p => p.id === val)
+                                            const procValor = proc ? Number(proc.valor) : 0
                                             setNewAppointment({
                                                 ...newAppointment,
                                                 procedimento_id: val,
-                                                valor: proc ? Number(proc.valor) : newAppointment.valor
-                                                // Note: tipo_consulta is now independent - user can select both
+                                                valor: baseValor + procValor
                                             })
                                         }
                                     }}
@@ -1180,7 +1199,7 @@ function AppointmentsContent() {
                                     <SelectTrigger>
                                         <SelectValue placeholder={isLoadingProcedures ? "Carregando..." : "Selecione..."} />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-[200px] z-[99999]">
                                         <SelectItem value="none">Nenhum</SelectItem>
                                         {procedures.map(p => (
                                             <SelectItem key={p.id} value={p.id}>
@@ -1431,10 +1450,21 @@ function AppointmentsContent() {
                                     <Label className="text-sm font-medium">Tipo de Consulta</Label>
                                     <Select
                                         value={editingAppointmentData.tipo_consulta}
-                                        onValueChange={(val) => setEditingAppointmentData({
-                                            ...editingAppointmentData,
-                                            tipo_consulta: val
-                                        })}
+                                        onValueChange={(val) => {
+                                            let baseValor = 0
+                                            if (val === 'Consulta') {
+                                                const consultaProc = procedures.find(p => p.nome.toUpperCase().includes('CONSULTA GINECOLOGICA') && p.nome.toUpperCase().includes('PUBLICO'))
+                                                baseValor = consultaProc ? Number(consultaProc.valor) : 0
+                                            }
+                                            const procValor = editingAppointmentData.procedimento_id
+                                                ? Number(procedures.find(p => p.id === editingAppointmentData.procedimento_id)?.valor || 0)
+                                                : 0
+                                            setEditingAppointmentData({
+                                                ...editingAppointmentData,
+                                                tipo_consulta: val,
+                                                valor: baseValor + procValor
+                                            })
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione" />
@@ -1452,19 +1482,24 @@ function AppointmentsContent() {
                                     <Select
                                         value={editingAppointmentData.procedimento_id || "none"}
                                         onValueChange={(val) => {
+                                            let baseValor = 0
+                                            if (editingAppointmentData.tipo_consulta === 'Consulta') {
+                                                const consultaProc = procedures.find(p => p.nome.toUpperCase().includes('CONSULTA GINECOLOGICA') && p.nome.toUpperCase().includes('PUBLICO'))
+                                                baseValor = consultaProc ? Number(consultaProc.valor) : 0
+                                            }
                                             if (val === "none") {
                                                 setEditingAppointmentData({
                                                     ...editingAppointmentData,
                                                     procedimento_id: null,
-                                                    valor: 0
+                                                    valor: baseValor
                                                 })
                                             } else {
                                                 const proc = procedures.find(p => p.id === val)
+                                                const procValor = proc ? Number(proc.valor) : 0
                                                 setEditingAppointmentData({
                                                     ...editingAppointmentData,
                                                     procedimento_id: val,
-                                                    valor: proc ? Number(proc.valor) : editingAppointmentData.valor
-                                                    // Note: tipo_consulta is now independent - user can select both
+                                                    valor: baseValor + procValor
                                                 })
                                             }
                                         }}
@@ -1472,7 +1507,7 @@ function AppointmentsContent() {
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione..." />
                                         </SelectTrigger>
-                                        <SelectContent className="z-[99999]">
+                                        <SelectContent className="max-h-[200px] z-[99999]">
                                             <SelectItem value="none">Nenhum</SelectItem>
                                             {procedures.map(p => (
                                                 <SelectItem key={p.id} value={p.id}>
