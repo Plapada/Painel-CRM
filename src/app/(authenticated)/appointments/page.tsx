@@ -258,11 +258,7 @@ function AppointmentsContent() {
                 const diffMins = Math.floor(diffMs / 60000)
 
                 if (diffMins >= 40 && diffMins < 45) { // Notify once in this window
-                    notify({
-                        title: "Consulta Atrasada",
-                        message: `A consulta de ${apt.nome_cliente} excedeu 40 minutos.`,
-                        type: "warning"
-                    })
+                    notify.warning(`A consulta de ${apt.nome_cliente} excedeu 40 minutos.`, "Consulta Atrasada")
                 }
             })
         }
