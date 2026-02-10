@@ -121,7 +121,7 @@ const STATUS_CONFIG: Record<AppointmentStatus | 'confirmada', { label: string, c
     'confirmada': { label: 'Confirmado', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 }, // Legacy support
     'compareceu': { label: 'Compareceu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: MapPin },
     'em_atendimento': { label: 'Em Atendimento', color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400', icon: PlayCircle },
-    'finalizado': { label: 'Finalizado', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400', icon: CheckSquare },
+    'finalizado': { label: 'Finalizado', color: 'bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-slate-100', icon: CheckSquare },
     'atrasado': { label: 'Atrasado', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertCircle },
     'faltou': { label: 'Faltou', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
     'cancelada': { label: 'Cancelada', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
