@@ -1601,7 +1601,7 @@ function AppointmentsContent() {
                                                 .eq('id', finishingAppointment.id)
 
                                             if (error) {
-                                                notify({ type: 'error', message: 'Erro ao salvar procedimento' })
+                                                notify.error('Erro ao salvar procedimento')
                                                 return
                                             }
                                         }
