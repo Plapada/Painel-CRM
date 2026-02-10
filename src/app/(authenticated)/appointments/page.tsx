@@ -197,14 +197,14 @@ function AppointmentsContent() {
     const [isLoadingProcedures, setIsLoadingProcedures] = useState(false)
 
     useEffect(() => {
-        if (showCreateModal && user?.clinic_id) {
+        if ((showCreateModal || showEditAppointmentModal) && user?.clinic_id) {
             setIsLoadingProcedures(true)
             getProcedures(user.clinic_id).then(data => {
                 setProcedures(data)
                 setIsLoadingProcedures(false)
             })
         }
-    }, [showCreateModal, user?.clinic_id])
+    }, [showCreateModal, showEditAppointmentModal, user?.clinic_id])
 
     // Patient Search State
     const [openCombobox, setOpenCombobox] = useState(false)
