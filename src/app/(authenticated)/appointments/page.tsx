@@ -783,7 +783,10 @@ function AppointmentsContent() {
                                     {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                                 </h2>
                             </div>
-                            <Button onClick={() => setShowCreateModal(true)} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 h-7 text-[10px]">
+                            <Button onClick={() => {
+                                setNewAppointment(prev => ({ ...prev, data_inicio: selectedDate.toISOString().split('T')[0] }))
+                                setShowCreateModal(true)
+                            }} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 h-7 text-[10px]">
                                 <Plus className="w-3 h-3 mr-1" /> Novo
                             </Button>
                         </div>
